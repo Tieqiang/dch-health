@@ -12,6 +12,7 @@ import java.sql.Timestamp;
 @Entity
 @Table(name = "drug_new_research_policy", schema = "dch", catalog = "")
 public class DrugNewResearchPolicy extends BaseEntity{
+    private String policyName ;
     private String policyTypeFlag;
     private String releaseOrgCn;
     private String releaseOrgEn;
@@ -30,6 +31,15 @@ public class DrugNewResearchPolicy extends BaseEntity{
     private String other;
     private String attachmentUrl;
 
+
+    @Column(name = "policy_name")
+    public String getPolicyName() {
+        return policyName;
+    }
+
+    public void setPolicyName(String policyName) {
+        this.policyName = policyName;
+    }
 
     @Basic
     @Column(name = "policy_type_flag", nullable = true, length = 20)
