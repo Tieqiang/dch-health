@@ -17,6 +17,7 @@
         <module>dch-document</module>
         <module>dch-pan</module>
         <module>dch-hdfs</module>
+        <module>dch-drug</module>
     </modules>
 
 
