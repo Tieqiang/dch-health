@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence xmlns="http://java.sun.com/xml/ns/persistence" version="2.0">
+
+    <persistence-unit name="NewPersistenceUnit">
+        <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
+        <class>com.dch.entity.DataElement</class>
+        <class>com.dch.entity.DataElementClass</class>
+        <class>com.dch.entity.DataValueRelamDetail</class>
+        <class>com.dch.entity.DataValueRelamMaster</class>
+        <class>com.dch.entity.DataElementCategory</class>
+        <class>com.dch.entity.DataElementStandard</class>
+        <class>com.dch.entity.DataRealm</class>
+        <class>com.dch.entity.DataRealmValue</class>
+        <class>com.dch.entity.DataSet</class>
+        <class>com.dch.entity.DataSetVsElement</class>
+        <class>com.dch.entity.DataVersion</class>
+        <class>com.dch.entity.DocumentTemplate</class>
+        <class>com.dch.entity.DocumentTemplateGroup</class>
+        <class>com.dch.entity.GroupVsTemplate</class>
+        <class>com.dch.entity.PanFile</class>
+        <class>com.dch.entity.PanFileType</class>
+        <class>com.dch.entity.PanFolder</class>
+        <properties>
+            <property name="hibernate.connection.url" value="jdbc:mysql://localhost:3306/dch"/>
+            <property name="hibernate.connection.driver_class" value="com.mysql.jdbc.Driver"/>
+            <property name="hibernate.connection.username" value=""/>
+            <property name="hibernate.connection.password" value=""/>
+            <property name="hibernate.archive.autodetection" value="class"/>
+            <property name="hibernate.show_sql" value="true"/>
+            <property name="hibernate.format_sql" value="true"/>
+            <property name="hbm2ddl.auto" value="update"/>
+        </properties>
+    </persistence-unit>
+</persistence>
