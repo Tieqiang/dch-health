@@ -15,9 +15,19 @@ public class DrugPackageInfo extends BaseEntity {
     private String packageSpec;
     private String durgBarCode;
     private String drugCode;
+    private String firmId ;
 
 
 
+    @Basic
+    @Column(name = "firm_id", nullable = true, length = 64)
+    public String getFirmId() {
+        return firmId;
+    }
+
+    public void setFirmId(String firmId) {
+        this.firmId = firmId;
+    }
     @Basic
     @Column(name = "drug_id", nullable = true, length = 64)
     public String getDrugId() {

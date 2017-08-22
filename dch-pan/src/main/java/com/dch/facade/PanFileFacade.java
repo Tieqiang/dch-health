@@ -164,4 +164,31 @@ public class PanFileFacade extends BaseFacade {
     public PanFile getPanFileById(String id){
         return get(PanFile.class,id);
     }
+
+    /**
+     *文件(夹)批量移动，删除，设为共享，取消共享
+     * @param ids       需要操作的文件接口
+     * @param fileShare 文件共享标志
+     * @param status    文件状态
+     * @param parentId  父路径
+     * @return
+     */
+    @Transactional
+    public void mergePanFiles(List<String> ids, String fileShare, String status, String parentId) {
+        for(String id :ids){
+            PanFile panFile = get(PanFile.class,id);
+            if(panFile!=null){
+                if(!"".equals(fileShare)&&fileShare!=null){
+                    panFile.setFileShare(fileShare);
+                }
+                if(!"".equals(status)&&status!=null){
+                    panFile.setStatus(status);
+                }
+                if(!"".equals(parentId)&&parentId!=null){
+                    panFile.setParentId(parentId);
+                }
+                merge(panFile);
+            }
+        }
+    }
 }
