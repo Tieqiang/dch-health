@@ -25,7 +25,7 @@ public class PanFileFacade extends BaseFacade {
      * @return
      */
     @Transactional
-    public PanFile mergePanFile(PanFile panFile){
+    public PanFile mergePanFile(PanFile panFile) throws Exception{
         //首先判断是否为删除
         if(panFile.getStatus().equals("-1")){
             String hql="update PanFile set status='-1' where parent_id = '"+panFile.getId()+"' or id='"+panFile.getId()+"'";
@@ -36,6 +36,16 @@ public class PanFileFacade extends BaseFacade {
                 return new PanFile();
             }
         }else{
+            String hql = " from PanFile where status<>'-1' and fileName = '"+panFile.getFileName()+"' and id <> '"+panFile.getId()+"'";
+            if(panFile.getParentId()==null||panFile.getParentId().equals("")){
+                hql +=" and parentId is null";
+            }else{
+                hql +=" and parentId = '"+panFile.getParentId()+"'";
+            }
+            List<PanFile> panFiles = createQuery(PanFile.class,hql,new ArrayList<Object>()).getResultList();
+            if(panFiles!=null && !panFiles.isEmpty()){
+                throw new Exception("文件名已存在，请修改");
+            }
            return merge(panFile);
         }
     }
