@@ -14,7 +14,6 @@ import java.util.Arrays;
 @Table(name = "drug_base_info", schema = "dch", catalog = "")
 public class DrugBaseInfo extends BaseEntity{
     private String approvalNo;
-    private String firmId;
     private Date approvalNoEndDate;
     private String spec;
     private String toxi;
@@ -37,15 +36,7 @@ public class DrugBaseInfo extends BaseEntity{
         this.approvalNo = approvalNo;
     }
 
-    @Basic
-    @Column(name = "firm_id", nullable = true, length = 64)
-    public String getFirmId() {
-        return firmId;
-    }
 
-    public void setFirmId(String firmId) {
-        this.firmId = firmId;
-    }
 
     @Basic
     @Column(name = "approval_no_end_date", nullable = true)
