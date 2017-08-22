@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence xmlns="http://java.sun.com/xml/ns/persistence" version="2.0">
+
+    <persistence-unit name="NewPersistenceUnit">
+        <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
+        <class>com.dch.entity.DrugAd</class>
+        <class>com.dch.entity.DrugAdministrationProtect</class>
+        <class>com.dch.entity.DrugAnalysisMethods</class>
+        <class>com.dch.entity.DrugBaseInfo</class>
+        <class>com.dch.entity.DrugClass</class>
+        <class>com.dch.entity.DrugDiseaseTreatmentGuide</class>
+        <class>com.dch.entity.DrugExamOrg</class>
+        <class>com.dch.entity.DrugFirm</class>
+        <class>com.dch.entity.DrugNameDict</class>
+        <class>com.dch.entity.DrugNaturalActive</class>
+        <class>com.dch.entity.DrugNaturalChemicalComposition</class>
+        <class>com.dch.entity.DrugNaturalEvaluation</class>
+        <class>com.dch.entity.DrugNewResearchPolicy</class>
+        <class>com.dch.entity.DrugNewResearchType</class>
+        <class>com.dch.entity.DrugPackage</class>
+        <class>com.dch.entity.DrugPackageInfo</class>
+        <class>com.dch.entity.DrugInstruction</class>
+        <class>com.dch.entity.DrugPatent</class>
+        <class>com.dch.entity.DrugPlant</class>
+        <class>com.dch.entity.DrugPlantPicture</class>
+        <class>com.dch.entity.DrugProducer</class>
+        <class>com.dch.entity.DrugUntowardEffect</class>
+        <properties>
+            <property name="hibernate.connection.url" value="jdbc:mysql://10.131.128.43:3306/dch"/>
+            <property name="hibernate.connection.driver_class" value="com.mysql.jdbc.Driver"/>
+            <property name="hibernate.connection.username" value=""/>
+            <property name="hibernate.connection.password" value=""/>
+            <property name="hibernate.archive.autodetection" value="class"/>
+            <property name="hibernate.show_sql" value="true"/>
+            <property name="hibernate.format_sql" value="true"/>
+            <property name="hbm2ddl.auto" value="update"/>
+        </properties>
+    </persistence-unit>
+</persistence>
