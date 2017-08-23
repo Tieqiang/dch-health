@@ -142,8 +142,10 @@ public class DrugBaseInfoFacade extends BaseFacade{
      * @return
      */
     public Page<DrugBaseInfo> getDrugBaseInfos(String classId, int perPage, int currentPage, String wherehql, String inputCode, String drugName) {
-        String hql = " from DrugBaseInfo as base where base.status<>'-1'";
-        String hqlCount = "select count(*) from DrugBaseInfo as base  where base.status<>'-1'" ;
+        String hql = "select distinct base from DrugBaseInfo as base,DrugNameDict as dict where base.status<>'-1' and dict.status<>'-1'" +
+                     " and base.drugCode = dict.drugCode ";
+        String hqlCount = "select count(distinct base) from DrugBaseInfo as base,DrugNameDict as dict  where base.status<>'-1' and dict.status<>'-1'" +
+                          " and base.drugCode = dict.drugCode ";
         if(!StringUtils.isEmptyParam(wherehql)){
             hql += (" and "+ wherehql);
             hqlCount += (" and "+ wherehql);
@@ -153,18 +155,16 @@ public class DrugBaseInfoFacade extends BaseFacade{
             hqlCount += " and classId = '"+classId+"'";
         }
         if(!StringUtils.isEmptyParam(inputCode) && !StringUtils.isEmptyParam(drugName)){
-            hql += " and (drugName like '%"+drugName+"%' or exists(select 1 from DrugNameDict as dict where dict.drugCode = base.drugCode" +
-                    " and dict.drugName = base.drugName and upper(dict.inputCode) like '%"+inputCode.toUpperCase()+"%'))";
-            hqlCount += " and (drugName like '%"+drugName+"%' or exists(select 1 from DrugNameDict as dict where dict.drugCode = base.drugCode" +
-                        " and dict.drugName = base.drugName and upper(dict.inputCode) like '%"+inputCode.toUpperCase()+"%'))";
+            hql += " and (base.drugName like '%"+drugName+"%' or dict.drugName like '%"+drugName+"%'" +
+                    " or upper(dict.inputCode) like '%"+inputCode.toUpperCase()+"%')";
+            hqlCount += " and (base.drugName like '%"+drugName+"%' or dict.drugName like '%"+drugName+"%'" +
+                        " or upper(dict.inputCode) like '%"+inputCode.toUpperCase()+"%')";
         }else if(!StringUtils.isEmptyParam(inputCode)){
-            hql += " and exists(select 1 from DrugNameDict as dict where dict.drugCode = base.drugCode" +
-                    " and dict.drugName = base.drugName and upper(dict.inputCode) like '%"+inputCode.toUpperCase()+"%')";
-            hqlCount += " and exists(select 1 from DrugNameDict as dict where dict.drugCode = base.drugCode" +
-                    " and dict.drugName = base.drugName and upper(dict.inputCode) like '%"+inputCode.toUpperCase()+"%')";
+            hql += " and upper(dict.inputCode) like '%"+inputCode.toUpperCase()+"%' ";
+            hqlCount += " and upper(dict.inputCode) like '%"+inputCode.toUpperCase()+"%' ";
         }else if(!StringUtils.isEmptyParam(drugName)){
-            hql += " and drugName like '%"+drugName+"%'";
-            hqlCount += " and drugName like '%"+drugName+"%'";
+            hql += " and (base.drugName like '%"+drugName+"%' or dict.drugName like '%"+drugName+"%')";
+            hqlCount += " and (base.drugName like '%"+drugName+"%' or dict.drugName like '%"+drugName+"%')";
         }
         hql += " order by base.createDate desc";
         hqlCount += " order by base.createDate desc";
