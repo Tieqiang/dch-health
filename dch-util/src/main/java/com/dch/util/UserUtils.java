@@ -45,11 +45,16 @@ public class UserUtils {
 	}
 
 	public static UserVo getCurrentUser(){
-		Subject subject = SecurityUtils.getSubject();
-		Principal principal = (Principal)subject.getPrincipal();
 		UserVo userVo = new UserVo();
-		userVo.setId(principal.getId());
-		userVo.setLoginName(principal.getLoginName());
-		return  userVo;
+		try {
+			Subject subject = SecurityUtils.getSubject();
+			Principal principal = (Principal)subject.getPrincipal();
+			userVo.setId(principal.getId());
+			userVo.setLoginName(principal.getLoginName());
+			return  userVo;
+		}catch (Exception e){
+			e.printStackTrace();
+		}
+		return userVo;
 	}
 }

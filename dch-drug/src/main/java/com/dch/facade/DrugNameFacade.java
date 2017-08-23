@@ -50,7 +50,8 @@ public class DrugNameFacade extends BaseFacade{
         if(!StringUtils.isEmptyParam(inputCode)){
             hql += " and upper(inputCode) like '%"+inputCode.toUpperCase()+"%'";
         }
-        return createQuery(DrugNameDict.class,hql,new ArrayList<Object>()).getResultList();
+        List<DrugNameDict> drugNameDicts = createQuery(DrugNameDict.class,hql,new ArrayList<Object>()).getResultList();
+        return drugNameDicts;
     }
 
     public DrugNameDict getDrugName(String nameId) throws Exception{
