@@ -7,6 +7,7 @@ import com.dch.vo.UserVo;
 import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
+import java.io.Serializable;
 import java.sql.Timestamp;
 import java.util.Date;
 
@@ -14,7 +15,7 @@ import java.util.Date;
  * Created by Administrator on 2017/7/19.
  */
 @MappedSuperclass
-public class BaseEntity {
+public class BaseEntity implements Serializable {
 
 
     private String id ;
