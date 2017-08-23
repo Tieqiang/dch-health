@@ -43,7 +43,10 @@ public class DrugNameFacade extends BaseFacade{
     }
 
     public List<DrugNameDict> getDrugNames(String drugCode, String inputCode) {
-        String hql = " from DrugNameDict where status<>'-1' and drugCode = '"+drugCode+"'";
+        String hql = " from DrugNameDict where status<>'-1' ";
+        if(!StringUtils.isEmptyParam(drugCode)){
+            hql +=" and drugCode = '"+drugCode+"'";
+        }
         if(!StringUtils.isEmptyParam(inputCode)){
             hql += " and upper(inputCode) like '%"+inputCode.toUpperCase()+"%'";
         }
