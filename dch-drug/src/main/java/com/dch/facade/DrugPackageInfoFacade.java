@@ -25,14 +25,19 @@ public class DrugPackageInfoFacade extends BaseFacade{
             if(drugPackageInfoList!=null && !drugPackageInfoList.isEmpty()){
                 throw new Exception("该包装规格信息已存在");
             }
-            String baseHql = " from DrugBaseInfo where status<>'-1' and id = '"+drugPackageInfo.getDrugId()+"' ";
-            List<DrugBaseInfo> drugBaseInfoList = createQuery(DrugBaseInfo.class,baseHql,new ArrayList<Object>()).getResultList();
-            if(drugBaseInfoList!=null && !drugBaseInfoList.isEmpty()){
-                DrugBaseInfo drugBaseInfo = drugBaseInfoList.get(0);
-                if(!drugBaseInfo.getSpec().equals(drugPackageInfo.getPackageSpec())){
-                    drugBaseInfo.setSpec(drugPackageInfo.getPackageSpec());
+            if(!StringUtils.isEmptyParam(drugPackageInfo.getId())){//修改包装规格信息
+                DrugPackageInfo dbDrugPackageInfo = get(DrugPackageInfo.class,drugPackageInfo.getId());
+                if(dbDrugPackageInfo.getPackageSpec()!=null && !dbDrugPackageInfo.getPackageSpec().equals(drugPackageInfo.getPackageSpec())){
+                    String baseHql = " from DrugBaseInfo where status<>'-1' and id = '"+drugPackageInfo.getDrugId()+"' ";
+                    List<DrugBaseInfo> drugBaseInfoList = createQuery(DrugBaseInfo.class,baseHql,new ArrayList<Object>()).getResultList();
+                    if(drugBaseInfoList!=null && !drugBaseInfoList.isEmpty()){
+                        DrugBaseInfo drugBaseInfo = drugBaseInfoList.get(0);
+                        if(drugBaseInfo.getSpec().equals(dbDrugPackageInfo.getPackageSpec())){
+                            drugBaseInfo.setSpec(drugPackageInfo.getPackageSpec());
+                            merge(drugBaseInfo);
+                        }
+                    }
                 }
-                merge(drugBaseInfo);
             }
             return merge(drugPackageInfo);
         }
