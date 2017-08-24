@@ -14,6 +14,7 @@ import java.util.Arrays;
 @Table(name = "drug_base_info", schema = "dch", catalog = "")
 public class DrugBaseInfo extends BaseEntity{
     private String approvalNo;
+    private String batchNo;
     private Date approvalNoEndDate;
     private String spec;
     private String toxi;
@@ -36,7 +37,15 @@ public class DrugBaseInfo extends BaseEntity{
         this.approvalNo = approvalNo;
     }
 
+    @Basic
+    @Column(name = "batch_no", nullable = true)
+    public String getBatchNo() {
+        return batchNo;
+    }
 
+    public void setBatchNo(String batchNo) {
+        this.batchNo = batchNo;
+    }
 
     @Basic
     @Column(name = "approval_no_end_date", nullable = true)
