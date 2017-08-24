@@ -27,17 +27,20 @@ public class DrugNameFacade extends BaseFacade{
           if(drugNameDictList!=null && !drugNameDictList.isEmpty()){
               throw new Exception("药品名称字典已存在，请修改");
           }
-          if("正名".equals(drugNameDict.getDrugNameType())){
-              String baseHql = " from DrugBaseInfo where status<>'-1' and drugCode='"+drugNameDict.getDrugCode()+"'";
-              List<DrugBaseInfo> drugBaseInfoList = createQuery(DrugBaseInfo.class,baseHql,new ArrayList<Object>()).getResultList();
-              if(drugBaseInfoList!=null && !drugBaseInfoList.isEmpty()){
-                  DrugBaseInfo drugBaseInfo = drugBaseInfoList.get(0);
-                  drugBaseInfo.setDrugName(drugNameDict.getDrugName());
-                  merge(drugBaseInfo);
+          if(!StringUtils.isEmptyParam(drugNameDict.getId())){
+              DrugNameDict dbDrugNameDict = get(DrugNameDict.class,drugNameDict.getId());
+              if(drugNameDict.getDrugName()!=null && !drugNameDict.getDrugName().equals(dbDrugNameDict.getDrugName())){
+                  String baseHql = " from DrugBaseInfo where status<>'-1' and drugCode='"+drugNameDict.getDrugCode()+"' and drugName = '"+dbDrugNameDict.getDrugName()+"'";
+                  List<DrugBaseInfo> drugBaseInfoList = createQuery(DrugBaseInfo.class,baseHql,new ArrayList<Object>()).getResultList();
+                  if(drugBaseInfoList!=null && !drugBaseInfoList.isEmpty()){
+                      DrugBaseInfo drugBaseInfo = drugBaseInfoList.get(0);
+                      drugBaseInfo.setDrugName(drugNameDict.getDrugName());
+                      merge(drugBaseInfo);
+                  }
               }
-              drugNameDict.setInputCode(PinYin2Abbreviation.cn2py(drugNameDict.getDrugName()));
-              return merge(drugNameDict);
           }
+          drugNameDict.setInputCode(PinYin2Abbreviation.cn2py(drugNameDict.getDrugName()));
+          return merge(drugNameDict);
         }
         return merge(drugNameDict);
     }
