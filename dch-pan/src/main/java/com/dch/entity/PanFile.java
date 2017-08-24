@@ -18,14 +18,13 @@ public class PanFile extends BaseEntity{
     private String fileTypeId;
     private String icon;
     private String useFor;
-    private String storePath;
     private String fileShare;
     private String fileOwner;
     private String parentId;
     private String categoryId;
     private String keyWords;
     private String folderFlag;
-
+    private String storeFileId ;
 
     @Basic
     @Column(name = "file_name")
@@ -87,15 +86,6 @@ public class PanFile extends BaseEntity{
         this.useFor = useFor;
     }
 
-    @Basic
-    @Column(name = "store_path")
-    public String getStorePath() {
-        return storePath;
-    }
-
-    public void setStorePath(String storePath) {
-        this.storePath = storePath;
-    }
 
     @Basic
     @Column(name = "file_share")
@@ -156,6 +146,15 @@ public class PanFile extends BaseEntity{
 
     public void setFolderFlag(String folderFlag) {
         this.folderFlag = folderFlag;
+    }
+
+    @Column(name="store_file_id")
+    public String getStoreFileId() {
+        return storeFileId;
+    }
+
+    public void setStoreFileId(String storeFileId) {
+        this.storeFileId = storeFileId;
     }
 
     @Override

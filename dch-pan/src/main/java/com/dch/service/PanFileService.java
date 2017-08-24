@@ -174,7 +174,6 @@ public class PanFileService {
         PanFile panFile=new PanFile();
         panFile.setFileName(filename);
         panFile.setStatus("1");
-        panFile.setStorePath(path);
         panFile=panFileFacade.mergePanFile(panFile);
         return Response.status(OK).entity(panFile).build();
     }

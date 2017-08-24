@@ -21,6 +21,7 @@ public class DrugFirm extends BaseEntity{
     private String produceRealm;
     private Date issueDate;
     private String licenceNo;
+    private String foreignFlag;
 
 
     @Basic
@@ -113,4 +114,12 @@ public class DrugFirm extends BaseEntity{
         this.licenceNo = licenceNo;
     }
 
+    @Column(name = "foreign_flag")
+    public String getForeignFlag() {
+        return foreignFlag;
+    }
+
+    public void setForeignFlag(String foreignFlag) {
+        this.foreignFlag = foreignFlag;
+    }
 }
