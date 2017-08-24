@@ -2,16 +2,23 @@ package com.dch.facade;
 
 import com.dch.entity.PanFile;
 import com.dch.entity.PanFileCategory;
+import com.dch.entity.PanFileStore;
 import com.dch.facade.common.BaseFacade;
 import com.dch.util.StringUtils;
+import com.dch.util.UserUtils;
+import com.dch.vo.UserVo;
+import com.mchange.v2.c3p0.test.C3P0BenchmarkApp;
+import com.sun.jersey.core.header.FormDataContentDisposition;
 import org.hibernate.metamodel.domain.PluralAttributeNature;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
+import javax.servlet.http.HttpServletRequest;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.net.URLDecoder;
+import java.util.*;
 
 /**
  * Created by Administrator on 2017/8/14.
@@ -190,5 +197,74 @@ public class PanFileFacade extends BaseFacade {
                 merge(panFile);
             }
         }
+    }
+
+    /**
+     * 文件上传
+     * @param uploadedInputStream
+     * @param fileDetail
+     * @return
+     * @throws Exception
+     */
+    @Transactional
+    public PanFileStore uploadPanFileStore(InputStream uploadedInputStream, FormDataContentDisposition fileDetail,String fileSystem,String basePath) throws Exception {
+
+        String filename  = fileDetail.getFileName() ;
+        filename = URLDecoder.decode(filename,"UTF-8");
+        if(fileSystem==null||"".equals(fileSystem)){
+            fileSystem = "local" ;
+        }
+
+        if(basePath==null||"".equals(basePath)){
+            basePath =System.getProperty("user.dir");//获取当前项目路径
+        }
+        if("local".equals(fileSystem)){
+
+            UserVo currentUser = UserUtils.getCurrentUser();
+            if(currentUser==null){
+                throw new Exception("获取当前用户信息为空");
+            }
+            String loginName = currentUser.getLoginName();
+            String path = basePath+"\\"+loginName+"\\" ;
+            Calendar c = Calendar.getInstance(TimeZone.getTimeZone("GMT+08:00"));
+            int year = c.get(Calendar.YEAR);
+            int month = c.get(Calendar.MONTH);
+            int day = c.get(Calendar.DAY_OF_MONTH);
+
+            path+=year;
+            path+=+month<10?("0"+month):month+day<10?("0"+day):day;
+            path+="\\"+filename;
+            File file = new File(path) ;
+            //创建文件夹目录
+            if(!file.exists()){
+                File fileParent = file.getParentFile() ;
+                if(!fileParent.exists()){
+                    if(!fileParent.mkdirs()){
+                        throw new Exception("创建文件路径失败");
+                    };
+                }
+                if(!file.createNewFile()){
+                    throw new Exception("创建文件失败!");
+                }
+            }
+            //创建文件
+            FileOutputStream fileOutputStream = new FileOutputStream(file);
+            byte[] bytes = new byte[1024];
+            int length = 0 ;
+            while(-1 !=(length=uploadedInputStream.read(bytes))){
+                fileOutputStream.write(bytes);
+            }
+            fileOutputStream.flush();
+            fileOutputStream.close();
+
+            PanFileStore panFileStore = new PanFileStore();
+            panFileStore.setFileName(filename);
+            panFileStore.setStorePath(path);
+            return merge(panFileStore);
+        }
+
+
+
+        return null;
     }
 }

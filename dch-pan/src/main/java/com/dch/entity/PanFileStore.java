@@ -1,5 +1,7 @@
 package com.dch.entity;
 
+import org.hibernate.annotations.GenericGenerator;
+
 import javax.persistence.*;
 
 /**
@@ -13,7 +15,9 @@ public class PanFileStore {
     private String storePath;
 
     @Id
-    @Column(name = "id", nullable = false, length = 64)
+    @Column(name = "id")
+    @GenericGenerator(name="generator",strategy = "uuid.hex")
+    @GeneratedValue(generator = "generator")
     public String getId() {
         return id;
     }

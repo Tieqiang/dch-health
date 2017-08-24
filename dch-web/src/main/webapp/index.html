@@ -6,7 +6,7 @@
     <meta name=viewport content="width=device-width,initial-scale=1">
     <title>医学大数据信息采集和分析评估系统</title>
     <link rel="stylesheet" href="uploadify/uploadify.css">
-    <script type="text/javascript" src="http://code.jquery.com/jquery-1.7.2.min.js"></script>
+    <script type="text/javascript" src="jquery-3.2.1.min.js"></script>
     <script type="text/javascript" src="uploadify/jquery.uploadify.js"></script>
 
 </head>
@@ -15,13 +15,25 @@
 <button type="button" id="upBtn">上传</button>
 <script>
     $(function() {
+
+        $.post("api/sys/login?username=zhang&password=zhang",function(data){
+            console.log("登录成功")
+        }) ;
+
         $('#file').uploadify({
             'formData'      : {'someKey' : 'someValue', 'someOtherKey' : 1},
             'swf'      : 'uploadify.swf',
             'uploader' : 'api/pan/file/upload',
             'auto'     : false,
             'buttonText':"请选择文件",
-            fileObjName:'file'
+            fileObjName:'file',
+            onUploadStart:function(file){
+//                var post_params = this.settings.post_params;
+//                post_params.filename=encodeURIComponent(file.name)
+//                console.log(post_params);
+//                this.setPostParams(post_params);
+                $("#file").uploadify("settings","filename",encodeURIComponent(file.name));
+            }
         });
 
 

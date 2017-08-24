@@ -1,6 +1,7 @@
 package com.dch.service;
 
 import com.dch.entity.PanFile;
+import com.dch.entity.PanFileStore;
 import com.dch.facade.PanFileFacade;
 import com.dch.facade.common.VO.ReturnInfo;
 import com.dch.util.UserUtils;
@@ -17,9 +18,11 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
 import java.io.*;
 import java.net.URLDecoder;
 import java.util.List;
+import java.util.Properties;
 
 import static javax.ws.rs.core.Response.Status.OK;
 
@@ -133,7 +136,6 @@ public class PanFileService {
      *
      * @param uploadedInputStream
      * @param fileDetail
-     * @param request
      * @return
      */
     @POST
@@ -141,41 +143,21 @@ public class PanFileService {
     @Path("upload")
     @Transactional
     public Response uploadFiles(@FormDataParam( "file") InputStream uploadedInputStream,
-                                @FormDataParam( "file") FormDataContentDisposition fileDetail, @Context HttpServletRequest request) throws Exception {
+                                @FormDataParam( "file") FormDataContentDisposition fileDetail,
+                                @Context HttpServletRequest request,
+                                @QueryParam("filename")String fileName) throws Exception {
+//
+
         request.setCharacterEncoding("utf-8");
-        String filename=URLDecoder.decode(fileDetail.getFileName(),"UTF-8");
-        String dir=System.getProperty("user.dir");//获取当前项目路径
-        String path = dir+"\\uploadfile\\"+filename;//直接存放到项目下的uploadfile目录下
-        File file= new File(path);
-        String exName = filename.substring(filename.lastIndexOf('.'));
-        System.out.println(exName);
-        //创建文件夹目录
-        if(!file.exists()){
-            File fileParent = file.getParentFile() ;
-            if(!fileParent.exists()){
-                if(!fileParent.mkdirs()){
-                    throw new Exception("创建文件路径失败");
-                };
-            }
-            if(!file.createNewFile()){
-                throw new Exception("创建文件失败!");
-            }
-        }
-        //创建文件
-        FileOutputStream fileOutputStream = new FileOutputStream(file);
-        byte[] bytes = new byte[1024];
-        int length = 0 ;
-        while(-1 !=(length=uploadedInputStream.read(bytes))){
-            fileOutputStream.write(bytes);
-        }
-        fileOutputStream.flush();
-        fileOutputStream.close();
-        //增添PanFile的数据库记录
-        PanFile panFile=new PanFile();
-        panFile.setFileName(filename);
-        panFile.setStatus("1");
-        panFile=panFileFacade.mergePanFile(panFile);
-        return Response.status(OK).entity(panFile).build();
+        String filename = URLDecoder.decode(fileDetail.getFileName(),"utf-8");
+        Properties properties = new Properties();
+        InputStream inputStream ;
+        inputStream=this.getClass().getClassLoader().getResourceAsStream("pan.properties");
+        properties.load(inputStream);
+        String fileSystem = properties.getProperty("fileSystem");
+        String basePath = properties.getProperty("storePath");
+        PanFileStore panFileStore =  panFileFacade.uploadPanFileStore(uploadedInputStream,fileDetail,fileSystem,basePath);
+        return Response.status(OK).entity(panFileStore).build();
     }
 
 
@@ -194,4 +176,31 @@ public class PanFileService {
         panFileFacade.mergePanFiles(ids,fileShare,status,parentId);
         return Response.status(OK).entity(new ReturnInfo("true","修改成功")).build();
     }
+
+
+    @GET
+    @Path("down-load")
+    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    public Response downLoadFile(@QueryParam("fileId") String fileId) throws IOException {
+        final PanFileStore panFileStore = panFileFacade.get(PanFileStore.class,fileId);
+        File file = new File(panFileStore.getStorePath());
+        String name = file.getName();
+
+        StreamingOutput streamingOutput = new StreamingOutput() {
+            public void write(OutputStream outputStream) throws IOException, WebApplicationException {
+                FileInputStream fileInputStream = new FileInputStream(panFileStore.getStorePath());
+                int length =  0 ;
+                byte[] bytes = new byte[1024];
+                while(-1!=(length=fileInputStream.read(bytes))){
+                    outputStream.write(bytes);
+                }
+                outputStream.flush();
+                outputStream.close();
+                fileInputStream.close();
+            }
+        };
+        return Response.status(Response.Status.OK).entity(streamingOutput).header("Content-disposition","attachment;filename="+name)
+                .header("Cache-Control","no-cache").build();
+    }
+
 }
