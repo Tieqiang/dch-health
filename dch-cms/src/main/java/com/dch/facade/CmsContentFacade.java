@@ -28,11 +28,12 @@ public class CmsContentFacade extends BaseFacade{
      * @param categoryId      分类
      * @param startTime       时间范围创建时间大于等于这个时间
      * @param stopTime        时间范围创建时间小于等于这个时间
+     * @param pubStatus
      * @return
      */
     public Page<CmsContent> getContents(int perPage, int currentPage, String whereHql,
                                         String title, String categoryId,
-                                        Timestamp startTime, Timestamp stopTime) {
+                                        Timestamp startTime, Timestamp stopTime, String pubStatus) {
 
         String hql = "from CmsContent as c where c.status<>'-1'" ;
         String hqlCount = "select count(*) from CmsContent as c where c.status<>'-1'" ;
@@ -60,9 +61,13 @@ public class CmsContentFacade extends BaseFacade{
             hql+=" and c.stopTime <="+stopTime;
             hqlCount+=" and c.stopTime <="+stopTime;
         }
+        if(pubStatus!=null){
+            hql+=" and c.pubStatus="+pubStatus;
+            hqlCount+=" and c.pubStatus="+pubStatus;
+        }
 
-        hql+=" order by c.createTime desc" ;
-        hqlCount+=" order by c.createTime desc" ;
+        hql+=" order by c.createDate desc" ;
+        hqlCount+=" order by c.createDate desc" ;
         Page<CmsContent> cmsContentPage = new Page<>() ;
         TypedQuery<CmsContent> cms = createQuery(CmsContent.class, hql, new ArrayList<Object>());
         Long al = createQuery(Long.class, hqlCount, new ArrayList<Object>()).getSingleResult();
