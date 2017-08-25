@@ -37,7 +37,7 @@ public class CmsCategoryService {
      * @return
      */
     @GET
-    @Path("get-all-category")
+    @Path("get-all-categorys")
     public List<CmsCategory> getCategorys(){
         return cmsCategoryFacade.getCategorys();
     }

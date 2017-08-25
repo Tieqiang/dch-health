@@ -1,1 +1,49 @@
-<!DOCTYPE html><html><head><meta charset=utf-8><meta http-equiv=X-UA-Compatible content="IE=edge,chrome=1"><meta name=viewport content="width=device-width,initial-scale=1"><title>医学大数据信息采集和分析评估系统</title><meta name=keywords content=""><meta name=description content=""><link href=./static/dch-health-icon.ico rel="shortcut icon"><link href=/static/css/app.046cbde65a1100c38f67dde60922e0bd.css rel=stylesheet></head><body><div id=app></div><script type=text/javascript src=/static/js/manifest.59f7c97f89ddd715257d.js></script><script type=text/javascript src=/static/js/vendor.ab877c2218f4529d9976.js></script><script type=text/javascript src=/static/js/app.20f9fdba7df87141285f.js></script></body></html>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset=utf-8>
+    <meta http-equiv=X-UA-Compatible content="IE=edge,chrome=1">
+    <meta name=viewport content="width=device-width,initial-scale=1">
+    <title>医学大数据信息采集和分析评估系统</title>
+    <link rel="stylesheet" href="uploadify/uploadify.css">
+    <script type="text/javascript" src="jquery-3.2.1.min.js"></script>
+    <script type="text/javascript" src="uploadify/jquery.uploadify.js"></script>
+
+</head>
+<body>
+<input type="file" name="file" id="file" />
+<button type="button" id="upBtn">上传</button>
+<script>
+    $(function() {
+
+        $.post("api/sys/login?username=zhang&password=zhang",function(data){
+            console.log("登录成功")
+        }) ;
+
+        $('#file').uploadify({
+            'formData'      : {'someKey' : 'someValue', 'someOtherKey' : 1},
+            'swf'      : 'uploadify.swf',
+            'uploader' : 'api/pan/file/upload',
+            'auto'     : false,
+            'buttonText':"请选择文件",
+            fileObjName:'file',
+            onUploadStart:function(file){
+//                var post_params = this.settings.post_params;
+//                post_params.filename=encodeURIComponent(file.name)
+//                console.log(post_params);
+//                this.setPostParams(post_params);
+                $("#file").uploadify("settings","filename",encodeURIComponent(file.name));
+            }
+        });
+
+
+        $("#upBtn").on("click",function(){
+            $("#file").uploadify('settings','somekey',1);
+            $("#file").uploadify('upload');
+        })
+
+    });
+
+</script>
+</body>
+</html>

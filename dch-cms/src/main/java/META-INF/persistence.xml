@@ -6,6 +6,7 @@
         <class>com.dch.entity.CmsCategory</class>
         <class>com.dch.entity.CmsContent</class>
         <class>com.dch.entity.CmsContentLabel</class>
+        <class>com.dch.entity.PanFileStore</class>
         <properties>
             <property name="hibernate.connection.url" value="jdbc:mysql://10.131.128.43:3306/dch"/>
             <property name="hibernate.connection.driver_class" value="com.mysql.jdbc.Driver"/>
