@@ -36,8 +36,6 @@ public class DrugBaseInfo extends BaseEntity{
         this.approvalNo = approvalNo;
     }
 
-
-
     @Basic
     @Column(name = "approval_no_end_date", nullable = true)
     public Date getApprovalNoEndDate() {

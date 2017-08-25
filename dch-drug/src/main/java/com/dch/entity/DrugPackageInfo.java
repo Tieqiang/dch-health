@@ -13,7 +13,7 @@ import java.sql.Timestamp;
 public class DrugPackageInfo extends BaseEntity {
     private String drugId;
     private String packageSpec;
-    private String durgBarCode;
+    private String drugBarCode;
     private String drugCode;
     private String firmId ;
 
@@ -49,13 +49,13 @@ public class DrugPackageInfo extends BaseEntity {
     }
 
     @Basic
-    @Column(name = "durg_bar_code", nullable = true, length = 20)
-    public String getDurgBarCode() {
-        return durgBarCode;
+    @Column(name = "drug_bar_code", nullable = true, length = 20)
+    public String getDrugBarCode() {
+        return drugBarCode;
     }
 
-    public void setDurgBarCode(String durgBarCode) {
-        this.durgBarCode = durgBarCode;
+    public void setDrugBarCode(String drugBarCode) {
+        this.drugBarCode = drugBarCode;
     }
 
     @Basic
