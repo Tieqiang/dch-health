@@ -49,8 +49,10 @@ public class UserUtils {
 		try {
 			Subject subject = SecurityUtils.getSubject();
 			Principal principal = (Principal)subject.getPrincipal();
-			userVo.setId(principal.getId());
-			userVo.setLoginName(principal.getLoginName());
+			if(principal!=null){
+				userVo.setId(principal.getId());
+				userVo.setLoginName(principal.getLoginName());
+			}
 			return  userVo;
 		}catch (Exception e){
 			e.printStackTrace();
