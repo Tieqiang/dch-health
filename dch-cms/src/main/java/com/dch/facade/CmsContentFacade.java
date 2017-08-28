@@ -8,8 +8,10 @@ import com.dch.facade.common.VO.Page;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.TemporalType;
 import javax.persistence.TypedQuery;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,15 +30,16 @@ public class CmsContentFacade extends BaseFacade{
      * @param categoryId      分类
      * @param startTime       时间范围创建时间大于等于这个时间
      * @param stopTime        时间范围创建时间小于等于这个时间
+     * @param pubStatus
      * @return
      */
     public Page<CmsContent> getContents(int perPage, int currentPage, String whereHql,
                                         String title, String categoryId,
-                                        Timestamp startTime, Timestamp stopTime) {
+                                        Timestamp startTime, Timestamp stopTime, String pubStatus) {
 
         String hql = "from CmsContent as c where c.status<>'-1'" ;
         String hqlCount = "select count(*) from CmsContent as c where c.status<>'-1'" ;
-
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         if(!strIsNull(whereHql)){
             hql+=whereHql;
             hqlCount+=whereHql;
@@ -53,19 +56,34 @@ public class CmsContentFacade extends BaseFacade{
         }
 
         if(startTime!=null){
-            hql+=" and c.startTime >="+startTime;
-            hqlCount+=" and c.startTime >="+startTime;
+            hql+=" and c.createDate >=:startDate";
+            hqlCount+=" and c.createDate >=:startDate";
         }
         if(stopTime!=null){
-            hql+=" and c.stopTime <="+stopTime;
-            hqlCount+=" and c.stopTime <="+stopTime;
+            hql+=" and c.createDate <=:stopDate";
+            hqlCount+=" and c.createDate <=:stopDate";
+        }
+        if(!strIsNull(pubStatus)){
+            hql+=" and c.pubStatus="+pubStatus;
+            hqlCount+=" and c.pubStatus="+pubStatus;
         }
 
-        hql+=" order by c.createTime desc" ;
-        hqlCount+=" order by c.createTime desc" ;
+        hql+=" order by c.createDate desc" ;
+        hqlCount+=" order by c.createDate desc" ;
         Page<CmsContent> cmsContentPage = new Page<>() ;
         TypedQuery<CmsContent> cms = createQuery(CmsContent.class, hql, new ArrayList<Object>());
-        Long al = createQuery(Long.class, hqlCount, new ArrayList<Object>()).getSingleResult();
+        TypedQuery<Long> longTypedQuery = createQuery(Long.class, hqlCount, new ArrayList<Object>());
+
+        if(startTime!=null){
+            cms.setParameter("startDate",startTime,TemporalType.TIMESTAMP);
+            longTypedQuery.setParameter("startDate",startTime,TemporalType.TIMESTAMP);
+        }
+        if(stopTime!=null){
+            cms.setParameter("stopDate",stopTime,TemporalType.TIMESTAMP);
+            longTypedQuery.setParameter("stopDate",stopTime,TemporalType.TIMESTAMP);
+        }
+
+        Long al = longTypedQuery.getSingleResult();
         cmsContentPage.setCounts(al);
         cmsContentPage.setPerPage((long) perPage);
         if(perPage<=0){
@@ -97,7 +115,7 @@ public class CmsContentFacade extends BaseFacade{
      * @return
      */
     public CmsContent getContent(String contentId) {
-        String hql = "from CategoryContent as c where c.status<> '-1'" ;
+        String hql = "from CmsContent as c where c.status<> '-1' and c.id='"+contentId+"'" ;
         CmsContent cmsContent = createQuery(CmsContent.class, hql, new ArrayList<Object>()).getSingleResult();
         return cmsContent;
     }
@@ -147,5 +165,10 @@ public class CmsContentFacade extends BaseFacade{
             page.setData(cmsContentTypedQuery.getResultList());
         }
         return page;
+    }
+
+    public List<CmsContentLabel> getContentLabels(String contentId) {
+        String hql = "from CmsContentLabel where contentId='"+contentId+"'";
+        return createQuery(CmsContentLabel.class,hql,new ArrayList<Object>()).getResultList();
     }
 }

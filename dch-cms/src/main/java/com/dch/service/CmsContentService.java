@@ -5,13 +5,30 @@ import com.dch.entity.CmsContent;
 import com.dch.entity.CmsContentLabel;
 import com.dch.facade.CmsContentFacade;
 import com.dch.facade.common.VO.Page;
+import com.sun.jersey.core.header.FormDataContentDisposition;
+import com.sun.jersey.multipart.FormDataParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URLDecoder;
 import java.sql.Timestamp;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
+import java.util.Properties;
+
+import static javax.ws.rs.core.Response.Status.OK;
 
 /**
  * Created by Administrator on 2017/8/23.
@@ -56,8 +73,9 @@ public class CmsContentService {
                                         @QueryParam("title")String title,
                                         @QueryParam("categoryId")String categoryId,
                                         @QueryParam("startTime")Timestamp startTime,
-                                        @QueryParam("stopTime")Timestamp stopTime){
-        return cmsContentFacade.getContents(perPage,currentPage,whereHql,title,categoryId,startTime,stopTime);
+                                        @QueryParam("stopTime")Timestamp stopTime,
+                                        @QueryParam("pubStatus")String pubStatus){
+        return cmsContentFacade.getContents(perPage,currentPage,whereHql,title,categoryId,startTime,stopTime,pubStatus);
     }
 
 
@@ -75,7 +93,7 @@ public class CmsContentService {
 
     @POST
     @Path("set-content-labels")
-    public List<CmsContentLabel> setContentLables(String contentId,List<String> labelNames) throws Exception {
+    public List<CmsContentLabel> setContentLables(@QueryParam("contentId") String contentId,List<String> labelNames) throws Exception {
         return cmsContentFacade.setContentLabels(contentId,labelNames);
     }
 
@@ -95,5 +113,70 @@ public class CmsContentService {
         return cmsContentFacade.getContentByLabel(labelName,perPage,currentPage);
     }
 
+    /**
+     * 获取新闻标签
+     * @param contentId
+     * @return
+     */
+    @GET
+    @Path("get-content-labels")
+    public List<CmsContentLabel> getContentLabels(@QueryParam("contentId") String contentId){
+        return cmsContentFacade.getContentLabels(contentId);
+    }
+
+    @POST
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Path("upload")
+    @Transactional
+    @Produces(MediaType.TEXT_PLAIN)
+    public Response uploadFiles(@FormDataParam( "file") InputStream uploadedInputStream,
+                                @FormDataParam( "file") FormDataContentDisposition fileDetail,
+                                @Context ServletContext context) throws Exception {
+//
+        String filename =fileDetail.getFileName();
+        String path = context.getRealPath("/");
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(new Date());
+        int year = calendar.get(Calendar.YEAR);
+        int month = calendar.get(Calendar.MONTH)+1;
+        int day = calendar.get(Calendar.DAY_OF_MONTH);
+        int hour = calendar.get(Calendar.HOUR_OF_DAY);
+        String exName = filename.substring(filename.lastIndexOf('.'));
+        String filePath = "/upload";
+        if(month>=10){
+            path = path+"\\upload"+"\\"+year+month+day+"\\"+hour+"\\"+filename;
+            filePath =filePath+"/"+year+month+day+"/"+hour+"/"+filename;
+        }else{
+            path = path+"\\upload"+"\\"+year+"0"+month+day+"\\"+hour+"\\"+filename;
+            filePath =filePath+"/"+year+"0"+month+day+"/"+hour+"/"+filename;
+        }
+
+
+
+        File file= new File(path);
+        if(!file.exists()){
+
+            File fileParent = file.getParentFile() ;
+            if(!fileParent.exists()){
+                if(!fileParent.mkdirs()){
+                    throw new Exception("创建文件路径失败");
+                };
+            }
+            if(!file.createNewFile()){
+                throw new Exception("创建文件失败!");
+            }
+        }
+
+        FileOutputStream fileOutputStream = new FileOutputStream(file);
+        byte[] bytes = new byte[1024];
+        int length = 0 ;
+        while(-1 !=(length=uploadedInputStream.read(bytes))){
+            fileOutputStream.write(bytes);
+        }
+        fileOutputStream.flush();
+        fileOutputStream.close();
+        return Response.status(Response.Status.OK).entity(filePath).build();
+
+    }
 
 }
