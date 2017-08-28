@@ -71,6 +71,7 @@ public class BaseSolrFacade {
         SolrInputDocument document  = new SolrInputDocument();
         //3.添加信息
         document.addField("id", drugCommonVo.getId());
+        document.addField("parentId", drugCommonVo.getParentId());
         document.addField("title", drugCommonVo.getTitle());
         document.addField("desc", drugCommonVo.getDesc());
         document.addField("label", drugCommonVo.getLabel());
@@ -89,6 +90,7 @@ public class BaseSolrFacade {
     public static DrugCommonVo produceByDoc(SolrDocument sd){
         DrugCommonVo drugCommonVo = new DrugCommonVo();
         drugCommonVo.setId(sd.getFieldValue("id")+"");
+        drugCommonVo.setParentId(sd.getFieldValue("parentId")+"");
         drugCommonVo.setTitle(sd.getFieldValue("title")+"");
         drugCommonVo.setDesc(sd.getFieldValue("desc")+"");
         drugCommonVo.setLabel(sd.getFieldValue("label")+"");
