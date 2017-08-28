@@ -173,8 +173,8 @@ public class DrugBaseInfoFacade extends BaseFacade{
         Long counts = createQuery(Long.class,hqlCount,new ArrayList<Object>()).getSingleResult();
         drugBaseInfoPage.setCounts(counts);
         if(perPage>0){
-            typedQuery.setFirstResult(currentPage*perPage) ;
-            typedQuery.setMaxResults(perPage);
+            typedQuery.setFirstResult((currentPage-1)*perPage) ;
+            typedQuery.setMaxResults(perPage*currentPage);
             drugBaseInfoPage.setPerPage((long) perPage);
         }
         List<DrugBaseInfo> drugBaseInfoList = typedQuery.getResultList();
