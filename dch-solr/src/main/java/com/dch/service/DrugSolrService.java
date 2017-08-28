@@ -1,6 +1,7 @@
 package com.dch.service;
 
 import com.dch.facade.BaseSolrFacade;
+import com.dch.facade.common.VO.Page;
 import com.dch.vo.DrugCommonVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -32,10 +33,10 @@ public class DrugSolrService {
      */
     @GET
     @Path("get-drug-common-infos")
-    public List<DrugCommonVo> getDrugCommonVos(@QueryParam("content") String content,@QueryParam("perPage")int perPage,
+    public Page<DrugCommonVo>  getDrugCommonVos(@QueryParam("content") String content,@QueryParam("perPage")int perPage,
                                                 @QueryParam("currentPage") int currentPage) throws Exception{
         try {
-            List<DrugCommonVo> drugCommonVos = baseSolrFacade.searchDrugCommonVos(content,perPage,currentPage);
+            Page<DrugCommonVo> drugCommonVos = baseSolrFacade.searchDrugCommonVos(content,perPage,currentPage);
             return drugCommonVos;
         }catch (Exception e){
             e.printStackTrace();
