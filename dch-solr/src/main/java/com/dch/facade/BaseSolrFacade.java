@@ -1,5 +1,6 @@
 package com.dch.facade;
 
+import com.dch.facade.common.VO.Page;
 import com.dch.vo.DrugCommonVo;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -45,20 +46,24 @@ public class BaseSolrFacade {
      * @return
      * @throws Exception
      */
-    public List<DrugCommonVo> searchDrugCommonVos(String content,int perPage,int currentPage) throws SolrServerException {
+    public Page<DrugCommonVo> searchDrugCommonVos(String content,int perPage,int currentPage) throws SolrServerException {
+        Page<DrugCommonVo> drugCommonVoPage = new Page<>() ;
         List<DrugCommonVo> drugCommonVos = new ArrayList<>();
         SolrQuery query = new SolrQuery();// 查询
         query.setQuery("content:"+content);
         //query.setRows(20);
-        if(currentPage>0){
+        if(perPage>0){
             query.setStart((currentPage-1)*perPage);
             query.setRows(perPage);
         }
         SolrDocumentList docs = httpSolrServer.query(query).getResults();
+        drugCommonVoPage.setPerPage((long)perPage);
+        drugCommonVoPage.setCounts((long)docs.size());
         for (SolrDocument sd : docs) {
             drugCommonVos.add(produceByDoc(sd));
         }
-        return drugCommonVos;
+        drugCommonVoPage.setData(drugCommonVos);
+        return drugCommonVoPage;
     }
 
     /**
