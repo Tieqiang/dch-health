@@ -24,7 +24,7 @@ public class CmsCategoryFacade extends BaseFacade {
     public List<CmsCategory> getChildrenCategorys(String parentCategoryId, String wherehql) {
         String hql = "from CmsCategory as c where c.status<> '-1'" ;
         if(parentCategoryId!=null&&!"".equals(parentCategoryId)){
-            hql+=" and c.prentCategoryId='"+parentCategoryId+"'" ;
+            hql+=" and c.parentCategoryId='"+parentCategoryId+"'" ;
         }
         if(wherehql!=null&&!"".equals(wherehql)){
             hql+=wherehql ;
