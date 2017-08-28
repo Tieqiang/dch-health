@@ -93,7 +93,7 @@ public class CmsContentFacade extends BaseFacade{
         if(perPage>0){
             int max = perPage*(currentPage-1) ;
             cms.setFirstResult(max);
-            cms.setMaxResults(perPage*currentPage);
+            cms.setMaxResults(perPage);
             cmsContentPage.setData(cms.getResultList());
         }
 
@@ -149,17 +149,22 @@ public class CmsContentFacade extends BaseFacade{
         return cmsContentLabels;
     }
 
-    public Page<CmsContent> getContentByLabel(String labelName, int perPage, int currentPage) {
+    public Page<CmsContent> getContentByLabel(String labelName, int perPage, int currentPage, String categoryId) {
         String hql = "select cc from CmsContent as cc ,CmsContentLabel ccl where cc.id=ccl.contentId and " +
                 "ccl.labelName='"+labelName+"'" ;
         String hqlCount = "select count(cc) from CmsContent as cc ,CmsContentLabel ccl where cc.id=ccl.contentId and " +
                 "ccl.labelName='"+labelName+"'" ;
+
+        if(categoryId!=null&&!"".equals(categoryId)){
+            hql+=" and cc.categoryId='"+categoryId+"'";
+            hql+=" and cc.categoryId='"+categoryId+"'";
+        }
         TypedQuery<CmsContent> cmsContentTypedQuery = createQuery(CmsContent.class, hql, new ArrayList<Object>());
         Long counts = createQuery(Long.class,hqlCount,new ArrayList<Object>()).getSingleResult();
         Page<CmsContent> page = new Page<>();
         if(perPage>0){
             cmsContentTypedQuery.setFirstResult(perPage*(currentPage-1));
-            cmsContentTypedQuery.setMaxResults(perPage*currentPage);
+            cmsContentTypedQuery.setMaxResults(perPage);
             page.setData(cmsContentTypedQuery.getResultList());
         }else{
             page.setData(cmsContentTypedQuery.getResultList());

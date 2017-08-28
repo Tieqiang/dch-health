@@ -111,8 +111,9 @@ public class CmsContentService {
     @Path("get-contents-by-label")
     public Page<CmsContent> getContentsByLabel(@QueryParam("labelName")String labelName,
                                                @QueryParam("perPage")int perPage,
-                                               @QueryParam("currentPage")int currentPage){
-        return cmsContentFacade.getContentByLabel(labelName,perPage,currentPage);
+                                               @QueryParam("currentPage")int currentPage,
+                                               @QueryParam("categoryId")String categoryId){
+        return cmsContentFacade.getContentByLabel(labelName,perPage,currentPage,categoryId);
     }
 
     /**
