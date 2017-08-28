@@ -13,8 +13,6 @@ import java.util.Arrays;
 @Entity
 @Table(name = "drug_base_info", schema = "dch", catalog = "")
 public class DrugBaseInfo extends BaseEntity{
-    private String approvalNo;
-    private Date approvalNoEndDate;
     private String spec;
     private String toxi;
     private String classId;
@@ -25,26 +23,8 @@ public class DrugBaseInfo extends BaseEntity{
     private String importFlag;
     private String rxFlag;
 
+    private String className ;
 
-    @Basic
-    @Column(name = "approval_no", nullable = true)
-    public String getApprovalNo() {
-        return approvalNo;
-    }
-
-    public void setApprovalNo(String approvalNo) {
-        this.approvalNo = approvalNo;
-    }
-
-    @Basic
-    @Column(name = "approval_no_end_date", nullable = true)
-    public Date getApprovalNoEndDate() {
-        return approvalNoEndDate;
-    }
-
-    public void setApprovalNoEndDate(Date approvalNoEndDate) {
-        this.approvalNoEndDate = approvalNoEndDate;
-    }
 
     @Basic
     @Column(name = "spec", nullable = true, length = 20)
@@ -136,4 +116,12 @@ public class DrugBaseInfo extends BaseEntity{
         this.rxFlag = rxFlag;
     }
 
+    @Column(name = "class_name")
+    public String getClassName() {
+        return className;
+    }
+
+    public void setClassName(String className) {
+        this.className = className;
+    }
 }
