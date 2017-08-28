@@ -7,6 +7,7 @@ import java.io.Serializable;
  */
 public class DrugCommonVo implements Serializable{
     private String id;
+    private String parent_id;
     private String title;
     private String desc;
     private String label;
@@ -52,10 +53,19 @@ public class DrugCommonVo implements Serializable{
         this.category = category;
     }
 
+    public String getParent_id() {
+        return parent_id;
+    }
+
+    public void setParent_id(String parent_id) {
+        this.parent_id = parent_id;
+    }
+
     @Override
     public String toString() {
         return "DrugCommonVo{" +
                 "id='" + id + '\'' +
+                ", parent_id='" + parent_id + '\'' +
                 ", title='" + title + '\'' +
                 ", desc='" + desc + '\'' +
                 ", label='" + label + '\'' +
