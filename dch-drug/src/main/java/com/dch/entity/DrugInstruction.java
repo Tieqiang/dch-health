@@ -29,6 +29,8 @@ public class DrugInstruction extends BaseEntity {
     private Date period;
     private String useStandard;
     private String memo;
+    private String drugName ;
+    private String firmId ;
 
     private String packageInfo;
 
@@ -214,4 +216,21 @@ public class DrugInstruction extends BaseEntity {
         this.packageInfo = packageInfo;
     }
 
+    @Column(name="drug_name")
+    public String getDrugName() {
+        return drugName;
+    }
+
+    public void setDrugName(String drugName) {
+        this.drugName = drugName;
+    }
+
+    @Column(name="firm_id")
+    public String getFirmId() {
+        return firmId;
+    }
+
+    public void setFirmId(String firmId) {
+        this.firmId = firmId;
+    }
 }

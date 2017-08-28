@@ -19,6 +19,7 @@ public class DrugAdministrationProtect extends BaseEntity {
     private String authorizeNo;
     private Date authorizeDate;
     private String pubNo;
+    private String drugName ;
 
 
 
@@ -93,4 +94,12 @@ public class DrugAdministrationProtect extends BaseEntity {
         this.pubNo = pubNo;
     }
 
+    @Column(name="drug_name")
+    public String getDrugName() {
+        return drugName;
+    }
+
+    public void setDrugName(String drugName) {
+        this.drugName = drugName;
+    }
 }

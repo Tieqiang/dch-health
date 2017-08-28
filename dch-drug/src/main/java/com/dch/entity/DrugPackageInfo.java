@@ -16,6 +16,7 @@ public class DrugPackageInfo extends BaseEntity {
     private String drugBarCode;
     private String drugCode;
     private String firmId ;
+    private String firmName ;
 
 
 
@@ -68,4 +69,12 @@ public class DrugPackageInfo extends BaseEntity {
         this.drugCode = drugCode;
     }
 
+    @Column(name="firm_name")
+    public String getFirmName() {
+        return firmName;
+    }
+
+    public void setFirmName(String firmName) {
+        this.firmName = firmName;
+    }
 }

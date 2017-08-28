@@ -24,6 +24,7 @@ public class DrugUntowardEffect extends BaseEntity{
     private String solution;
     private String treadResult;
     private String unionDrug;
+    private String drugName ;
 
 
     @Basic
@@ -156,4 +157,12 @@ public class DrugUntowardEffect extends BaseEntity{
         this.unionDrug = unionDrug;
     }
 
+    @Column(name = "drug_name")
+    public String getDrugName() {
+        return drugName;
+    }
+
+    public void setDrugName(String drugName) {
+        this.drugName = drugName;
+    }
 }

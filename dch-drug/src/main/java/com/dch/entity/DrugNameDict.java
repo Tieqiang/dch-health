@@ -15,6 +15,7 @@ public class DrugNameDict extends BaseEntity {
     private String drugNameType;
     private String drugName;
     private String inputCode;
+    private String drugId ;
 
 
     @Basic
@@ -57,4 +58,12 @@ public class DrugNameDict extends BaseEntity {
         this.inputCode = inputCode;
     }
 
+    @Column(name="drug_id")
+    public String getDrugId() {
+        return drugId;
+    }
+
+    public void setDrugId(String drugId) {
+        this.drugId = drugId;
+    }
 }
