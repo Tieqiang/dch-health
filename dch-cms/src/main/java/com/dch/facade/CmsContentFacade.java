@@ -152,10 +152,10 @@ public class CmsContentFacade extends BaseFacade{
     public Page<CmsContent> getContentByLabel(String labelName, int perPage, int currentPage) {
         String hql = "select cc from CmsContent as cc ,CmsContentLabel ccl where cc.id=ccl.contentId and " +
                 "ccl.labelName='"+labelName+"'" ;
-        String hqlCount = "select cc from CmsContent as cc ,CmsContentLabel ccl where cc.id=ccl.contentId and " +
+        String hqlCount = "select count(cc) from CmsContent as cc ,CmsContentLabel ccl where cc.id=ccl.contentId and " +
                 "ccl.labelName='"+labelName+"'" ;
         TypedQuery<CmsContent> cmsContentTypedQuery = createQuery(CmsContent.class, hql, new ArrayList<Object>());
-        Long counts = createQuery(Long.class,hql,new ArrayList<Object>()).getSingleResult();
+        Long counts = createQuery(Long.class,hqlCount,new ArrayList<Object>()).getSingleResult();
         Page<CmsContent> page = new Page<>();
         if(perPage>0){
             cmsContentTypedQuery.setFirstResult(perPage*(currentPage-1));

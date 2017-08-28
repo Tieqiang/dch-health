@@ -91,6 +91,8 @@ public class CmsContentService {
     }
 
 
+
+
     @POST
     @Path("set-content-labels")
     public List<CmsContentLabel> setContentLables(@QueryParam("contentId") String contentId,List<String> labelNames) throws Exception {
