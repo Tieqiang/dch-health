@@ -35,6 +35,15 @@ public class FrontCategorySearchFacade extends BaseFacade {
         return baseSolrFacade.searchDrugCommonVosById(categoryId);
     }
 
+    /**
+     * 根据关键字进行分类信息查询
+     * @param categoryId
+     * @param keyWords
+     * @param perPage
+     * @param currentPage
+     * @return
+     * @throws Exception
+     */
     public Page<DrugCommonVo> getFrontCategorysByKeyWords(String categoryId, String keyWords, int perPage, int currentPage) throws Exception {
        return baseSolrFacade.searchChildDrugCommonVos(categoryId,keyWords,perPage,currentPage);
     }

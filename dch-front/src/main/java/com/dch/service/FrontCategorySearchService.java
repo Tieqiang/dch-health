@@ -42,6 +42,15 @@ public class FrontCategorySearchService {
         return frontCategorySearchFacade.getFrontChildCategorys(categoryId);
     }
 
+    /**
+     * 根据关键字进行分类信息查询
+     * @param categoryId
+     * @param keyWords
+     * @param perPage
+     * @param currentPage
+     * @return
+     * @throws Exception
+     */
     @Path("get-categorys-by-keywords")
     @GET
     public Page<DrugCommonVo> getFrontCategorysByKeyWords(@QueryParam("categoryId") String categoryId,
