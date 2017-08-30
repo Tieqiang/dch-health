@@ -1,6 +1,7 @@
 package com.dch.facade;
 
 import com.dch.facade.common.VO.Page;
+import com.dch.util.StringUtils;
 import com.dch.vo.DrugCommonVo;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -115,5 +116,88 @@ public class BaseSolrFacade {
                 return objectMessage;
             }
         });
+    }
+
+    /**
+     * 根据分类id查询分类下的子分类并匹配关键字
+     * @param id
+     * @param content
+     * @param perPage
+     * @param currentPage
+     * @return
+     * @throws Exception
+     */
+    public Page<DrugCommonVo> searchChildDrugCommonVos(String id, String content, int perPage, int currentPage) throws Exception{
+        Page<DrugCommonVo> drugCommonVoPage = new Page<>();
+        List<DrugCommonVo> resultList = new ArrayList<>();
+        SolrQuery query = new SolrQuery();// 查询
+        query.setQuery("id:"+id);
+        SolrDocumentList docs = httpSolrServer.query(query).getResults();
+        if(docs==null || docs.isEmpty()){
+            throw new Exception("分类信息不存在");
+        }
+        String para = "";
+        DrugCommonVo drugCommonVo = produceByDoc(docs.get(0));
+        if(StringUtils.isEmptyParam(drugCommonVo.getParentId())||"0".equals(drugCommonVo.getParentId())){//为空说明是一级分类
+            query.clear();
+            query.setQuery("parentId:"+id);
+            SolrDocumentList childDocs = httpSolrServer.query(query).getResults();
+            List<DrugCommonVo> drugCommonVos = new ArrayList<>();
+            for(SolrDocument sd : childDocs){
+                drugCommonVos.add(produceByDoc(sd));
+            }
+            query.clear();
+            if(!drugCommonVos.isEmpty()){
+                para = para+"(";
+                for(int i=0;i<drugCommonVos.size();i++){
+                    if(i!=drugCommonVos.size()-1){
+                        para = para+"parentId:"+drugCommonVos.get(i).getId()+" OR ";
+                    }else{
+                        para = para+"parentId:"+drugCommonVos.get(i).getId()+")";
+                    }
+                }
+            }
+            if("".equals(para)){
+                para = para+"content:"+content;
+            }else{
+                para = para+" AND content:"+content;
+            }
+        }else{//二级分类
+            query.clear();
+            para = " parentId:"+drugCommonVo.getId()+" AND content:"+content;
+        }
+        query.setQuery(para);
+        if(perPage>0){
+            query.setStart((currentPage-1)*perPage);
+            query.setRows(perPage);
+        }
+        SolrDocumentList docList = httpSolrServer.query(query).getResults();
+        drugCommonVoPage.setPerPage((long)perPage);
+        drugCommonVoPage.setCounts((long)docList.size());
+        for (SolrDocument sd : docList) {
+            resultList.add(produceByDoc(sd));
+        }
+        drugCommonVoPage.setData(resultList);
+        return drugCommonVoPage;
+    }
+
+    /**
+     * 根据id查询分类信息 如果id为空查询一级分类不为空则查询其下的子分类
+     * @param id
+     * @return
+     */
+    public List<DrugCommonVo> searchDrugCommonVosById(String id) throws Exception{
+        List<DrugCommonVo> resultList = new ArrayList<>();
+        SolrQuery query = new SolrQuery();// 查询
+        if(StringUtils.isEmptyParam(id)){
+            query.setQuery("parentId:"+"0");
+        }else{
+            query.setQuery("parentId:"+id);
+        }
+        SolrDocumentList docs = httpSolrServer.query(query).getResults();
+        for (SolrDocument sd : docs) {
+            resultList.add(produceByDoc(sd));
+        }
+        return resultList;
     }
 }

@@ -43,4 +43,28 @@ public class DrugSolrService {
         }
         return null;
     }
+
+
+    /**
+     * 根据分类id查询分类下的子分类并匹配关键字
+     * @param id
+     * @param content
+     * @param perPage
+     * @param currentPage
+     * @return
+     * @throws Exception
+     */
+    @GET
+    @Path("get-child-drug-common-infos")
+    public Page<DrugCommonVo>  getChildDrugCommonVos(@QueryParam("id") String id,@QueryParam("content") String content,@QueryParam("perPage")int perPage,
+                                                @QueryParam("currentPage") int currentPage) throws Exception{
+        try {
+            Page<DrugCommonVo> drugCommonVos = baseSolrFacade.searchChildDrugCommonVos(id,content,perPage,currentPage);
+            return drugCommonVos;
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return null;
+    }
+
 }
