@@ -103,13 +103,9 @@ public class LoginService {
         UsernamePasswordToken usernamePasswordToken = new UsernamePasswordToken();
         usernamePasswordToken.setUsername(username);
         usernamePasswordToken.setPassword(password.toCharArray());
-
-        try {
-            subject.login(usernamePasswordToken);
-        } catch (AuthenticationException e) {
-            e.printStackTrace();
-        }
-        return Response.status(Response.Status.OK).entity(yunUsers).build();
+        subject.login(usernamePasswordToken);
+        UserVo currentUser = UserUtils.getCurrentUser();
+        return Response.status(Response.Status.OK).entity(currentUser).build();
     }
 
     /**

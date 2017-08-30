@@ -19,7 +19,14 @@
         </property>
         <property name="filterChainDefinitions">
             <value>
-                /**=anon
+                <!--/static/**=anon-->
+                <!--/ueditor/**=anon-->
+                <!--/index.html==anon-->
+                <!--/api/cms/**=anon-->
+                <!--/=anon-->
+                <!--/api/*=authc-->
+                <!--/upload/**=anon-->
+                <!--/**=authc-->
             </value>
         </property>
     </bean>
