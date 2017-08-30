@@ -143,9 +143,9 @@ public class DrugBaseInfoFacade extends BaseFacade{
      */
     public Page<DrugBaseInfo> getDrugBaseInfos(String classId, int perPage, int currentPage, String wherehql, String inputCode, String drugName) {
         String hql = "select distinct base from DrugBaseInfo as base,DrugNameDict as dict where base.status<>'-1' and dict.status<>'-1'" +
-                     " and base.drugCode = dict.drugCode ";
+                     " and base.id = dict.drugId ";
         String hqlCount = "select count(distinct base) from DrugBaseInfo as base,DrugNameDict as dict  where base.status<>'-1' and dict.status<>'-1'" +
-                          " and base.drugCode = dict.drugCode ";
+                          " and base.id = dict.drugId ";
         if(!StringUtils.isEmptyParam(wherehql)){
             hql += (" and "+ wherehql);
             hqlCount += (" and "+ wherehql);
