@@ -2,6 +2,7 @@ package com.dch.facade;
 
 import com.dch.entity.DrugAd;
 import com.dch.facade.common.BaseFacade;
+import com.dch.facade.common.VO.Page;
 import com.dch.util.StringUtils;
 import org.springframework.stereotype.Component;
 
@@ -32,8 +33,9 @@ public class DrugAdFacade extends BaseFacade {
      * @return
      * @throws Exception
      */
-    public List<DrugAd> getDrugAds(String drugId, String drugCode) throws Exception {
+    public Page<DrugAd> getDrugAds(String drugId, String drugCode, int perPage, int currentPage) throws Exception {
         String hql="from DrugAd where status<> '-1' ";
+
 
         if(StringUtils.isEmptyParam(drugId)&&StringUtils.isEmptyParam(drugCode)){
 
@@ -45,8 +47,17 @@ public class DrugAdFacade extends BaseFacade {
         if(drugCode!=null&&!"".equals(drugCode)){
             hql+="and drugCode =' "+ drugCode +"'";
         }
-        List<DrugAd> drugAds = createQuery(DrugAd.class, hql, new ArrayList<>()).getResultList();
-        return drugAds;
+        TypedQuery<DrugAd> query = createQuery(DrugAd.class, hql, new ArrayList<>());
+        Page page =new Page();
+        if (perPage > 0) {
+            query.setFirstResult((currentPage-1) * perPage);
+            query.setMaxResults(currentPage * perPage);
+            page.setPerPage((long) perPage);
+        }
+        List<DrugAd> drugAdList = query.getResultList();
+        page.setCounts((long) drugAdList.size());
+        page.setData(drugAdList);
+        return page;
     }
 
     /**

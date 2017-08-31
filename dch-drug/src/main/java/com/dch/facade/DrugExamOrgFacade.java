@@ -3,9 +3,11 @@ package com.dch.facade;
 import com.dch.entity.DrugDiseaseTreatmentGuide;
 import com.dch.entity.DrugExamOrg;
 import com.dch.facade.common.BaseFacade;
+import com.dch.facade.common.VO.Page;
 import com.dch.util.StringUtils;
 import org.springframework.stereotype.Component;
 
+import javax.persistence.TypedQuery;
 import javax.transaction.Transactional;
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
@@ -28,9 +30,10 @@ public class DrugExamOrgFacade extends BaseFacade {
      * 获取临床药物试验机构
      * @param orgName
      * @param wherehql
-     * @return
+     * @param perPage
+     *@param currentPage @return
      */
-    public List<DrugExamOrg> getDrugExamOrgs(String orgName, String wherehql) {
+    public Page<DrugExamOrg> getDrugExamOrgs(String orgName, String wherehql, int perPage, int currentPage) {
         String hql="from DrugExamOrg where status <> '-1' ";
         if(null!=orgName&&!"".equals(orgName)){
             hql += "and medicalOrgName like '%"+orgName+"%'";
@@ -38,7 +41,17 @@ public class DrugExamOrgFacade extends BaseFacade {
         if(!StringUtils.isEmptyParam(wherehql)){
             hql += " and "+wherehql;
         }
-        return createQuery(DrugExamOrg.class,hql,new ArrayList<>()).getResultList();
+        TypedQuery<DrugExamOrg> query = createQuery(DrugExamOrg.class, hql, new ArrayList<>());
+        Page page=new Page();
+        if (perPage > 0) {
+            query.setFirstResult(currentPage * perPage);
+            query.setMaxResults(perPage);
+            page.setPerPage((long) perPage);
+        }
+        List<DrugExamOrg> examOrgList = query.getResultList();
+        page.setCounts((long) examOrgList.size());
+        page.setData(examOrgList);
+        return page;
     }
 
     /**

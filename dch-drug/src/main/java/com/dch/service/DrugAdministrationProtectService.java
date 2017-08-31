@@ -2,6 +2,7 @@ package com.dch.service;
 
 import com.dch.entity.DrugAdministrationProtect;
 import com.dch.facade.DrugAdministrationProtectFacade;
+import com.dch.facade.common.VO.Page;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
@@ -38,8 +39,10 @@ public class DrugAdministrationProtectService {
      */
     @GET
     @Path("get-protects")
-    public List<DrugAdministrationProtect> getAdministrationProtects(@QueryParam("drugId") String drugId){
-        return drugAdministrationProtectFacade.getAdministrationProtects(drugId);
+    public Page<DrugAdministrationProtect> getAdministrationProtects(@QueryParam("drugId") String drugId,
+                                                                     @QueryParam("perPage") int perPage,
+                                                                     @QueryParam("currentPage") int currentPage){
+        return drugAdministrationProtectFacade.getAdministrationProtects(drugId,perPage,currentPage);
 
     }
 

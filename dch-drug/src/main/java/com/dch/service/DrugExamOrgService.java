@@ -2,6 +2,7 @@ package com.dch.service;
 
 import com.dch.entity.DrugExamOrg;
 import com.dch.facade.DrugExamOrgFacade;
+import com.dch.facade.common.VO.Page;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
@@ -36,10 +37,12 @@ public class DrugExamOrgService {
      */
     @GET
     @Path("get-drug-exam-orgs")
-    public List<DrugExamOrg> getDrugExamOrgs(@QueryParam("orgName") String orgName,
-                                             @QueryParam("wherehql") String wherehql){
+    public Page<DrugExamOrg> getDrugExamOrgs(@QueryParam("orgName") String orgName,
+                                             @QueryParam("wherehql") String wherehql,
+                                             @QueryParam("perPage") int perPage,
+                                             @QueryParam("currentPage") int currentPage){
 
-        return drugExamOrgFacade.getDrugExamOrgs(orgName,wherehql);
+        return drugExamOrgFacade.getDrugExamOrgs(orgName,wherehql,perPage,currentPage);
     }
 
     /**

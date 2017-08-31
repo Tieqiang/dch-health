@@ -2,6 +2,7 @@ package com.dch.service;
 
 import com.dch.entity.DrugInstruction;
 import com.dch.facade.DrugInstructionsFacade;
+import com.dch.facade.common.VO.Page;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
@@ -36,8 +37,10 @@ public class DrugInstructionsService {
      */
     @GET
     @Path("get-drug-instructions")
-    public List<DrugInstruction> getDrugInstructions(@QueryParam("drugId") String drugId){
-        return drugInstructionsFacade.getDrugInstructions(drugId);
+    public Page<DrugInstruction> getDrugInstructions(@QueryParam("drugId") String drugId,
+                                                     @QueryParam("perPage") int perPage,
+                                                     @QueryParam("currentPage") int currentPage){
+        return drugInstructionsFacade.getDrugInstructions(drugId,perPage,currentPage);
     }
 
     /**

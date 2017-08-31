@@ -2,6 +2,7 @@ package com.dch.service;
 
 import com.dch.entity.DrugPackage;
 import com.dch.facade.DrugPackageFacade;
+import com.dch.facade.common.VO.Page;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
@@ -40,8 +41,10 @@ public class DrugPackageService {
      */
     @GET
     @Path("get-drug-packages")
-    public List<DrugPackage> getDrugPackages(@QueryParam("packageName")String packageName,@QueryParam("wherehql")String wherehql){
-        return drugPackageFacade.getDrugPackages(packageName,wherehql);
+    public Page<DrugPackage> getDrugPackages(@QueryParam("packageName")String packageName, @QueryParam("wherehql")String wherehql,
+                                             @QueryParam("perPage") int perPage,
+                                             @QueryParam("currentPage") int currentPage){
+        return drugPackageFacade.getDrugPackages(packageName,wherehql,perPage,currentPage);
     }
 
     /**

@@ -2,6 +2,7 @@ package com.dch.service;
 
 import com.dch.entity.DrugNewResearchPolicy;
 import com.dch.facade.DrugNewResearchPolicyFacade;
+import com.dch.facade.common.VO.Page;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
@@ -38,9 +39,11 @@ public class DrugNewResearchPolicyService {
      */
     @GET
     @Path("get-policys")
-    public List<DrugNewResearchPolicy> getNewResearchPolicys(@QueryParam("policyTypeFlag") String policyTypeFlag){
+    public Page<DrugNewResearchPolicy> getNewResearchPolicys(@QueryParam("policyTypeFlag") String policyTypeFlag,
+                                                             @QueryParam("perPage") int perPage,
+                                                             @QueryParam("currentPage") int currentPage){
 
-        return drugNewResearchPolicyFacade.getNewResearchPolicys(policyTypeFlag);
+        return drugNewResearchPolicyFacade.getNewResearchPolicys(policyTypeFlag,perPage,currentPage);
     }
 
     @GET

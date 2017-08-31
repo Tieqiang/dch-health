@@ -2,8 +2,10 @@ package com.dch.facade;
 
 import com.dch.entity.DrugAdministrationProtect;
 import com.dch.facade.common.BaseFacade;
+import com.dch.facade.common.VO.Page;
 import org.springframework.stereotype.Component;
 
+import javax.persistence.TypedQuery;
 import javax.transaction.Transactional;
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
@@ -27,14 +29,25 @@ public class DrugAdministrationProtectFacade extends BaseFacade {
     /**
      * 获取药品行政曾策保护
      * @param drugId
-     * @return
+     * @param perPage
+     *@param currentPage @return
      */
-    public List<DrugAdministrationProtect> getAdministrationProtects(String drugId) {
+    public Page<DrugAdministrationProtect> getAdministrationProtects(String drugId, int perPage, int currentPage) {
         String hql="from DrugAdministrationProtect where status <> '-1' ";
         if(drugId!=null && !"".equals(drugId)){
             hql+="and drugId = '" +drugId+ "'";
         }
-        return createQuery(DrugAdministrationProtect.class, hql, new ArrayList<>()).getResultList();
+        TypedQuery<DrugAdministrationProtect> query = createQuery(DrugAdministrationProtect.class, hql, new ArrayList<>());
+        Page page =new Page();
+        if (perPage > 0) {
+            query.setFirstResult((currentPage-1) * perPage);
+            query.setMaxResults(currentPage * perPage);
+            page.setPerPage((long) perPage);
+        }
+        List<DrugAdministrationProtect> drugAdministrationProtectList = query.getResultList();
+        page.setData(drugAdministrationProtectList);
+        page.setCounts((long) drugAdministrationProtectList.size());
+        return page;
     }
 
     /**

@@ -2,6 +2,7 @@ package com.dch.service;
 
 import com.dch.entity.DrugUntowardEffect;
 import com.dch.facade.DrugUntowardEffectFacade;
+import com.dch.facade.common.VO.Page;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
@@ -36,8 +37,10 @@ public class DrugUntowardEffectService {
      */
     @GET
     @Path("get-drug-untoward-effects")
-    public List<DrugUntowardEffect> getDrugUntowardEffects(@QueryParam("drugId") String drugId){
-        return drugUntowardEffectFacade.getDrugUntowardEffects(drugId);
+    public Page<DrugUntowardEffect> getDrugUntowardEffects(@QueryParam("drugId") String drugId,
+                                                           @QueryParam("perPage") int perPage,
+                                                           @QueryParam("currentPage") int currentPage){
+        return drugUntowardEffectFacade.getDrugUntowardEffects(drugId,perPage,currentPage);
     }
 
     /**

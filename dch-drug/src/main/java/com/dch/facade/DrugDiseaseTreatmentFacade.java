@@ -2,8 +2,10 @@ package com.dch.facade;
 
 import com.dch.entity.DrugDiseaseTreatmentGuide;
 import com.dch.facade.common.BaseFacade;
+import com.dch.facade.common.VO.Page;
 import org.springframework.stereotype.Component;
 
+import javax.persistence.TypedQuery;
 import javax.transaction.Transactional;
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
@@ -15,15 +17,25 @@ public class DrugDiseaseTreatmentFacade extends BaseFacade {
     /**
      * 获取疾病治疗指南
      * @param guideName
-     * @return
+     * @param perPage
+     *@param currentPage @return
      */
-    public List<DrugDiseaseTreatmentGuide> getTreatments(String guideName) {
+    public Page<DrugDiseaseTreatmentGuide> getTreatments(String guideName, int perPage, int currentPage) {
         String hql="from DrugDiseaseTreatmentGuide where status <> '-1' ";
         if(null!=guideName&&!"".equals(guideName)){
             hql+="and guideName like '%"+guideName+"%'";
         }
-        return createQuery(DrugDiseaseTreatmentGuide.class,hql,new ArrayList<>()).getResultList();
-
+        TypedQuery<DrugDiseaseTreatmentGuide> query = createQuery(DrugDiseaseTreatmentGuide.class, hql, new ArrayList<>());
+        Page page =new Page();
+        if (perPage > 0) {
+            query.setFirstResult((currentPage-1) * perPage);
+            query.setMaxResults(currentPage * perPage);
+            page.setPerPage((long) perPage);
+        }
+        List<DrugDiseaseTreatmentGuide> treatmentGuideList = query.getResultList();
+        page.setData(treatmentGuideList);
+        page.setCounts((long) treatmentGuideList.size());
+        return page;
     }
 
     /**

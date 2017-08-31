@@ -2,8 +2,10 @@ package com.dch.facade;
 
 import com.dch.entity.DrugUntowardEffect;
 import com.dch.facade.common.BaseFacade;
+import com.dch.facade.common.VO.Page;
 import org.springframework.stereotype.Component;
 
+import javax.persistence.TypedQuery;
 import javax.transaction.Transactional;
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
@@ -28,15 +30,25 @@ public class DrugUntowardEffectFacade extends BaseFacade {
     /**
      * 获取药品不良反应信息
      * @param drugId
-     * @return
+     * @param perPage
+     *@param currentPage @return
      */
-    public List<DrugUntowardEffect> getDrugUntowardEffects(String drugId) {
+    public Page<DrugUntowardEffect> getDrugUntowardEffects(String drugId, int perPage, int currentPage) {
         String hql="from DrugUntowardEffect where status <> '-1' ";
         if(drugId!=null && !"".equals(drugId)){
             hql+="and drugId= '" + drugId + "' ";
         }
-        return createQuery(DrugUntowardEffect.class, hql, new ArrayList<>()).getResultList();
-
+        TypedQuery<DrugUntowardEffect> query = createQuery(DrugUntowardEffect.class, hql, new ArrayList<>());
+        Page page =new Page();
+        if (perPage > 0) {
+            query.setFirstResult((currentPage-1) * perPage);
+            query.setMaxResults(currentPage * perPage);
+            page.setPerPage((long) perPage);
+        }
+        List<DrugUntowardEffect> drugUntowardEffectList = query.getResultList();
+        page.setCounts(Long.valueOf(drugUntowardEffectList.size()));
+        page.setData(drugUntowardEffectList);
+        return page;
     }
 
     /**

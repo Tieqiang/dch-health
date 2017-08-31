@@ -2,10 +2,12 @@ package com.dch.facade;
 
 import com.dch.entity.DrugPackage;
 import com.dch.facade.common.BaseFacade;
+import com.dch.facade.common.VO.Page;
 import com.dch.util.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.TypedQuery;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,9 +27,10 @@ public class DrugPackageFacade extends BaseFacade{
      * 获取药品包材信息
      * @param packageName
      * @param wherehql
-     * @return
+     * @param perPage
+     *@param currentPage @return
      */
-    public List<DrugPackage> getDrugPackages(String packageName, String wherehql) {
+    public Page<DrugPackage> getDrugPackages(String packageName, String wherehql, int perPage, int currentPage) {
         String hql = "from DrugPackage where status<>'-1' ";
         if(!StringUtils.isEmptyParam(packageName)){
             hql += " and packageName like '%"+packageName+"%'";
@@ -35,7 +38,17 @@ public class DrugPackageFacade extends BaseFacade{
         if(!StringUtils.isEmptyParam(wherehql)){
             hql += " and "+wherehql;
         }
-        return createQuery(DrugPackage.class,hql,new ArrayList<Object>()).getResultList();
+        TypedQuery<DrugPackage> query = createQuery(DrugPackage.class, hql, new ArrayList<Object>());
+        Page page=new Page();
+        if (perPage > 0) {
+            query.setFirstResult((currentPage-1) * perPage);
+            query.setMaxResults(currentPage * perPage);
+            page.setPerPage((long) perPage);
+        }
+        List<DrugPackage> drugPackageList = query.getResultList();
+        page.setCounts((long) drugPackageList.size());
+        page.setData(drugPackageList);
+        return page;
     }
 
     /**

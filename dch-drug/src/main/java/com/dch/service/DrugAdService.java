@@ -2,6 +2,7 @@ package com.dch.service;
 
 import com.dch.entity.DrugAd;
 import com.dch.facade.DrugAdFacade;
+import com.dch.facade.common.VO.Page;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
@@ -39,9 +40,12 @@ public class DrugAdService {
      */
     @GET
     @Path("get-drug-ads")
-    public List<DrugAd> getDrugAds(@QueryParam("drugId") String drugId,
-                                   @QueryParam("drugCode") String drugCode)throws Exception{
-        return drugAdFacade.getDrugAds(drugId,drugCode);
+    public Page<DrugAd> getDrugAds(@QueryParam("drugId") String drugId,
+                                   @QueryParam("drugCode") String drugCode,
+                                   @QueryParam("perPage") int perPage,
+                                   @QueryParam("currentPage") int currentPage)throws Exception{
+        return drugAdFacade.getDrugAds(drugId, drugCode,perPage,currentPage);
+
     }
 
     /**

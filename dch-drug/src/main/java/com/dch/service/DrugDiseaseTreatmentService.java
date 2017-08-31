@@ -3,6 +3,7 @@ package com.dch.service;
 
 import com.dch.entity.DrugDiseaseTreatmentGuide;
 import com.dch.facade.DrugDiseaseTreatmentFacade;
+import com.dch.facade.common.VO.Page;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
@@ -40,8 +41,10 @@ public class DrugDiseaseTreatmentService {
      */
     @GET
     @Path("get-treatments")
-    public List<DrugDiseaseTreatmentGuide> getTreatments(@QueryParam("guideName") String guideName){
-        return drugDiseaseTreatmentFacade.getTreatments(guideName);
+    public Page<DrugDiseaseTreatmentGuide> getTreatments(@QueryParam("guideName") String guideName,
+                                                         @QueryParam("perPage") int perPage,
+                                                         @QueryParam("currentPage") int currentPage){
+        return drugDiseaseTreatmentFacade.getTreatments(guideName,perPage,currentPage);
     }
 
     /**
