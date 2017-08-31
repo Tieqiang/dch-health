@@ -54,6 +54,20 @@ public class DrugBaseInfoService {
                                                @QueryParam("drugName")String drugName){
         return drugBaseInfoFacade.getDrugBaseInfos(classId,perPage,currentPage,wherehql,inputCode,drugName);
     }
+
+    /**
+     * 获取药品基名称
+     * classId:药品类别（选传）perPage:每页显示数量（选传）currentPage：当前页（选传）wherehql:自己拼装的条件（选传）
+     * inputCode:不区分大小写的模糊匹配（选传）
+     * drugName:模糊匹配（选传）如果和inputCode同时传递，则取并集;另外drugName和可以是商品名和其他任何一种名称
+     * @param classId
+     * @param perPage
+     * @param currentPage
+     * @param wherehql
+     * @param inputCode
+     * @param drugName
+     * @return
+     */
     @GET
     @Path("get-drug-name")
     public Page<DrugNameDict> getDrugName(@QueryParam("classId")String classId, @QueryParam("perPage")int perPage, @QueryParam("currentPage") int currentPage,
