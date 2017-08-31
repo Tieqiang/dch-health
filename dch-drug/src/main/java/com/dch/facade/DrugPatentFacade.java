@@ -2,10 +2,12 @@ package com.dch.facade;
 
 import com.dch.entity.DrugPatent;
 import com.dch.facade.common.BaseFacade;
+import com.dch.facade.common.VO.Page;
 import com.dch.util.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.TypedQuery;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,15 +29,29 @@ public class DrugPatentFacade extends BaseFacade{
      * @param wherehql
      * @return
      */
-    public List<DrugPatent> getDrugPatents(String patentName, String wherehql) {
+    public Page<DrugPatent> getDrugPatents(String patentName,int perPage,int currentPage, String wherehql) {
+        Page<DrugPatent> drugPatentPage = new Page<>();
         String hql = "from DrugPatent where status<>'-1'";
+        String hqlCount = "select count(*) from DrugPatent where status<>'-1' ";
         if(!StringUtils.isEmptyParam(patentName)){
             hql += " and patentName like '%"+patentName+"%'";
+            hqlCount += " and patentName like '%"+patentName+"%'";
         }
         if(!StringUtils.isEmptyParam(wherehql)){
             hql += " and "+wherehql;
+            hqlCount += " and "+wherehql;
         }
-        return createQuery(DrugPatent.class,hql,new ArrayList<Object>()).getResultList();
+        TypedQuery<DrugPatent> typedQuery = createQuery(DrugPatent.class,hql,new ArrayList<Object>());
+        Long counts = createQuery(Long.class,hqlCount,new ArrayList<Object>()).getSingleResult();
+        drugPatentPage.setCounts(counts);
+        if(currentPage>0){
+            typedQuery.setFirstResult((currentPage-1)*perPage) ;
+            typedQuery.setMaxResults(perPage*currentPage);
+            drugPatentPage.setPerPage((long) perPage);
+        }
+        List<DrugPatent> drugPatentList = typedQuery.getResultList();
+        drugPatentPage.setData(drugPatentList);
+        return drugPatentPage;
     }
 
     /**

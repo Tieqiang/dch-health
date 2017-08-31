@@ -33,7 +33,7 @@ public class DrugExamOrgFacade extends BaseFacade {
     public List<DrugExamOrg> getDrugExamOrgs(String orgName, String wherehql) {
         String hql="from DrugExamOrg where status <> '-1' ";
         if(null!=orgName&&!"".equals(orgName)){
-            hql += "and guideName like '%"+orgName+"%'";
+            hql += "and medicalOrgName like '%"+orgName+"%'";
         }
         if(!StringUtils.isEmptyParam(wherehql)){
             hql += " and "+wherehql;
