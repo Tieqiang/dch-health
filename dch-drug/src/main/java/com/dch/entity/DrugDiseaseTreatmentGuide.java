@@ -19,7 +19,6 @@ public class DrugDiseaseTreatmentGuide extends BaseEntity {
     private Date pubDate;
     private String specialty;
     private String origin;
-    private String attachmentUrl;
 
 
     @Basic
@@ -80,16 +79,6 @@ public class DrugDiseaseTreatmentGuide extends BaseEntity {
 
     public void setOrigin(String origin) {
         this.origin = origin;
-    }
-
-    @Basic
-    @Column(name = "attachment_url", nullable = true, length = 300)
-    public String getAttachmentUrl() {
-        return attachmentUrl;
-    }
-
-    public void setAttachmentUrl(String attachmentUrl) {
-        this.attachmentUrl = attachmentUrl;
     }
 
 }
