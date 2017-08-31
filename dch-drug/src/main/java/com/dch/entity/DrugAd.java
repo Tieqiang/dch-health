@@ -12,10 +12,11 @@ import java.sql.Date;
 @Table(name = "drug_ad", schema = "dch", catalog = "")
 public class DrugAd extends BaseEntity {
     private String drugCode;
+    private String drugName;
     private String drugId;
     private String adContent;
     private String adType;
-    private Date adPeriod;
+    private String adPeriod;
     private String adTime;
     private String adNo;
     private String zipCode;
@@ -64,11 +65,11 @@ public class DrugAd extends BaseEntity {
 
     @Basic
     @Column(name = "ad_period", nullable = true)
-    public Date getAdPeriod() {
+    public String getAdPeriod() {
         return adPeriod;
     }
 
-    public void setAdPeriod(Date adPeriod) {
+    public void setAdPeriod(String adPeriod) {
         this.adPeriod = adPeriod;
     }
 
@@ -102,4 +103,13 @@ public class DrugAd extends BaseEntity {
         this.zipCode = zipCode;
     }
 
+    @Basic
+    @Column(name = "drug_name", nullable = true, length = -1)
+    public String getDrugName() {
+        return drugName;
+    }
+
+    public void setDrugName(String drugName) {
+        this.drugName = drugName;
+    }
 }

@@ -19,7 +19,7 @@ public class DrugFirm extends BaseEntity{
     private String addressRegist;
     private String addressProduce;
     private String produceRealm;
-    private Date issueDate;
+    private String issueDate;
     private String licenceNo;
     private String foreignFlag;
 
@@ -96,11 +96,11 @@ public class DrugFirm extends BaseEntity{
 
     @Basic
     @Column(name = "issue_date", nullable = true)
-    public Date getIssueDate() {
+    public String getIssueDate() {
         return issueDate;
     }
 
-    public void setIssueDate(Date issueDate) {
+    public void setIssueDate(String issueDate) {
         this.issueDate = issueDate;
     }
 
