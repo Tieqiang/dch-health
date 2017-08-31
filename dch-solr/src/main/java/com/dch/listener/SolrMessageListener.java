@@ -23,11 +23,11 @@ public class SolrMessageListener implements MessageListener {
     public void onMessage(Message message) {
         try {
             ObjectMessage objectMessage= (ObjectMessage) message;
-            DrugCommonVo drugCommonVo= (DrugCommonVo) objectMessage.getObject();
+            //DrugCommonVo drugCommonVo= (DrugCommonVo) objectMessage.getObject();
             //等待1秒钟
-            Thread.sleep(1000*3600);
+            Thread.sleep(1000);
             //同步索引库
-            baseSolrFacade.sendIndexToSolr(drugCommonVo);
+            baseSolrFacade.sendIndexToSolr(objectMessage.getObject());
         } catch (Exception e) {
             e.printStackTrace();
         }
