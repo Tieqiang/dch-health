@@ -3,7 +3,6 @@ package com.dch.entity;
 import com.dch.entity.base.BaseEntity;
 
 import javax.persistence.*;
-import java.sql.Timestamp;
 
 /**
  * Created by Administrator on 2017/8/22.
@@ -12,12 +11,12 @@ import java.sql.Timestamp;
 @Table(name = "drug_untoward_effect", schema = "dch", catalog = "")
 public class DrugUntowardEffect extends BaseEntity{
     private String sex;
-    private Integer age;
+    private String age;
     private String drugId;
     private String userDrugReason;
     private String administration;
     private String quantity;
-    private Timestamp untowardEffectStartTime;
+    private String untowardEffectStartTime;
     private String familyDrugUntowardEffect;
     private String disease;
     private String untowardEffectResult;
@@ -39,11 +38,11 @@ public class DrugUntowardEffect extends BaseEntity{
 
     @Basic
     @Column(name = "age", nullable = true)
-    public Integer getAge() {
+    public String getAge() {
         return age;
     }
 
-    public void setAge(Integer age) {
+    public void setAge(String age) {
         this.age = age;
     }
 
@@ -89,11 +88,11 @@ public class DrugUntowardEffect extends BaseEntity{
 
     @Basic
     @Column(name = "untoward_effect_start_time", nullable = true)
-    public Timestamp getUntowardEffectStartTime() {
+    public String getUntowardEffectStartTime() {
         return untowardEffectStartTime;
     }
 
-    public void setUntowardEffectStartTime(Timestamp untowardEffectStartTime) {
+    public void setUntowardEffectStartTime(String untowardEffectStartTime) {
         this.untowardEffectStartTime = untowardEffectStartTime;
     }
 

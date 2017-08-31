@@ -46,7 +46,7 @@ public class DrugUntowardEffectFacade extends BaseFacade {
             page.setPerPage((long) perPage);
         }
         List<DrugUntowardEffect> drugUntowardEffectList = query.getResultList();
-        page.setCounts(Long.valueOf(drugUntowardEffectList.size()));
+        page.setCounts((long) drugUntowardEffectList.size());
         page.setData(drugUntowardEffectList);
         return page;
     }
