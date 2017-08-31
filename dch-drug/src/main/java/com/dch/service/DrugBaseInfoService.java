@@ -1,6 +1,7 @@
 package com.dch.service;
 
 import com.dch.entity.DrugBaseInfo;
+import com.dch.entity.DrugNameDict;
 import com.dch.facade.DrugBaseInfoFacade;
 import com.dch.facade.common.VO.Page;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,6 +53,13 @@ public class DrugBaseInfoService {
                                                @QueryParam("wherehql")String wherehql, @QueryParam("inputCode")String inputCode,
                                                @QueryParam("drugName")String drugName){
         return drugBaseInfoFacade.getDrugBaseInfos(classId,perPage,currentPage,wherehql,inputCode,drugName);
+    }
+    @GET
+    @Path("get-drug-name")
+    public Page<DrugNameDict> getDrugName(@QueryParam("classId")String classId, @QueryParam("perPage")int perPage, @QueryParam("currentPage") int currentPage,
+                                          @QueryParam("wherehql")String wherehql, @QueryParam("inputCode")String inputCode,
+                                          @QueryParam("drugName")String drugName){
+        return drugBaseInfoFacade.getDrugName(classId,perPage,currentPage,wherehql,inputCode,drugName);
     }
 
     /**

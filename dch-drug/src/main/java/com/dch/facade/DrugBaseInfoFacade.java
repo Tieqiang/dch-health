@@ -181,4 +181,52 @@ public class DrugBaseInfoFacade extends BaseFacade{
         drugBaseInfoPage.setData(drugBaseInfoList);
         return drugBaseInfoPage;
     }
+
+    public Page<DrugNameDict> getDrugName(String classId, int perPage, int currentPage, String wherehql, String inputCode, String drugName) {
+
+        String hql = "from DrugNameDict as dnd where status<>'-1'" ;
+        String hqlCount="select count(dnd) from DrugNameDict as dnd where status<>'-1' " ;
+        if(!StringUtils.isEmptyParam(wherehql)){
+            hql += (" and "+ wherehql);
+            hqlCount += (" and "+ wherehql);
+        }
+        if(!StringUtils.isEmptyParam(classId)){
+            hql += " and classId = '"+classId+"'";
+            hqlCount += " and classId = '"+classId+"'";
+        }
+        if(!StringUtils.isEmptyParam(inputCode) && !StringUtils.isEmptyParam(drugName)){
+            hql += " and (dnd.drugName like '%"+drugName+"%'" +
+                    " or upper(dnd.inputCode) like '%"+inputCode.toUpperCase()+"%')";
+            hqlCount += " and (dnd.drugName like '%"+drugName+"%'" +
+                    " or upper(dnd.inputCode) like '%"+inputCode.toUpperCase()+"%')";
+        }else if(!StringUtils.isEmptyParam(inputCode)){
+            hql += " and upper(dnd.inputCode) like '%"+inputCode.toUpperCase()+"%' ";
+            hqlCount += " and upper(dnd.inputCode) like '%"+inputCode.toUpperCase()+"%' ";
+        }else if(!StringUtils.isEmptyParam(drugName)){
+            hql += " and (dnd.drugName like '%"+drugName+"%')";
+            hqlCount += " and (dnd.drugName like '%"+drugName+"%')";
+        }
+        hql += " order by dnd.createDate desc";
+        hqlCount += " order by dnd.createDate desc";
+        TypedQuery<DrugNameDict> typedQuery = createQuery(DrugNameDict.class,hql,new ArrayList<Object>());
+        Page<DrugNameDict> drugBaseInfoPage = new Page<>();
+        Long counts = createQuery(Long.class,hqlCount,new ArrayList<Object>()).getSingleResult();
+        drugBaseInfoPage.setCounts(counts);
+        if(perPage<=0){
+            perPage=100 ;
+        }
+        if(perPage>0){
+
+            if(currentPage<=0){
+                currentPage=1 ;
+            }
+
+            typedQuery.setFirstResult((currentPage-1)*perPage) ;
+            typedQuery.setMaxResults(perPage*currentPage);
+            drugBaseInfoPage.setPerPage((long) perPage);
+        }
+        List<DrugNameDict> drugBaseInfoList = typedQuery.getResultList();
+        drugBaseInfoPage.setData(drugBaseInfoList);
+        return drugBaseInfoPage;
+    }
 }
