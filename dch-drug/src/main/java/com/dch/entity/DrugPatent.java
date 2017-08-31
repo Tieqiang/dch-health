@@ -13,9 +13,9 @@ import java.sql.Timestamp;
 @Table(name = "drug_patent", schema = "dch", catalog = "")
 public class DrugPatent extends BaseEntity{
     private String pubNo;
-    private Date pubDate;
+    private String pubDate;
     private String patentNo;
-    private Date patentDate;
+    private String patentDate;
     private String patentName;
     private String masterClassNo;
     private String classNo;
@@ -24,9 +24,9 @@ public class DrugPatent extends BaseEntity{
     private String applyer;
     private String inventor;
     private String address;
-    private Date approvalDate;
+    private String approvalDate;
     private String internationalApplication;
-    private Date enterDate;
+    private String enterDate;
     private String patentAgency;
     private String agencyPerson;
     private String countryProvince;
@@ -46,11 +46,11 @@ public class DrugPatent extends BaseEntity{
 
     @Basic
     @Column(name = "pub_date", nullable = true)
-    public Date getPubDate() {
+    public String getPubDate() {
         return pubDate;
     }
 
-    public void setPubDate(Date pubDate) {
+    public void setPubDate(String pubDate) {
         this.pubDate = pubDate;
     }
 
@@ -66,11 +66,11 @@ public class DrugPatent extends BaseEntity{
 
     @Basic
     @Column(name = "patent_date", nullable = true)
-    public Date getPatentDate() {
+    public String getPatentDate() {
         return patentDate;
     }
 
-    public void setPatentDate(Date patentDate) {
+    public void setPatentDate(String patentDate) {
         this.patentDate = patentDate;
     }
 
@@ -156,11 +156,11 @@ public class DrugPatent extends BaseEntity{
 
     @Basic
     @Column(name = "approval_date", nullable = true)
-    public Date getApprovalDate() {
+    public String getApprovalDate() {
         return approvalDate;
     }
 
-    public void setApprovalDate(Date approvalDate) {
+    public void setApprovalDate(String approvalDate) {
         this.approvalDate = approvalDate;
     }
 
@@ -176,11 +176,11 @@ public class DrugPatent extends BaseEntity{
 
     @Basic
     @Column(name = "enter_date", nullable = true)
-    public Date getEnterDate() {
+    public String getEnterDate() {
         return enterDate;
     }
 
-    public void setEnterDate(Date enterDate) {
+    public void setEnterDate(String enterDate) {
         this.enterDate = enterDate;
     }
 
@@ -234,4 +234,13 @@ public class DrugPatent extends BaseEntity{
         this.internationalPub = internationalPub;
     }
 
+    @Basic
+    @Column(name = "abstract_content", nullable = true, length = -1)
+    public String getAbstractContent() {
+        return abstractContent;
+    }
+
+    public void setAbstractContent(String abstractContent) {
+        this.abstractContent = abstractContent;
+    }
 }

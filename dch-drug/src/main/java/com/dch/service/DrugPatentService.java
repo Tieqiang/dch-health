@@ -2,6 +2,7 @@ package com.dch.service;
 
 import com.dch.entity.DrugPatent;
 import com.dch.facade.DrugPatentFacade;
+import com.dch.facade.common.VO.Page;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
@@ -40,8 +41,8 @@ public class DrugPatentService {
      */
     @GET
     @Path("get-drug-patents")
-    public List<DrugPatent> getDrugPatents(@QueryParam("patentName")String patentName,@QueryParam("wherehql")String wherehql){
-        return drugPatentFacade.getDrugPatents(patentName,wherehql);
+    public Page<DrugPatent> getDrugPatents(@QueryParam("patentName")String patentName, @QueryParam("perPage")int perPage, @QueryParam("currentPage")int currentPage, @QueryParam("wherehql")String wherehql){
+        return drugPatentFacade.getDrugPatents(patentName,perPage,currentPage,wherehql);
     }
 
     /**
