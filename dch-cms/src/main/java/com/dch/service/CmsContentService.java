@@ -147,10 +147,10 @@ public class CmsContentService {
         String exName = filename.substring(filename.lastIndexOf('.'));
         String filePath = "/upload";
         if(month>=10){
-            path = path+"\\upload"+"\\"+year+month+day+"\\"+hour+"\\"+filename;
+            path = path+"/upload"+"/"+year+month+day+"/"+hour+"/"+filename;
             filePath =filePath+"/"+year+month+day+"/"+hour+"/"+filename;
         }else{
-            path = path+"\\upload"+"\\"+year+"0"+month+day+"\\"+hour+"\\"+filename;
+            path = path+"/upload"+"/"+year+"0"+month+day+"/"+hour+"/"+filename;
             filePath =filePath+"/"+year+"0"+month+day+"/"+hour+"/"+filename;
         }
 

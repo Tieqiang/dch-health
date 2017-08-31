@@ -25,7 +25,7 @@ public class SolrMessageListener implements MessageListener {
             ObjectMessage objectMessage= (ObjectMessage) message;
             DrugCommonVo drugCommonVo= (DrugCommonVo) objectMessage.getObject();
             //等待1秒钟
-            Thread.sleep(1000);
+            Thread.sleep(1000*3600);
             //同步索引库
             baseSolrFacade.sendIndexToSolr(drugCommonVo);
         } catch (Exception e) {

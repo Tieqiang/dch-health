@@ -155,16 +155,16 @@ public class DrugBaseInfoFacade extends BaseFacade{
             hqlCount += " and classId = '"+classId+"'";
         }
         if(!StringUtils.isEmptyParam(inputCode) && !StringUtils.isEmptyParam(drugName)){
-            hql += " and (base.drugName like '%"+drugName+"%' or dict.drugName like '%"+drugName+"%'" +
+            hql += " and (dict.drugName like '%"+drugName+"%'" +
                     " or upper(dict.inputCode) like '%"+inputCode.toUpperCase()+"%')";
-            hqlCount += " and (base.drugName like '%"+drugName+"%' or dict.drugName like '%"+drugName+"%'" +
+            hqlCount += " and (dict.drugName like '%"+drugName+"%'" +
                         " or upper(dict.inputCode) like '%"+inputCode.toUpperCase()+"%')";
         }else if(!StringUtils.isEmptyParam(inputCode)){
             hql += " and upper(dict.inputCode) like '%"+inputCode.toUpperCase()+"%' ";
             hqlCount += " and upper(dict.inputCode) like '%"+inputCode.toUpperCase()+"%' ";
         }else if(!StringUtils.isEmptyParam(drugName)){
-            hql += " and (base.drugName like '%"+drugName+"%' or dict.drugName like '%"+drugName+"%')";
-            hqlCount += " and (base.drugName like '%"+drugName+"%' or dict.drugName like '%"+drugName+"%')";
+            hql += " and (dict.drugName like '%"+drugName+"%')";
+            hqlCount += " and (dict.drugName like '%"+drugName+"%')";
         }
         hql += " order by base.createDate desc";
         hqlCount += " order by base.createDate desc";
