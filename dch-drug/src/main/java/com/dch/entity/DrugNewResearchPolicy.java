@@ -16,7 +16,7 @@ public class DrugNewResearchPolicy extends BaseEntity{
     private String policyTypeFlag;
     private String releaseOrgCn;
     private String releaseOrgEn;
-    private Date pubDate;
+    private String pubDate;
     private String writerCn;
     private String writerEn;
     private String pubOrgCn;
@@ -26,7 +26,7 @@ public class DrugNewResearchPolicy extends BaseEntity{
     private String summaryCn;
     private String summaryEn;
     private String contactsWay;
-    private Date expirationDate;
+    private String expirationDate;
     private String country;
     private String other;
     private String attachmentUrl;
@@ -73,11 +73,11 @@ public class DrugNewResearchPolicy extends BaseEntity{
 
     @Basic
     @Column(name = "pub_date", nullable = true)
-    public Date getPubDate() {
+    public String getPubDate() {
         return pubDate;
     }
 
-    public void setPubDate(Date pubDate) {
+    public void setPubDate(String pubDate) {
         this.pubDate = pubDate;
     }
 
@@ -173,11 +173,11 @@ public class DrugNewResearchPolicy extends BaseEntity{
 
     @Basic
     @Column(name = "expiration_date", nullable = true)
-    public Date getExpirationDate() {
+    public String getExpirationDate() {
         return expirationDate;
     }
 
-    public void setExpirationDate(Date expirationDate) {
+    public void setExpirationDate(String expirationDate) {
         this.expirationDate = expirationDate;
     }
 
