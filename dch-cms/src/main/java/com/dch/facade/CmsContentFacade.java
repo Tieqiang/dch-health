@@ -150,9 +150,9 @@ public class CmsContentFacade extends BaseFacade{
     }
 
     public Page<CmsContent> getContentByLabel(String labelName, int perPage, int currentPage, String categoryId) {
-        String hql = "select cc from CmsContent as cc ,CmsContentLabel ccl where cc.id=ccl.contentId and " +
+        String hql = "select cc from CmsContent as cc ,CmsContentLabel ccl where cc.id=ccl.contentId and cc.status<>'-1' and " +
                 "ccl.labelName='"+labelName+"'" ;
-        String hqlCount = "select count(cc) from CmsContent as cc ,CmsContentLabel ccl where cc.id=ccl.contentId and " +
+        String hqlCount = "select count(cc) from CmsContent as cc ,CmsContentLabel ccl where cc.id=ccl.contentId and cc.status<>'-1' and " +
                 "ccl.labelName='"+labelName+"'" ;
 
         if(categoryId!=null&&!"".equals(categoryId)){
