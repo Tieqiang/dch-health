@@ -36,8 +36,8 @@ public class DrugAnalysisMethodsFacade extends BaseFacade {
         String hql="from DrugAnalysisMethods where status <> '-1' ";
         String hqlCount = "select count(*) from DrugAnalysisMethods where status <> '-1' ";
         if(null!=methodName&&!"".equals(methodName)){
-            hql+="and guideName like '%"+methodName+"%'";
-            hqlCount += "and guideName like '%"+methodName+"%'";
+            hql+="and methodName like '%"+methodName+"%'";
+            hqlCount += "and methodName like '%"+methodName+"%'";
         }
         if(!StringUtils.isEmptyParam(wherehql)){
             hql += " and "+wherehql;
