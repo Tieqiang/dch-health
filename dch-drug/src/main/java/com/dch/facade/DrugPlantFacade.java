@@ -28,10 +28,13 @@ public class DrugPlantFacade extends BaseFacade {
         List<DrugPlantVo> drugPlantVos = new ArrayList<>();
 
         String hql = "from DrugPlant as p where p.status<>'-1'" ;
+        String hqlCount = "select count(*) from DrugPlant as p where p.status<>'-1'" ;
         if(name!=null&&!"".equals(name)){
             hql+=" and (p.nameCn like '"+name+"' or p.nameLatin like '%"+name+"%')";
+            hqlCount+=" and (p.nameCn like '"+name+"' or p.nameLatin like '%"+name+"%')";
         }
         TypedQuery<DrugPlant> query = createQuery(DrugPlant.class, hql, new ArrayList<Object>());
+        Long counts = createQuery(Long.class,hqlCount,new ArrayList<Object>()).getSingleResult();
         Page page =new Page();
         if(perPage<=0){
             perPage=20;
@@ -54,7 +57,7 @@ public class DrugPlantFacade extends BaseFacade {
             drugPlantVos.add(drugPlantVo);
         }
         page.setData(drugPlantVos);
-        page.setCounts((long) drugPlantVos.size());
+        page.setCounts(counts);
         return page;
     }
 

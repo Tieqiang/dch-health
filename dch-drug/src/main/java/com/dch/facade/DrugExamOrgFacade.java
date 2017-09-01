@@ -35,13 +35,17 @@ public class DrugExamOrgFacade extends BaseFacade {
      */
     public Page<DrugExamOrg> getDrugExamOrgs(String orgName, String wherehql, int perPage, int currentPage) {
         String hql="from DrugExamOrg where status <> '-1' ";
+        String hqlCount="select count(*) from DrugExamOrg where status <> '-1' ";
         if(null!=orgName&&!"".equals(orgName)){
             hql += "and medicalOrgName like '%"+orgName+"%'";
+            hqlCount += "and medicalOrgName like '%"+orgName+"%'";
         }
         if(!StringUtils.isEmptyParam(wherehql)){
             hql += " and "+wherehql;
+            hqlCount += " and "+wherehql;
         }
         TypedQuery<DrugExamOrg> query = createQuery(DrugExamOrg.class, hql, new ArrayList<>());
+        Long counts = createQuery(Long.class,hqlCount,new ArrayList<Object>()).getSingleResult();
         Page page=new Page();
         if (perPage > 0) {
             query.setFirstResult(currentPage * perPage);
@@ -49,7 +53,7 @@ public class DrugExamOrgFacade extends BaseFacade {
             page.setPerPage((long) perPage);
         }
         List<DrugExamOrg> examOrgList = query.getResultList();
-        page.setCounts((long) examOrgList.size());
+        page.setCounts(counts);
         page.setData(examOrgList);
         return page;
     }

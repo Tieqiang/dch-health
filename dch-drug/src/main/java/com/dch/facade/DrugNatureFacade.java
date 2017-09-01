@@ -31,13 +31,17 @@ public class DrugNatureFacade extends BaseFacade {
     public Page<DrugNatureVo> getDrugNatures(String name, String wherehql, int perPage, int currentPage) {
         List<DrugNatureVo> drugNatureVos = new ArrayList<>();
         String hql = "from DrugNaturalActive as d where d.status<>'-1'" ;
+        String hqlCount = "select count(*) from DrugNaturalActive as d where d.status<>'-1'" ;
         if(name!=null&&!"".equals(name)){
             hql+=" and (d.drugNaturalNameCn like '%"+name+"%' or d.drugNaturalNameLatin like '%"+name+"%')";
+            hqlCount+=" and (d.drugNaturalNameCn like '%"+name+"%' or d.drugNaturalNameLatin like '%"+name+"%')";
         }
         if(wherehql!=null&&!"".equals(wherehql)){
-            hql+=wherehql ;
+            hql +=wherehql ;
+            hqlCount +=wherehql ;
         }
         TypedQuery<DrugNaturalActive> query = createQuery(DrugNaturalActive.class, hql, new ArrayList<Object>());
+        Long counts = createQuery(Long.class,hqlCount,new ArrayList<Object>()).getSingleResult();
         Page page =new Page();
         if(perPage<=0){
             perPage=20;
@@ -58,7 +62,7 @@ public class DrugNatureFacade extends BaseFacade {
             drugNatureVo.setDrugNaturalEvaluations(drugNaturalEvaluation);
             drugNatureVos.add(drugNatureVo);
         }
-        page.setCounts((long) drugNatureVos.size());
+        page.setCounts(counts);
         page.setData(drugNatureVos);
         return page;
     }

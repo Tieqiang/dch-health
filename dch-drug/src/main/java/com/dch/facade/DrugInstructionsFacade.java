@@ -37,11 +37,13 @@ public class DrugInstructionsFacade extends BaseFacade {
      */
     public Page<DrugInstruction> getDrugInstructions(String drugId, int perPage, int currentPage) {
         String hql=" from DrugInstruction where status <> '-1' ";
+        String hqlCount="select count(*) from DrugInstruction where status <> '-1' ";
         if(drugId!=null && !"".equals(drugId)){
             hql+="and drugId ='" + drugId + "' ";
+            hqlCount+="and drugId ='" + drugId + "' ";
         }
         TypedQuery<DrugInstruction> query = createQuery(DrugInstruction.class, hql, new ArrayList<>());
-
+        Long counts = createQuery(Long.class,hqlCount,new ArrayList<Object>()).getSingleResult();
         Page page =new Page();
         if (perPage > 0) {
             query.setFirstResult((currentPage-1) * perPage);
@@ -49,7 +51,7 @@ public class DrugInstructionsFacade extends BaseFacade {
             page.setPerPage((long) perPage);
         }
         List<DrugInstruction> drugInstructionList = query.getResultList();
-        page.setCounts((long) drugInstructionList.size());
+        page.setCounts(counts);
         page.setData(drugInstructionList);
         return page;
     }
