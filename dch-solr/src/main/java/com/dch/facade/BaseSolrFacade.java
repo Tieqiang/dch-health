@@ -74,7 +74,7 @@ public class BaseSolrFacade {
                 Object o = getMethod.invoke(object);//执行get方法返回一个Object
                 document.addField(field.getName(), o==null?"":o.toString());
             }
-            document.addField("tableName",clazz.getName());
+            document.addField("tableName",clazz.getSimpleName());
         } catch (SecurityException e) {
             e.printStackTrace();
         } catch (IllegalArgumentException e) {
@@ -122,6 +122,12 @@ public class BaseSolrFacade {
     public <T> List<T> getSolrObjectByParam(String param, Class<T> type) throws Exception{
         List<T> result = new ArrayList<>();
         SolrQuery query = new SolrQuery();// 查询
+        if(param==null||"".equals(param)){
+            param = "*:*";
+        }
+        if(type!=null){
+            param = param+" AND tableName:"+type.getSimpleName();
+        }
         query.setQuery(param);
         SolrDocumentList docs = httpSolrServer.query(query).getResults();
         if(docs!=null && !docs.isEmpty()){
@@ -150,7 +156,7 @@ public class BaseSolrFacade {
             param = "*:*";
         }
         if(type!=null){
-            param = param+" AND tableName:"+type.getName();
+            param = param+" AND tableName:"+type.getSimpleName();
         }
         query.setQuery(param);
         //开启高亮
@@ -231,4 +237,5 @@ public class BaseSolrFacade {
         //提交修改
         httpSolrServer.commit();
     }
+
 }

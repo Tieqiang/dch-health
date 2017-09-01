@@ -28,10 +28,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URLDecoder;
 import java.sql.Timestamp;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
 import static javax.ws.rs.core.Response.Status.OK;
 
@@ -257,4 +254,25 @@ public class CmsContentService {
         return cmsContentPage;
     }
 
+    /**
+     * 初始化solr索引库
+     * @return
+     */
+    @GET
+    @Path("init-solr-index")
+    public List<String> initSolrIndex(){
+        List<String> ids = new ArrayList<>();
+        String hql = "from CmsContent where status<>'-1' ";
+        List<CmsContent> cmsContentList = cmsContentFacade.createQuery(CmsContent.class,hql,new ArrayList<Object>()).getResultList();
+        for(int i=0;i<cmsContentList.size();i++){
+            CmsContent cmsContent = cmsContentList.get(i);
+            CmsContentVo solrContent = new CmsContentVo();
+            solrContent.setId(cmsContent.getId());
+            solrContent.setContentTitle(cmsContent.getContentTitle());
+            solrContent.setContent(getClearHtmlContent(cmsContent.getContent()));
+            baseSolrFacade.addObjectMessageToMq(solrContent);
+            ids.add(solrContent.getId());
+        }
+        return ids;
+    }
 }
