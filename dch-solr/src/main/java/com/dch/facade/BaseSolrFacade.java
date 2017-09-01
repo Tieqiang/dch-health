@@ -6,6 +6,7 @@ import com.dch.vo.DrugCommonVo;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
+import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrInputDocument;
@@ -26,6 +27,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Administrator on 2017/8/24.
@@ -72,6 +74,7 @@ public class BaseSolrFacade {
                 Object o = getMethod.invoke(object);//执行get方法返回一个Object
                 document.addField(field.getName(), o==null?"":o.toString());
             }
+            document.addField("tableName",clazz.getName());
         } catch (SecurityException e) {
             e.printStackTrace();
         } catch (IllegalArgumentException e) {
@@ -104,7 +107,7 @@ public class BaseSolrFacade {
             throw new Exception("索引信息不存在");
         }
         SolrDocument doc = docs.get(0);
-        T ret = getDto(type,doc);
+        T ret = getDto(type,doc,null);
         return ret;
     }
 
@@ -123,7 +126,7 @@ public class BaseSolrFacade {
         SolrDocumentList docs = httpSolrServer.query(query).getResults();
         if(docs!=null && !docs.isEmpty()){
             for(SolrDocument doc : docs){
-                result.add(getDto(type,doc));
+                result.add(getDto(type,doc,null));
             }
         }
         return result;
@@ -139,36 +142,73 @@ public class BaseSolrFacade {
      * @return
      * @throws Exception
      */
-    public <T> Page<T> getSolrObjectByParamAndPageParm(String param,int perPage,int currentPage, Class<T> type) throws Exception{
+    public <T> Page<T> getSolrObjectByParamAndPageParm(String param,String hlFields,int perPage,int currentPage, Class<T> type) throws Exception{
         Page<T> resul = new Page<>();
         List<T> resultList = new ArrayList<>();
         SolrQuery query = new SolrQuery();// 查询
+        if(param==null||"".equals(param)){
+            param = "*:*";
+        }
+        if(type!=null){
+            param = param+" AND tableName:"+type.getName();
+        }
         query.setQuery(param);
+        //开启高亮
+        query.setHighlight(true);
+        //高亮显示的格式
+        query.setHighlightSimplePre("<font color='red'>");
+        query.setHighlightSimplePost("</font>");
+        if(hlFields!=null && !"".equals(hlFields)){
+                //我需要那几个字段进行高亮
+                query.setParam("hl.fl", hlFields);
+
+        }
+        query.setHighlightSnippets(2);//结果分片数，默认为1
+        query.setHighlightFragsize(10000);//每个分片的最大长度，默认为100
         if(currentPage>0){
             query.setStart((currentPage-1)*perPage);
             query.setRows(perPage);
         }
-        SolrDocumentList childDocs = httpSolrServer.query(query).getResults();
+        QueryResponse queryResponse=httpSolrServer.query(query);
+        //返回所有的结果...
+        SolrDocumentList childDocs=queryResponse.getResults();
+        Map<String, Map<String, List<String>>> maplist=queryResponse.getHighlighting();
         resul.setPerPage((long)perPage);
         resul.setCounts((long)childDocs.size());
         for(SolrDocument sd : childDocs){
-            resultList.add(getDto(type,sd));
+            resultList.add(getDto(type,sd,maplist));
         }
         resul.setData(resultList);
         return resul;
     }
 
-    public <T> T getDto(Class<T> type,SolrDocument doc) throws Exception{
+    public <T> T getDto(Class<T> type,SolrDocument doc,Map<String, Map<String, List<String>>> hlMap) throws Exception{
+        Object id=doc.get("id");
+        Map<String, List<String>>  fieldMap = (hlMap==null?null:hlMap.get(id));
         T ret  = (T)Class.forName(type.getName()).newInstance();
         Field[] fileds = ret.getClass().getDeclaredFields();
         for(Field field:fileds){
             String value = doc.getFieldValue(field.getName())==null?"":doc.getFieldValue(field.getName()).toString();
             field.setAccessible(true); // 设置些属性是可以访问的
-            field.set(ret,value);
+            if(fieldMap!=null && fieldMap.get(field.getName())!=null){
+                List<String> stringlist=fieldMap.get(field.getName());
+                field.set(ret,getHlString(stringlist));
+            }else{
+                field.set(ret,value);
+            }
         }
         return ret;
     }
 
+    public String getHlString(List<String> hlList){
+        StringBuffer stringBuffer = new StringBuffer("");
+        if(hlList!=null && !hlList.isEmpty()){
+            for(String hl:hlList){
+                stringBuffer.append(hl);
+            }
+        }
+        return stringBuffer.toString();
+    }
     /**
      * 根据id删除索引操作
      * @param id
