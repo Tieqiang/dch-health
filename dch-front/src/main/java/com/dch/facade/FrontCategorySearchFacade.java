@@ -23,7 +23,8 @@ public class FrontCategorySearchFacade extends BaseFacade {
      */
     public List<DrugCommonVo> getFrontFirstCategorys() throws Exception {
 
-       return baseSolrFacade.searchDrugCommonVosById("");
+//       return baseSolrFacade.searchDrugCommonVosById("");
+       return null ;
     }
 
     /**
@@ -32,7 +33,8 @@ public class FrontCategorySearchFacade extends BaseFacade {
      * @return
      */
     public List<DrugCommonVo> getFrontChildCategorys(String categoryId) throws Exception {
-        return baseSolrFacade.searchDrugCommonVosById(categoryId);
+//        return baseSolrFacade.searchDrugCommonVosById(categoryId);
+        return null ;
     }
 
     /**
@@ -45,6 +47,7 @@ public class FrontCategorySearchFacade extends BaseFacade {
      * @throws Exception
      */
     public Page<DrugCommonVo> getFrontCategorysByKeyWords(String categoryId, String keyWords, int perPage, int currentPage) throws Exception {
-       return baseSolrFacade.searchChildDrugCommonVos(categoryId,keyWords,perPage,currentPage);
+//       return baseSolrFacade.searchChildDrugCommonVos(categoryId,keyWords,perPage,currentPage);
+        return null ;
     }
 }
