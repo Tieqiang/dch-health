@@ -38,9 +38,10 @@ public class DrugAnalysisMethodsService {
      * @return
      */
     @GET
-    @Path("get-drug-analysis-methodses")
+    @Path("/get-drug-analysis-methodses")
     public Page<DrugAnalysisMethods> getDrugAnalysisMethodses(@QueryParam("methodName") String methodName,
-                                                              @QueryParam("wherehql") String wherehql,@QueryParam("perPage")int perPage,
+                                                              @QueryParam("wherehql") String wherehql,
+                                                              @QueryParam("perPage")int perPage,
                                                               @QueryParam("currentPage")int currentPage){
 
         return drugAnalysisMethodsFacade.getDrugAnalysisMethodses(methodName,wherehql,perPage,currentPage);
