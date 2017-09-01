@@ -64,7 +64,7 @@ public class DrugFirmFacade extends BaseFacade{
                 currentPage = 1;
             }
             typedQuery.setFirstResult((currentPage-1)*perPage) ;
-            typedQuery.setMaxResults(perPage*currentPage);
+            typedQuery.setMaxResults(perPage);
             drugFirmPage.setPerPage((long)perPage);
         }
         List<DrugFirm> drugFirmList = typedQuery.getResultList();

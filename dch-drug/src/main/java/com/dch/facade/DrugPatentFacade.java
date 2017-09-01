@@ -46,7 +46,7 @@ public class DrugPatentFacade extends BaseFacade{
         drugPatentPage.setCounts(counts);
         if(currentPage>0){
             typedQuery.setFirstResult((currentPage-1)*perPage) ;
-            typedQuery.setMaxResults(perPage*currentPage);
+            typedQuery.setMaxResults(perPage);
             drugPatentPage.setPerPage((long) perPage);
         }
         List<DrugPatent> drugPatentList = typedQuery.getResultList();

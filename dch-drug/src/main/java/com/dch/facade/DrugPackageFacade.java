@@ -46,7 +46,7 @@ public class DrugPackageFacade extends BaseFacade{
         Page page=new Page();
         if (perPage > 0) {
             query.setFirstResult((currentPage-1) * perPage);
-            query.setMaxResults(currentPage * perPage);
+            query.setMaxResults(perPage);
             page.setPerPage((long) perPage);
         }
         List<DrugPackage> drugPackageList = query.getResultList();
