@@ -5,9 +5,9 @@ import java.io.Serializable;
 /**
  * Created by Administrator on 2017/8/24.
  */
-public class DrugCommonVo implements Serializable{
+public class SolrVo implements Serializable{
     private String id;
-    private String parentId;
+    private String categoryId;
     private String title;
     private String desc;
     private String label;
@@ -53,19 +53,19 @@ public class DrugCommonVo implements Serializable{
         this.category = category;
     }
 
-    public String getParentId() {
-        return parentId;
+    public String getCategoryId() {
+        return categoryId;
     }
 
-    public void setParentId(String parentId) {
-        this.parentId = parentId;
+    public void setCategoryId(String categoryId) {
+        this.categoryId = categoryId;
     }
 
     @Override
     public String toString() {
-        return "DrugCommonVo{" +
+        return "SolrVo{" +
                 "id='" + id + '\'' +
-                ", parentId='" + parentId + '\'' +
+                ", categoryId='" + categoryId + '\'' +
                 ", title='" + title + '\'' +
                 ", desc='" + desc + '\'' +
                 ", label='" + label + '\'' +

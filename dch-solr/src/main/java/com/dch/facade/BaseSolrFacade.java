@@ -1,8 +1,6 @@
 package com.dch.facade;
 
 import com.dch.facade.common.VO.Page;
-import com.dch.util.StringUtils;
-import com.dch.vo.DrugCommonVo;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;

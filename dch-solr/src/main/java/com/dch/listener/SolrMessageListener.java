@@ -1,7 +1,6 @@
 package com.dch.listener;
 
 import com.dch.facade.BaseSolrFacade;
-import com.dch.vo.DrugCommonVo;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.jms.Message;
