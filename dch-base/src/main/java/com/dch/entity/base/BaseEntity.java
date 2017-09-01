@@ -54,9 +54,7 @@ public class BaseEntity implements Serializable {
     @Basic
     @Column(name = "modify_date")
     public Timestamp getModifyDate() {
-        if(this.modifyDate==null){
-            this.modifyDate =new Timestamp(new Date().getTime());
-        }
+        this.modifyDate =new Timestamp(new Date().getTime());
         return modifyDate;
     }
 

@@ -16,7 +16,7 @@ public class CmsContent extends BaseEntity{
     private String categoryId;
     private String contentTitle;
     private String content;
-    private Date pubTime;
+    private Timestamp pubTime;
     private String pubStatus;
     private String facePic;
 
@@ -54,11 +54,11 @@ public class CmsContent extends BaseEntity{
 
     @Basic
     @Column(name = "pub_time", nullable = true)
-    public Date getPubTime() {
+    public Timestamp getPubTime() {
         return pubTime;
     }
 
-    public void setPubTime(Date pubTime) {
+    public void setPubTime(Timestamp pubTime) {
         this.pubTime = pubTime;
     }
 

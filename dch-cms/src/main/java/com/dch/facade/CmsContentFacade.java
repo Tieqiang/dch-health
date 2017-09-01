@@ -13,6 +13,7 @@ import javax.persistence.TypedQuery;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -37,8 +38,8 @@ public class CmsContentFacade extends BaseFacade{
                                         String title, String categoryId,
                                         Timestamp startTime, Timestamp stopTime, String pubStatus) {
 
-        String hql = "from CmsContent as c where c.status<>'-1'" ;
-        String hqlCount = "select count(*) from CmsContent as c where c.status<>'-1'" ;
+        String hql = "from CmsContent as c where c.status<>'-1' and c.pubStatus='1' and c.pubTime<=:nowDate" ;
+        String hqlCount = "select count(*) from CmsContent as c where c.status<>'-1' and c.pubStatus='1' and c.pubTime<=:nowDate" ;
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         if(!strIsNull(whereHql)){
             hql+=whereHql;
@@ -68,11 +69,13 @@ public class CmsContentFacade extends BaseFacade{
             hqlCount+=" and c.pubStatus="+pubStatus;
         }
 
-        hql+=" order by c.createDate desc" ;
-        hqlCount+=" order by c.createDate desc" ;
+        hql+=" order by c.pubTime desc" ;
+        hqlCount+=" order by c.pubTime desc" ;
         Page<CmsContent> cmsContentPage = new Page<>() ;
         TypedQuery<CmsContent> cms = createQuery(CmsContent.class, hql, new ArrayList<Object>());
         TypedQuery<Long> longTypedQuery = createQuery(Long.class, hqlCount, new ArrayList<Object>());
+        cms.setParameter("nowDate",new Timestamp(new Date().getTime()),TemporalType.TIMESTAMP);
+        longTypedQuery.setParameter("nowDate",new Timestamp(new Date().getTime()),TemporalType.TIMESTAMP);
 
         if(startTime!=null){
             cms.setParameter("startDate",startTime,TemporalType.TIMESTAMP);
