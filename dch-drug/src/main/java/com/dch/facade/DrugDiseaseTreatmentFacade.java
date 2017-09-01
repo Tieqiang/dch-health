@@ -21,12 +21,21 @@ public class DrugDiseaseTreatmentFacade extends BaseFacade {
      *@param currentPage @return
      */
     public Page<DrugDiseaseTreatmentGuide> getTreatments(String guideName, int perPage, int currentPage) {
+        Page page =new Page();
         String hql="from DrugDiseaseTreatmentGuide where status <> '-1' ";
+        String hqlCount = "select count(*) from DrugDiseaseTreatmentGuide where status <> '-1' ";
         if(null!=guideName&&!"".equals(guideName)){
             hql+="and guideName like '%"+guideName+"%'";
+            hqlCount += "and guideName like '%"+guideName+"%'";
         }
         TypedQuery<DrugDiseaseTreatmentGuide> query = createQuery(DrugDiseaseTreatmentGuide.class, hql, new ArrayList<>());
-        Page page =new Page();
+        Long counts = createQuery(Long.class,hqlCount,new ArrayList<Object>()).getSingleResult();
+        if(perPage<=0){
+            perPage = 20;
+        }
+        if(currentPage<=0){
+            currentPage =1;
+        }
         if (perPage > 0) {
             query.setFirstResult((currentPage-1) * perPage);
             query.setMaxResults(currentPage * perPage);
@@ -34,7 +43,7 @@ public class DrugDiseaseTreatmentFacade extends BaseFacade {
         }
         List<DrugDiseaseTreatmentGuide> treatmentGuideList = query.getResultList();
         page.setData(treatmentGuideList);
-        page.setCounts((long) treatmentGuideList.size());
+        page.setCounts(counts);
         return page;
     }
 
