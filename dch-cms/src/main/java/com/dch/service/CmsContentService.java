@@ -3,9 +3,12 @@ package com.dch.service;
 import com.dch.entity.CmsCategory;
 import com.dch.entity.CmsContent;
 import com.dch.entity.CmsContentLabel;
+import com.dch.facade.BaseSolrFacade;
 import com.dch.facade.CmsContentFacade;
 import com.dch.facade.common.VO.Page;
 import com.dch.util.StringUtils;
+import com.dch.util.StringUtils;
+import com.dch.vo.CmsContentVo;
 import com.sun.jersey.core.header.FormDataContentDisposition;
 import com.sun.jersey.multipart.FormDataParam;
 import org.mortbay.util.StringUtil;
@@ -43,6 +46,9 @@ public class CmsContentService {
     @Autowired
     private CmsContentFacade cmsContentFacade ;
 
+    @Autowired
+    private BaseSolrFacade baseSolrFacade;
+
 
     /**
      * 添加、删除、修改内容信息
@@ -53,9 +59,28 @@ public class CmsContentService {
     @Path("merge-content")
     @Transactional
     public CmsContent mergeContent(CmsContent cmsContent){
+        CmsContent merge = cmsContentFacade.merge(cmsContent);
+        CmsContentVo solrContent = new CmsContentVo();
+        solrContent.setId(merge.getId());
+        solrContent.setContentTitle(merge.getContentTitle());
+        solrContent.setContent(getClearHtmlContent(merge.getContent()));
+        baseSolrFacade.addObjectMessageToMq(solrContent);
         return cmsContentFacade.merge(cmsContent);
     }
 
+    /**
+     * 去除内容中的html标签和特殊字符
+     * @param content
+     * @return
+     */
+    public static String getClearHtmlContent(String content){
+        if(content==null||"".equals(content)){
+            return content;
+        }
+        content = content.replaceAll("</?[^>]+>", "");
+        content = content.replaceAll("\\&[a-zA-Z]{1,10};", "");
+        return content;
+    }
     /**
      * 获取新闻列表
      * @param perPage         每页显示条数
@@ -201,6 +226,35 @@ public class CmsContentService {
         fileOutputStream.close();
         return Response.status(Response.Status.OK).entity(filePath).build();
 
+    }
+
+    /**
+     * 根据输入关键字，分页信息检索查询新闻信息
+     * @param keywords
+     * @param perPage
+     * @param currentPage
+     * @return
+     * @throws Exception
+     */
+    @GET
+    @Path("get-cms-content-by-solr")
+    public Page<CmsContentVo> getCmsContentBySolr(@QueryParam("keywords")String keywords,@QueryParam("perPage")int perPage,
+                                                @QueryParam("currentPage")int currentPage) throws Exception{
+        if(perPage<=0){
+            perPage = 20;
+        }
+        if(perPage>0){
+            if(currentPage<=0){
+                currentPage =1;
+            }
+        }
+        String param = "";
+        if(!StringUtils.isEmptyParam(keywords)){
+            param +=  "keywords:"+keywords;
+        }
+        String hl = "content,contentTitle";
+        Page<CmsContentVo> cmsContentPage = baseSolrFacade.getSolrObjectByParamAndPageParm(param,hl,perPage,currentPage,CmsContentVo.class);
+        return cmsContentPage;
     }
 
 }

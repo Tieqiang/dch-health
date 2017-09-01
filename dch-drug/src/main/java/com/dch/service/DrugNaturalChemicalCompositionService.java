@@ -2,18 +2,17 @@ package com.dch.service;
 
 import com.dch.entity.DrugNaturalChemicalComposition;
 import com.dch.facade.DrugNaturalChemicalCompositionFacade;
+import com.dch.facade.common.VO.Page;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.*;
 import java.util.List;
 
 /**
  * Created by Administrator on 2017/8/22.
  */
+@Produces("application/json")
 @Controller
 @Path("drug/drug-chemical-composition")
 public class DrugNaturalChemicalCompositionService {
@@ -29,9 +28,10 @@ public class DrugNaturalChemicalCompositionService {
      */
     @GET
     @Path("get-drug-chemical-compositions")
-    public List<DrugNaturalChemicalComposition> getDrugNaturalChemicalCompsitions(@QueryParam("name") String name,
-                                                                                  @QueryParam("wherehql")String wherehql){
-        return compositionFacade.getDrugNaturalChemicalCompsitions(name,wherehql);
+    public Page<DrugNaturalChemicalComposition> getDrugNaturalChemicalCompsitions(@QueryParam("name") String name,
+                                                                                  @QueryParam("wherehql")String wherehql, @QueryParam("name") int perPage,
+                                                                                  @QueryParam("currentPage")int currentPage){
+        return compositionFacade.getDrugNaturalChemicalCompsitions(name,wherehql,perPage,currentPage);
     }
 
     /**

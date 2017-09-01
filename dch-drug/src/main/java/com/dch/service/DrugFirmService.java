@@ -2,6 +2,7 @@ package com.dch.service;
 
 import com.dch.entity.DrugFirm;
 import com.dch.facade.DrugFirmFacade;
+import com.dch.facade.common.VO.Page;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
@@ -40,8 +41,9 @@ public class DrugFirmService {
      */
     @GET
     @Path("get-drug-firms")
-    public List<DrugFirm> getDrugFirms(@QueryParam("inputCode")String inputCode,@QueryParam("firmName")String firmName){
-        return drugFirmFacade.getDrugFirms(inputCode,firmName);
+    public Page<DrugFirm> getDrugFirms(@QueryParam("inputCode")String inputCode, @QueryParam("firmName")String firmName,
+                                       @QueryParam("perPage")int perPage, @QueryParam("currentPage")int currentPage){
+        return drugFirmFacade.getDrugFirms(inputCode,firmName,perPage,currentPage);
     }
 
     /**
