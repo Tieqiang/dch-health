@@ -24,7 +24,7 @@ public class DrugClassFacade extends BaseFacade{
                 throw new Exception("药品分类名称不能重复，请重新添加");
             }
         }else{
-            List<DrugClass> drugClassList = getChildDrugClassList(drugClass.getParentId());
+            List<DrugClass> drugClassList = getChildDrugClassList(drugClass.getId());
             if(drugClassList!=null && !drugClassList.isEmpty()){
                 throw new Exception("药品类别下有子分类，请先删除子分类");
             }
@@ -39,6 +39,8 @@ public class DrugClassFacade extends BaseFacade{
         }
         if(parentId==null||"".equals(parentId)){
             hql += " and (parentId is null or parentId='')";
+        }else{
+            hql += " and parentId = '"+parentId+"'";
         }
         if(!StringUtils.isEmptyParam(selfId)){
             hql += " and id <> '"+selfId+"'";
