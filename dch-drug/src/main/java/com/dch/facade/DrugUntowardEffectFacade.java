@@ -35,10 +35,13 @@ public class DrugUntowardEffectFacade extends BaseFacade {
      */
     public Page<DrugUntowardEffect> getDrugUntowardEffects(String drugId, int perPage, int currentPage) {
         String hql="from DrugUntowardEffect where status <> '-1' ";
+        String hqlCount="select count(*) from DrugUntowardEffect where status <> '-1' ";
         if(drugId!=null && !"".equals(drugId)){
             hql+="and drugId= '" + drugId + "' ";
+            hqlCount+="and drugId= '" + drugId + "' ";
         }
         TypedQuery<DrugUntowardEffect> query = createQuery(DrugUntowardEffect.class, hql, new ArrayList<>());
+        Long counts = createQuery(Long.class,hqlCount,new ArrayList<Object>()).getSingleResult();
         Page page =new Page();
         if (perPage > 0) {
             query.setFirstResult((currentPage-1) * perPage);
@@ -46,7 +49,7 @@ public class DrugUntowardEffectFacade extends BaseFacade {
             page.setPerPage((long) perPage);
         }
         List<DrugUntowardEffect> drugUntowardEffectList = query.getResultList();
-        page.setCounts((long) drugUntowardEffectList.size());
+        page.setCounts(counts);
         page.setData(drugUntowardEffectList);
         return page;
     }

@@ -29,35 +29,32 @@ public class DrugAnalysisMethodsFacade extends BaseFacade {
      *
      * @param methodName
      * @param wherehql
-     * @return
+     * @param perPage
+     *@param currentPage @return
      */
-    public Page<DrugAnalysisMethods> getDrugAnalysisMethodses(String methodName, String wherehql,int perPage,int currentPage) {
-        Page<DrugAnalysisMethods> drugAnalysisMethodsPage = new Page<>();
+    public Page<DrugAnalysisMethods> getDrugAnalysisMethodses(String methodName, String wherehql, int perPage, int currentPage) {
         String hql="from DrugAnalysisMethods where status <> '-1' ";
-        String hqlCount = "select count(*) from DrugAnalysisMethods where status <> '-1' ";
+        String hqlCount="select count(*) from DrugAnalysisMethods where status <> '-1' ";
         if(null!=methodName&&!"".equals(methodName)){
-            hql+="and methodName like '%"+methodName+"%'";
-            hqlCount += "and methodName like '%"+methodName+"%'";
+            hql+="and guideName like '%"+methodName+"%'";
+            hqlCount+="and guideName like '%"+methodName+"%'";
         }
         if(!StringUtils.isEmptyParam(wherehql)){
             hql += " and "+wherehql;
-            hqlCount +=" and "+wherehql;
+            hqlCount += " and "+wherehql;
         }
-        TypedQuery<DrugAnalysisMethods> typedQuery = createQuery(DrugAnalysisMethods.class,hql,new ArrayList<Object>());
+        TypedQuery<DrugAnalysisMethods> query = createQuery(DrugAnalysisMethods.class, hql, new ArrayList<>());
         Long counts = createQuery(Long.class,hqlCount,new ArrayList<Object>()).getSingleResult();
-        drugAnalysisMethodsPage.setCounts(counts);
-        if(perPage<=0){
-            perPage =100;
+        Page page =new Page();
+        if (perPage > 0) {
+            query.setFirstResult((currentPage-1) * perPage);
+            query.setMaxResults(currentPage * perPage);
+            page.setPerPage((long) perPage);
         }
-        if(currentPage<=0){
-            currentPage=1;
-        }
-        typedQuery.setFirstResult((currentPage-1)*perPage);
-        typedQuery.setMaxResults(currentPage*perPage);
-        drugAnalysisMethodsPage.setPerPage((long)perPage);
-        List<DrugAnalysisMethods> drugAnalysisMethodsList = typedQuery.getResultList();
-        drugAnalysisMethodsPage.setData(drugAnalysisMethodsList);
-        return drugAnalysisMethodsPage;
+        List<DrugAnalysisMethods> drugAnalysisMethodsList = query.getResultList();
+        page.setCounts(counts);
+        page.setData(drugAnalysisMethodsList);
+        return page;
     }
 
     /**

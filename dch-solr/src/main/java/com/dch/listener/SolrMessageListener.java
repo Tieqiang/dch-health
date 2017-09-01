@@ -30,7 +30,7 @@ public class SolrMessageListener implements MessageListener {
             baseSolrFacade.sendIndexToSolr(objectMessage.getObject());
         } catch (Exception e) {
             e.printStackTrace();
-        }
+    }
 
     }
 }

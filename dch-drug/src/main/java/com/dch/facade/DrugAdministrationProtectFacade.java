@@ -34,10 +34,13 @@ public class DrugAdministrationProtectFacade extends BaseFacade {
      */
     public Page<DrugAdministrationProtect> getAdministrationProtects(String drugId, int perPage, int currentPage) {
         String hql="from DrugAdministrationProtect where status <> '-1' ";
+        String hqlCount="select count(*) from DrugAdministrationProtect where status <> '-1' ";
         if(drugId!=null && !"".equals(drugId)){
             hql+="and drugId = '" +drugId+ "'";
+            hqlCount+="and drugId = '" +drugId+ "'";
         }
         TypedQuery<DrugAdministrationProtect> query = createQuery(DrugAdministrationProtect.class, hql, new ArrayList<>());
+        Long counts = createQuery(Long.class,hqlCount,new ArrayList<Object>()).getSingleResult();
         Page page =new Page();
         if (perPage > 0) {
             query.setFirstResult((currentPage-1) * perPage);
@@ -46,7 +49,7 @@ public class DrugAdministrationProtectFacade extends BaseFacade {
         }
         List<DrugAdministrationProtect> drugAdministrationProtectList = query.getResultList();
         page.setData(drugAdministrationProtectList);
-        page.setCounts((long) drugAdministrationProtectList.size());
+        page.setCounts(counts);
         return page;
     }
 

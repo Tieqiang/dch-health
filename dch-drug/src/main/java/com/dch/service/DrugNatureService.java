@@ -2,6 +2,7 @@ package com.dch.service;
 
 import com.dch.entity.DrugNaturalActive;
 import com.dch.facade.DrugNatureFacade;
+import com.dch.facade.common.VO.Page;
 import com.dch.vo.DrugNatureVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -30,8 +31,11 @@ public class DrugNatureService {
      */
     @GET
     @Path("get-drug-natures")
-    public List<DrugNatureVo> getDrugNatures(@QueryParam("name") String name,@QueryParam("wherehql") String wherehql){
-        return drugNatureFacade.getDrugNatures(name,wherehql);
+    public Page<DrugNatureVo> getDrugNatures(@QueryParam("name") String name,
+                                             @QueryParam("wherehql") String wherehql,
+                                             @QueryParam("perPage") int perPage,
+                                             @QueryParam("currentPage")int currentPage){
+        return drugNatureFacade.getDrugNatures(name,wherehql,perPage,currentPage);
     }
 
     /**

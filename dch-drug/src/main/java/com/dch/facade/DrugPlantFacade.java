@@ -3,10 +3,12 @@ package com.dch.facade;
 import com.dch.entity.DrugPlant;
 import com.dch.entity.DrugPlantPicture;
 import com.dch.facade.common.BaseFacade;
+import com.dch.facade.common.VO.Page;
 import com.dch.vo.DrugPlantVo;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.TypedQuery;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,25 +20,45 @@ public class DrugPlantFacade extends BaseFacade {
     /**
      * 查询药用植物
      * @param name
-     * @return
+     * @param perPage
+     *@param currentPage @return
      */
-    public List<DrugPlantVo> getDrugPlants(String name) {
+    public Page<DrugPlantVo> getDrugPlants(String name, int perPage, int currentPage) {
 
         List<DrugPlantVo> drugPlantVos = new ArrayList<>();
 
         String hql = "from DrugPlant as p where p.status<>'-1'" ;
+        String hqlCount = "select count(*) from DrugPlant as p where p.status<>'-1'" ;
         if(name!=null&&!"".equals(name)){
             hql+=" and (p.nameCn like '"+name+"' or p.nameLatin like '%"+name+"%')";
+            hqlCount+=" and (p.nameCn like '"+name+"' or p.nameLatin like '%"+name+"%')";
         }
-        List<DrugPlant> drugPlants = createQuery(DrugPlant.class,hql,new ArrayList<Object>()).getResultList();
-        for(DrugPlant plant :drugPlants){
+        TypedQuery<DrugPlant> query = createQuery(DrugPlant.class, hql, new ArrayList<Object>());
+        Long counts = createQuery(Long.class,hqlCount,new ArrayList<Object>()).getSingleResult();
+        Page page =new Page();
+        if(perPage<=0){
+            perPage=20;
+        }
+        if (perPage > 0) {
+            if(currentPage<=0){
+                currentPage =1;
+            }
+            query.setFirstResult((currentPage-1) * perPage);
+            query.setMaxResults(currentPage * perPage);
+            page.setPerPage((long) perPage);
+        }
+        List<DrugPlant> drugPlantList = query.getResultList();
+
+        for(DrugPlant plant :drugPlantList){
             List<DrugPlantPicture> drugPlantPictures= getDrugPlantPictures(plant.getId());
             DrugPlantVo drugPlantVo = new DrugPlantVo();
             drugPlantVo.setDrugPlant(plant);
             drugPlantVo.setDrugPlantPictures(drugPlantPictures);
             drugPlantVos.add(drugPlantVo);
         }
-        return drugPlantVos;
+        page.setData(drugPlantVos);
+        page.setCounts(counts);
+        return page;
     }
 
     /**

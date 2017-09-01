@@ -208,7 +208,7 @@ public class CmsContentFacade extends BaseFacade{
         if(resultList.size()>0){
             return resultList.get(0);
         }else{
-            throw new Exception("没有找到结果");
+            return null;
         }
 
     }
