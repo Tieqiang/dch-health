@@ -51,7 +51,7 @@ public class DrugNatureFacade extends BaseFacade {
                 currentPage =1;
             }
             query.setFirstResult((currentPage-1) * perPage);
-            query.setMaxResults(currentPage * perPage);
+            query.setMaxResults(perPage);
             page.setPerPage((long) perPage);
         }
         List<DrugNaturalActive> drugNaturalActives =query.getResultList();

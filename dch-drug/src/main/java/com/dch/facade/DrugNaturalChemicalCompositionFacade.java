@@ -38,7 +38,7 @@ public class DrugNaturalChemicalCompositionFacade extends BaseFacade {
                 currentPage =1;
             }
             typedQuery.setFirstResult((currentPage-1)*perPage);
-            typedQuery.setMaxResults(currentPage*perPage);
+            typedQuery.setMaxResults(perPage);
             drugNaturalChemicalCompositionPage.setPerPage((long)perPage);
         }
         List<DrugNaturalChemicalComposition> drugNaturalChemicalCompositionList = typedQuery.getResultList();
