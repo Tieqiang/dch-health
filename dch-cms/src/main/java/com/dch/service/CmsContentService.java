@@ -234,7 +234,7 @@ public class CmsContentService {
      * @throws Exception
      */
     @GET
-    @Path("get-cms-content-by-solr")
+    @Path("get-cms-contents-by-solr")
     public Page<CmsContentVo> getCmsContentBySolr(@QueryParam("keywords")String keywords,@QueryParam("perPage")int perPage,
                                                 @QueryParam("currentPage")int currentPage) throws Exception{
         if(perPage<=0){
