@@ -65,7 +65,7 @@ public class CmsContentService {
         solrContent.setContentTitle(merge.getContentTitle());
         solrContent.setContent(getClearHtmlContent(merge.getContent()));
         baseSolrFacade.addObjectMessageToMq(solrContent);
-        return cmsContentFacade.merge(cmsContent);
+        return merge;
     }
 
     /**
