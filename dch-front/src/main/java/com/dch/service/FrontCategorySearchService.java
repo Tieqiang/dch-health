@@ -3,7 +3,7 @@ package com.dch.service;
 import com.dch.entity.FrontSearchCategory;
 import com.dch.facade.FrontCategorySearchFacade;
 import com.dch.facade.common.VO.Page;
-import com.dch.vo.DrugCommonVo;
+import com.dch.vo.SolrVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
@@ -26,7 +26,7 @@ public class FrontCategorySearchService {
      */
     @GET
     @Path("get-first-categorys")
-    public List<DrugCommonVo> getFrontFirstCategorys() throws Exception {
+    public List<FrontSearchCategory> getFrontFirstCategorys() throws Exception {
         return frontCategorySearchFacade.getFrontFirstCategorys();
     }
 
@@ -37,7 +37,7 @@ public class FrontCategorySearchService {
      */
     @Path("get-child-categorys")
     @GET
-    public List<DrugCommonVo> getFrontChildCategorys(@QueryParam("categoryId") String categoryId) throws Exception {
+    public List<FrontSearchCategory> getFrontChildCategorys(@QueryParam("categoryId") String categoryId) throws Exception {
 
         return frontCategorySearchFacade.getFrontChildCategorys(categoryId);
     }
@@ -53,10 +53,10 @@ public class FrontCategorySearchService {
      */
     @Path("get-categorys-by-keywords")
     @GET
-    public Page<DrugCommonVo> getFrontCategorysByKeyWords(@QueryParam("categoryId") String categoryId,
-                                                          @QueryParam("keyWords") String keyWords,
-                                                          @QueryParam("perPage") int perPage,
-                                                          @QueryParam("currentPage") int currentPage) throws Exception {
+    public Page<SolrVo> getFrontCategorysByKeyWords(@QueryParam("categoryId") String categoryId,
+                                                    @QueryParam("keyWords") String keyWords,
+                                                    @QueryParam("perPage") int perPage,
+                                                    @QueryParam("currentPage") int currentPage) throws Exception {
         return frontCategorySearchFacade.getFrontCategorysByKeyWords(categoryId,keyWords,perPage,currentPage);
     }
 }

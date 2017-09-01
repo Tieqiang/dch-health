@@ -3,7 +3,8 @@ package com.dch.facade;
 import com.dch.entity.FrontSearchCategory;
 import com.dch.facade.common.BaseFacade;
 import com.dch.facade.common.VO.Page;
-import com.dch.vo.DrugCommonVo;
+import com.dch.util.StringUtils;
+import com.dch.vo.SolrVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -21,10 +22,9 @@ public class FrontCategorySearchFacade extends BaseFacade {
      * 查询一级分类信息
      * @return
      */
-    public List<DrugCommonVo> getFrontFirstCategorys() throws Exception {
-
-//       return baseSolrFacade.searchDrugCommonVosById("");
-       return null ;
+    public List<FrontSearchCategory> getFrontFirstCategorys() throws Exception {
+        String hql=" from FrontSearchCategory where status <> '-1' and parentId is null";
+        return createQuery(FrontSearchCategory.class,hql,new ArrayList<>()).getResultList();
     }
 
     /**
@@ -32,9 +32,9 @@ public class FrontCategorySearchFacade extends BaseFacade {
      * @param categoryId
      * @return
      */
-    public List<DrugCommonVo> getFrontChildCategorys(String categoryId) throws Exception {
-//        return baseSolrFacade.searchDrugCommonVosById(categoryId);
-        return null ;
+    public List<FrontSearchCategory> getFrontChildCategorys(String categoryId) throws Exception {
+        String hql=" from FrontSearchCategory where status <> '-1' and parentId ='"+categoryId+"'";
+        return createQuery(FrontSearchCategory.class,hql,new ArrayList<>()).getResultList();
     }
 
     /**
@@ -46,8 +46,19 @@ public class FrontCategorySearchFacade extends BaseFacade {
      * @return
      * @throws Exception
      */
-    public Page<DrugCommonVo> getFrontCategorysByKeyWords(String categoryId, String keyWords, int perPage, int currentPage) throws Exception {
-//       return baseSolrFacade.searchChildDrugCommonVos(categoryId,keyWords,perPage,currentPage);
-        return null ;
+    public Page<SolrVo> getFrontCategorysByKeyWords(String categoryId, String keyWords, int perPage, int currentPage) throws Exception {
+        if(StringUtils.isEmptyParam(categoryId) && StringUtils.isEmptyParam(keyWords)){
+            throw new Exception("参数为空！");
+        }
+        String param="";
+        if(categoryId!=null && !"".equals(categoryId)){
+            param +=  "content_keywords:"+categoryId+"AND";
+        }
+
+        if(keyWords!=null && !"".equals(keyWords)){
+            param +=  "content_keywords:"+keyWords;
+        }
+        String hl="title,label,desc";
+        return baseSolrFacade.getSolrObjectByParamAndPageParm(param,hl,perPage,currentPage,SolrVo.class);
     }
 }
