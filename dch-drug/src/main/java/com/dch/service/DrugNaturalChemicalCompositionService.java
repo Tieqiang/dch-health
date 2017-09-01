@@ -29,7 +29,7 @@ public class DrugNaturalChemicalCompositionService {
     @GET
     @Path("get-drug-chemical-compositions")
     public Page<DrugNaturalChemicalComposition> getDrugNaturalChemicalCompsitions(@QueryParam("name") String name,
-                                                                                  @QueryParam("wherehql")String wherehql, @QueryParam("name") int perPage,
+                                                                                  @QueryParam("wherehql")String wherehql, @QueryParam("perPage") int perPage,
                                                                                   @QueryParam("currentPage")int currentPage){
         return compositionFacade.getDrugNaturalChemicalCompsitions(name,wherehql,perPage,currentPage);
     }

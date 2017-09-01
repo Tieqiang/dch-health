@@ -3,11 +3,13 @@ package com.dch.facade;
 import com.dch.entity.DrugBaseInfo;
 import com.dch.entity.DrugNameDict;
 import com.dch.facade.common.BaseFacade;
+import com.dch.facade.common.VO.Page;
 import com.dch.util.PinYin2Abbreviation;
 import com.dch.util.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.TypedQuery;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -45,16 +47,33 @@ public class DrugNameFacade extends BaseFacade{
         return merge(drugNameDict);
     }
 
-    public List<DrugNameDict> getDrugNames(String drugCode, String inputCode) {
+    public Page<DrugNameDict> getDrugNames(String drugCode, String inputCode, int perPage, int currentPage) {
+        Page<DrugNameDict> drugNameDictPage = new Page<>();
         String hql = " from DrugNameDict where status<>'-1' ";
+        String hqlCount = "select count(*) from DrugNameDict where status<>'-1' ";
         if(!StringUtils.isEmptyParam(drugCode)){
             hql +=" and drugCode = '"+drugCode+"'";
+            hqlCount += " and drugCode = '"+drugCode+"'";
         }
         if(!StringUtils.isEmptyParam(inputCode)){
             hql += " and upper(inputCode) like '%"+inputCode.toUpperCase()+"%'";
+            hqlCount += " and upper(inputCode) like '%"+inputCode.toUpperCase()+"%'";
         }
-        List<DrugNameDict> drugNameDicts = createQuery(DrugNameDict.class,hql,new ArrayList<Object>()).getResultList();
-        return drugNameDicts;
+        TypedQuery<DrugNameDict> typedQuery = createQuery(DrugNameDict.class,hql,new ArrayList<Object>());
+        Long counts =  createQuery(Long.class,hqlCount,new ArrayList<Object>()).getSingleResult();
+        drugNameDictPage.setCounts(counts);
+        if(perPage<=0){
+            perPage =100;
+        }
+        if(currentPage<=0){
+            currentPage=1;
+        }
+        typedQuery.setFirstResult((currentPage-1)*perPage);
+        typedQuery.setMaxResults(currentPage*perPage);
+        drugNameDictPage.setPerPage((long)perPage);
+        List<DrugNameDict> drugNameDictList = typedQuery.getResultList();
+        drugNameDictPage.setData(drugNameDictList);
+        return drugNameDictPage;
     }
 
     public DrugNameDict getDrugName(String nameId) throws Exception{

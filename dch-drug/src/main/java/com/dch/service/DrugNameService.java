@@ -2,6 +2,7 @@ package com.dch.service;
 
 import com.dch.entity.DrugNameDict;
 import com.dch.facade.DrugNameFacade;
+import com.dch.facade.common.VO.Page;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
@@ -40,8 +41,9 @@ public class DrugNameService {
      */
     @GET
     @Path("get-drug-names")
-    public List<DrugNameDict> getDrugNames(@QueryParam("drugCode")String drugCode,@QueryParam("inputCode")String inputCode){
-        return drugNameFacade.getDrugNames(drugCode,inputCode);
+    public Page<DrugNameDict> getDrugNames(@QueryParam("drugCode")String drugCode, @QueryParam("inputCode")String inputCode,
+                                           @QueryParam("perPage")int perPage,@QueryParam("currentPage")int currentPage){
+        return drugNameFacade.getDrugNames(drugCode,inputCode,perPage,currentPage);
     }
 
     /**
