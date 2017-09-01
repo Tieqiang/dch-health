@@ -3,6 +3,7 @@ package com.dch.service;
 import com.dch.entity.DrugAnalysisMethods;
 import com.dch.entity.DrugExamOrg;
 import com.dch.facade.DrugAnalysisMethodsFacade;
+import com.dch.facade.common.VO.Page;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
@@ -38,10 +39,12 @@ public class DrugAnalysisMethodsService {
      */
     @GET
     @Path("/get-drug-analysis-methodses")
-    public List<DrugAnalysisMethods> getDrugAnalysisMethodses(@QueryParam("methodName") String methodName,
-                                             @QueryParam("wherehql") String wherehql){
+    public Page<DrugAnalysisMethods> getDrugAnalysisMethodses(@QueryParam("methodName") String methodName,
+                                                              @QueryParam("wherehql") String wherehql,
+                                                              @QueryParam("perPage")int perPage,
+                                                              @QueryParam("currentPage")int currentPage){
 
-        return drugAnalysisMethodsFacade.getDrugAnalysisMethodses(methodName,wherehql);
+        return drugAnalysisMethodsFacade.getDrugAnalysisMethodses(methodName,wherehql,perPage,currentPage);
     }
 
     /**

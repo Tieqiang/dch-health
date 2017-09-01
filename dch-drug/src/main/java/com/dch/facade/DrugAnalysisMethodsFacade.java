@@ -3,9 +3,11 @@ package com.dch.facade;
 import com.dch.entity.DrugAnalysisMethods;
 import com.dch.entity.DrugDiseaseTreatmentGuide;
 import com.dch.facade.common.BaseFacade;
+import com.dch.facade.common.VO.Page;
 import com.dch.util.StringUtils;
 import org.springframework.stereotype.Component;
 
+import javax.persistence.TypedQuery;
 import javax.transaction.Transactional;
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
@@ -27,9 +29,10 @@ public class DrugAnalysisMethodsFacade extends BaseFacade {
      *
      * @param methodName
      * @param wherehql
-     * @return
+     * @param perPage
+     *@param currentPage @return
      */
-    public List<DrugAnalysisMethods> getDrugAnalysisMethodses(String methodName, String wherehql) {
+    public Page<DrugAnalysisMethods> getDrugAnalysisMethodses(String methodName, String wherehql, int perPage, int currentPage) {
         String hql="from DrugAnalysisMethods where status <> '-1' ";
         if(null!=methodName&&!"".equals(methodName)){
             hql+="and guideName like '%"+methodName+"%'";
@@ -37,8 +40,17 @@ public class DrugAnalysisMethodsFacade extends BaseFacade {
         if(!StringUtils.isEmptyParam(wherehql)){
             hql += " and "+wherehql;
         }
-        return createQuery(DrugAnalysisMethods.class,hql,new ArrayList<>()).getResultList();
-
+        TypedQuery<DrugAnalysisMethods> query = createQuery(DrugAnalysisMethods.class, hql, new ArrayList<>());
+        Page page =new Page();
+        if (perPage > 0) {
+            query.setFirstResult((currentPage-1) * perPage);
+            query.setMaxResults(currentPage * perPage);
+            page.setPerPage((long) perPage);
+        }
+        List<DrugAnalysisMethods> drugAnalysisMethodsList = query.getResultList();
+        page.setCounts((long) drugAnalysisMethodsList.size());
+        page.setData(drugAnalysisMethodsList);
+        return page;
     }
 
     /**

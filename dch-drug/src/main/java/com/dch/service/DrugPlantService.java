@@ -1,6 +1,7 @@
 package com.dch.service;
 
 import com.dch.facade.DrugPlantFacade;
+import com.dch.facade.common.VO.Page;
 import com.dch.vo.DrugPlantVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -28,8 +29,10 @@ public class DrugPlantService {
      */
     @GET
     @Path("get-drug-plants")
-    public List<DrugPlantVo> getDrugPlants(@QueryParam("name") String name){
-        return drugPlantFacade.getDrugPlants(name) ;
+    public Page<DrugPlantVo> getDrugPlants(@QueryParam("name") String name,
+                                           @QueryParam("perPage") int perPage,
+                                           @QueryParam("currentPage")int currentPage){
+        return drugPlantFacade.getDrugPlants(name,perPage,currentPage) ;
     }
 
 

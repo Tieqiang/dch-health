@@ -3,10 +3,12 @@ package com.dch.facade;
 import com.dch.entity.DrugNaturalActive;
 import com.dch.entity.DrugNaturalEvaluation;
 import com.dch.facade.common.BaseFacade;
+import com.dch.facade.common.VO.Page;
 import com.dch.vo.DrugNatureVo;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.TypedQuery;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,9 +25,10 @@ public class DrugNatureFacade extends BaseFacade {
      *  获取药物活性列表
      * @param name
      * @param wherehql
-     * @return
+     * @param perPage
+     *@param currentPage @return
      */
-    public List<DrugNatureVo> getDrugNatures(String name, String wherehql) {
+    public Page<DrugNatureVo> getDrugNatures(String name, String wherehql, int perPage, int currentPage) {
         List<DrugNatureVo> drugNatureVos = new ArrayList<>();
         String hql = "from DrugNaturalActive as d where d.status<>'-1'" ;
         if(name!=null&&!"".equals(name)){
@@ -34,7 +37,20 @@ public class DrugNatureFacade extends BaseFacade {
         if(wherehql!=null&&!"".equals(wherehql)){
             hql+=wherehql ;
         }
-        List<DrugNaturalActive> drugNaturalActives =createQuery(DrugNaturalActive.class,hql,new ArrayList<Object>()).getResultList();
+        TypedQuery<DrugNaturalActive> query = createQuery(DrugNaturalActive.class, hql, new ArrayList<Object>());
+        Page page =new Page();
+        if(perPage<=0){
+            perPage=20;
+        }
+        if (perPage > 0) {
+            if(currentPage<=0){
+                currentPage =1;
+            }
+            query.setFirstResult((currentPage-1) * perPage);
+            query.setMaxResults(currentPage * perPage);
+            page.setPerPage((long) perPage);
+        }
+        List<DrugNaturalActive> drugNaturalActives =query.getResultList();
         for(DrugNaturalActive drugNaturalActive:drugNaturalActives){
             List<DrugNaturalEvaluation> drugNaturalEvaluation = getDrugNaturalEvaluation(drugNaturalActive.getId());
             DrugNatureVo drugNatureVo = new DrugNatureVo();
@@ -42,7 +58,9 @@ public class DrugNatureFacade extends BaseFacade {
             drugNatureVo.setDrugNaturalEvaluations(drugNaturalEvaluation);
             drugNatureVos.add(drugNatureVo);
         }
-        return drugNatureVos;
+        page.setCounts((long) drugNatureVos.size());
+        page.setData(drugNatureVos);
+        return page;
     }
 
 
