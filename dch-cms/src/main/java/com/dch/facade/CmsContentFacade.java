@@ -176,4 +176,40 @@ public class CmsContentFacade extends BaseFacade{
         String hql = "from CmsContentLabel where contentId='"+contentId+"'";
         return createQuery(CmsContentLabel.class,hql,new ArrayList<Object>()).getResultList();
     }
+
+    /**
+     *
+     * @param categoryId 所属分类
+     * @param preFlag    1，表示下一条新闻,0表示上一条新闻
+     * @param currentId  当前新闻
+     * @return
+     */
+    public CmsContent getContentByFlag(String categoryId, String currentId, String preFlag) throws Exception {
+
+        CmsContent curr = get(CmsContent.class,currentId) ;
+        if(curr==null){
+            throw new Exception("获取当前新闻信息失败");
+        }
+
+        String hql = "from CmsContent as cc where cc.status<> '-1'" ;
+
+        if("1".equals(preFlag)){
+            hql+=" and cc.createDate>:theTime order by cc.createDate asc" ;
+        }else if("0".equals(preFlag)){
+            hql+=" and cc.createDate<:theTime order by cc.createDate desc" ;
+        }else{
+            throw new Exception("preFlag 参数有误");
+        }
+
+        TypedQuery<CmsContent> cmsContentTypedQuery = createQuery(CmsContent.class, hql, new ArrayList<Object>());
+        cmsContentTypedQuery.setParameter("theTime",curr.getCreateDate(),TemporalType.TIMESTAMP);
+
+        List<CmsContent> resultList = cmsContentTypedQuery.getResultList();
+        if(resultList.size()>0){
+            return resultList.get(0);
+        }else{
+            throw new Exception("没有找到结果");
+        }
+
+    }
 }

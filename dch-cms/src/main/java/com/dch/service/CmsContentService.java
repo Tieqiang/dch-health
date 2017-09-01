@@ -5,8 +5,10 @@ import com.dch.entity.CmsContent;
 import com.dch.entity.CmsContentLabel;
 import com.dch.facade.CmsContentFacade;
 import com.dch.facade.common.VO.Page;
+import com.dch.util.StringUtils;
 import com.sun.jersey.core.header.FormDataContentDisposition;
 import com.sun.jersey.multipart.FormDataParam;
+import org.mortbay.util.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
@@ -78,6 +80,25 @@ public class CmsContentService {
         return cmsContentFacade.getContents(perPage,currentPage,whereHql,title,categoryId,startTime,stopTime,pubStatus);
     }
 
+
+    /**
+     *
+     * @param categoryId 所属分类
+     * @param preFlag    1，表示下一条新闻,0表示上一条新闻
+     * @param currentId  当前新闻
+     * @return
+     */
+    @GET
+    @Path("get-content-by-flag")
+    public CmsContent getContentByFlag(@QueryParam("categoryId") String categoryId,
+                                       @QueryParam("currentId") String currentId,
+                                       @QueryParam("preFlag") String preFlag) throws Exception {
+        if(StringUtils.isEmptyParam(categoryId)||StringUtils.isEmptyParam(currentId)||StringUtils.isEmptyParam(preFlag)){
+            throw  new Exception("传入的参数有误，请检查");
+        }
+        return cmsContentFacade.getContentByFlag(categoryId,currentId,preFlag) ;
+
+    }
 
     /**
      * 获取单一的内容信息
