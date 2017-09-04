@@ -98,8 +98,9 @@ public class CmsContentService {
                                         @QueryParam("categoryId")String categoryId,
                                         @QueryParam("startTime")Timestamp startTime,
                                         @QueryParam("stopTime")Timestamp stopTime,
-                                        @QueryParam("pubStatus")String pubStatus){
-        return cmsContentFacade.getContents(perPage,currentPage,whereHql,title,categoryId,startTime,stopTime,pubStatus);
+                                        @QueryParam("pubStatus")String pubStatus,
+                                        @QueryParam("pubFilterFlag")String pubFilterFlag){
+        return cmsContentFacade.getContents(perPage,currentPage,whereHql,title,categoryId,startTime,stopTime,pubStatus,pubFilterFlag);
     }
 
 

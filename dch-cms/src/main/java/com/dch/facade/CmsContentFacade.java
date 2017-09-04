@@ -32,15 +32,24 @@ public class CmsContentFacade extends BaseFacade{
      * @param startTime       时间范围创建时间大于等于这个时间
      * @param stopTime        时间范围创建时间小于等于这个时间
      * @param pubStatus
+     * @param pubFilterFlag
      * @return
      */
     public Page<CmsContent> getContents(int perPage, int currentPage, String whereHql,
                                         String title, String categoryId,
-                                        Timestamp startTime, Timestamp stopTime, String pubStatus) {
+                                        Timestamp startTime, Timestamp stopTime, String pubStatus, String pubFilterFlag) {
 
-        String hql = "from CmsContent as c where c.status<>'-1' and c.pubStatus='1' and c.pubTime<=:nowDate" ;
-        String hqlCount = "select count(*) from CmsContent as c where c.status<>'-1' and c.pubStatus='1' and c.pubTime<=:nowDate" ;
+
+        String hql = "from CmsContent as c where c.status<>'-1' " ;
+        String hqlCount = "select count(*) from CmsContent as c where c.status<>'-1'" ;
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+
+        if(!"0".equals(pubFilterFlag)){
+            //表示不根据发布时间进行过滤
+            hql+=" and c.pubStatus='1' and c.pubTime<=:nowDate" ;
+            hqlCount+=" and c.pubStatus='1' and c.pubTime<=:nowDate";
+        }
+
         if(!strIsNull(whereHql)){
             hql+=whereHql;
             hqlCount+=whereHql;
@@ -74,8 +83,11 @@ public class CmsContentFacade extends BaseFacade{
         Page<CmsContent> cmsContentPage = new Page<>() ;
         TypedQuery<CmsContent> cms = createQuery(CmsContent.class, hql, new ArrayList<Object>());
         TypedQuery<Long> longTypedQuery = createQuery(Long.class, hqlCount, new ArrayList<Object>());
-        cms.setParameter("nowDate",new Timestamp(new Date().getTime()),TemporalType.TIMESTAMP);
-        longTypedQuery.setParameter("nowDate",new Timestamp(new Date().getTime()),TemporalType.TIMESTAMP);
+        if(!"0".equals(pubFilterFlag)){
+            //不过滤
+            cms.setParameter("nowDate",new Timestamp(new Date().getTime()),TemporalType.TIMESTAMP);
+            longTypedQuery.setParameter("nowDate",new Timestamp(new Date().getTime()),TemporalType.TIMESTAMP);
+        }
 
         if(startTime!=null){
             cms.setParameter("startDate",startTime,TemporalType.TIMESTAMP);
