@@ -1,5 +1,7 @@
 package com.dch.facade.common;
 
+import com.dch.facade.common.VO.Page;
+import com.dch.util.StringUtils;
 import com.google.common.base.Optional;
 import org.hibernate.SQLQuery;
 import org.hibernate.transform.AliasToBeanResultTransformer;
@@ -248,6 +250,50 @@ public class BaseFacade {
         return (List<T>) query.getResultList();
     }
 
+    /**
+     * 获取分页查询信息 默认值为20条
+     * @param entityClass
+     * @param hql
+     * @param perPage
+     * @param currentPage
+     * @param <T>
+     * @return
+     */
+    public <T> Page<T> getPageResult(Class<T> entityClass,String hql, int perPage, int currentPage) {
+        Page<T> resultPage = new Page<>();
+        String hqlCount = getHqlCount(hql,entityClass.getSimpleName());
+        TypedQuery<T> typedQuery = createQuery(entityClass,hql,new ArrayList<Object>());
+        Long counts =  createQuery(Long.class,hqlCount,new ArrayList<Object>()).getSingleResult();
+        resultPage.setCounts(counts);
+        if(perPage<=0){
+            perPage =20;
+        }
+        if(currentPage<=0){
+            currentPage=1;
+        }
+        typedQuery.setFirstResult((currentPage-1)*perPage);
+        typedQuery.setMaxResults(currentPage*perPage);
+        resultPage.setPerPage((long)perPage);
+        List<T> resultList = typedQuery.getResultList();
+        resultPage.setData(resultList);
+        return resultPage;
+    }
+
+    public static String getHqlCount(String hql,String entityName){
+        String hqlCount = "";
+        if(StringUtils.isEmptyParam(hql)){
+            return hqlCount;
+        }
+        String hqlUpper = hql.toUpperCase();
+        int fromIndex = hqlUpper.indexOf("FROM");
+        if(hqlUpper.contains("DISTINCT")){
+            int disIndex = hqlUpper.indexOf("DISTINCT");
+            hqlCount = "SELECT COUNT("+hql.substring(disIndex,fromIndex)+") "+hql.substring(fromIndex);
+        }else{
+            hqlCount = "SELECT COUNT(*) "+hql.substring(fromIndex);
+        }
+        return hqlCount;
+    }
 
     /**
      * 构建排序子句
