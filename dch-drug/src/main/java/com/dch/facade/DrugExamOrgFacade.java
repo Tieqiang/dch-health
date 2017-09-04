@@ -48,7 +48,7 @@ public class DrugExamOrgFacade extends BaseFacade {
         Long counts = createQuery(Long.class,hqlCount,new ArrayList<Object>()).getSingleResult();
         Page page=new Page();
         if (perPage > 0) {
-            query.setFirstResult(currentPage * perPage);
+            query.setFirstResult((currentPage-1) * perPage);
             query.setMaxResults(perPage);
             page.setPerPage((long) perPage);
         }
