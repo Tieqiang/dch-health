@@ -41,9 +41,9 @@ public class DrugNameService {
      */
     @GET
     @Path("get-drug-names")
-    public Page<DrugNameDict> getDrugNames(@QueryParam("drugCode")String drugCode, @QueryParam("inputCode")String inputCode,
+    public Page<DrugNameDict> getDrugNames(@QueryParam("drugId")String drugId,@QueryParam("drugCode")String drugCode, @QueryParam("inputCode")String inputCode,
                                            @QueryParam("perPage")int perPage,@QueryParam("currentPage")int currentPage){
-        return drugNameFacade.getDrugNames(drugCode,inputCode,perPage,currentPage);
+        return drugNameFacade.getDrugNames(drugId,drugCode,inputCode,perPage,currentPage);
     }
 
     /**
