@@ -30,6 +30,7 @@ public class DrugBaseInfoFacade extends BaseFacade{
             DrugBaseInfo merge = merge(drugBaseInfo);
             //生成DrugDict
             DrugNameDict drugNameDict = new DrugNameDict();
+            drugNameDict.setDrugId(merge.getId());
             drugNameDict.setDrugCode(code);
             drugNameDict.setDrugName(drugBaseInfo.getDrugName());
             drugNameDict.setInputCode(PinYin2Abbreviation.cn2py(drugBaseInfo.getDrugName()));
@@ -45,7 +46,7 @@ public class DrugBaseInfoFacade extends BaseFacade{
         }
         if(!StringUtils.isEmptyParam(drugBaseInfo.getId()) && !"-1".equals(drugBaseInfo.getStatus())){//修改
             DrugBaseInfo dbDrugBaseInfo = get(DrugBaseInfo.class,drugBaseInfo.getId());
-            DrugNameDict drugNameDict = getDrugNameDictByCodeAndName(dbDrugBaseInfo.getDrugCode(),dbDrugBaseInfo.getDrugName());
+            DrugNameDict drugNameDict = getDrugNameDictByIdAndName(dbDrugBaseInfo.getId(),dbDrugBaseInfo.getDrugName());
             DrugPackageInfo drugPackageInfo = getDrugPackageInfoByDrugId(drugBaseInfo.getId());
             if(drugBaseInfo.getClassId()!=null && !drugBaseInfo.getClassId().equals(dbDrugBaseInfo.getClassId())){
                 String code = getDrugCodeBySequenc(drugBaseInfo.getClassId());
@@ -77,8 +78,8 @@ public class DrugBaseInfoFacade extends BaseFacade{
         }
     }
 
-    public DrugNameDict getDrugNameDictByCodeAndName(String drugCode,String drugName) throws Exception{
-        String hql = "from DrugNameDict where drugCode = '"+drugCode+"' and drugName = '"+drugName+"'";
+    public DrugNameDict getDrugNameDictByIdAndName(String drugId,String drugName) throws Exception{
+        String hql = "from DrugNameDict where drugId = '"+drugId+"' and drugName = '"+drugName+"'";
         List<DrugNameDict> drugNameDicts = createQuery(DrugNameDict.class,hql,new ArrayList<Object>()).getResultList();
         if(drugNameDicts!=null && !drugNameDicts.isEmpty()){
             return drugNameDicts.get(0);
