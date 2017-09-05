@@ -47,13 +47,17 @@ public class DrugNameFacade extends BaseFacade{
         return merge(drugNameDict);
     }
 
-    public Page<DrugNameDict> getDrugNames(String drugCode, String inputCode, int perPage, int currentPage) {
+    public Page<DrugNameDict> getDrugNames(String drugCode, String inputCode, int perPage, int currentPage, String drugId) {
         Page<DrugNameDict> drugNameDictPage = new Page<>();
         String hql = " from DrugNameDict where status<>'-1' ";
         String hqlCount = "select count(*) from DrugNameDict where status<>'-1' ";
         if(!StringUtils.isEmptyParam(drugCode)){
             hql +=" and drugCode = '"+drugCode+"'";
             hqlCount += " and drugCode = '"+drugCode+"'";
+        }
+        if(!StringUtils.isEmptyParam(drugId)){
+            hql +=" and drugId = '"+drugId+"'";
+            hqlCount += " and drugId = '"+drugId+"'";
         }
         if(!StringUtils.isEmptyParam(inputCode)){
             hql += " and upper(inputCode) like '%"+inputCode.toUpperCase()+"%'";
@@ -69,7 +73,7 @@ public class DrugNameFacade extends BaseFacade{
             currentPage=1;
         }
         typedQuery.setFirstResult((currentPage-1)*perPage);
-        typedQuery.setMaxResults(currentPage*perPage);
+        typedQuery.setMaxResults(perPage);
         drugNameDictPage.setPerPage((long)perPage);
         List<DrugNameDict> drugNameDictList = typedQuery.getResultList();
         drugNameDictPage.setData(drugNameDictList);

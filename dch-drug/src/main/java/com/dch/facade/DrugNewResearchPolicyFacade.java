@@ -31,9 +31,10 @@ public class DrugNewResearchPolicyFacade extends BaseFacade {
      * 获取研发政策
      * @param policyTypeFlag
      * @param perPage
-     *@param currentPage @return
+     * @param currentPage @return
+     * @param policyName
      */
-    public Page<DrugNewResearchPolicy> getNewResearchPolicys(String policyTypeFlag, int perPage, int currentPage) {
+    public Page<DrugNewResearchPolicy> getNewResearchPolicys(String policyTypeFlag, int perPage, int currentPage, String policyName) {
 
         String hql=" from DrugNewResearchPolicy where status <> '-1' ";
         String hqlCount="select count(*) from DrugNewResearchPolicy where status <> '-1' ";
@@ -41,7 +42,10 @@ public class DrugNewResearchPolicyFacade extends BaseFacade {
             hql+="and policyTypeFlag = '" +policyTypeFlag+ "'";
             hqlCount+="and policyTypeFlag = '" +policyTypeFlag+ "'";
         }
-
+        if(null!=policyName&&!"".equals(policyName)){
+            hql += "and policyName like '%"+policyName+"%'";
+            hqlCount += "and policyName like '%"+policyName+"%'";
+        }
         TypedQuery<DrugNewResearchPolicy> query = createQuery(DrugNewResearchPolicy.class, hql, new ArrayList<>());
         Long counts = createQuery(Long.class,hqlCount,new ArrayList<Object>()).getSingleResult();
         Page page=new Page();

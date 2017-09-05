@@ -17,8 +17,27 @@ public class DrugPackageInfo extends BaseEntity {
     private String drugCode;
     private String firmId ;
     private String firmName ;
+    private String drugSpec;
+    private String approvalNo;
+    private String approvalNoEndDate;
+    @Basic
+    @Column(name = "drug_spec", nullable = true, length = 400)
+    public String getDrugSpec() { return drugSpec; }
+
+    public void setDrugSpec(String drugSpec) { this.drugSpec = drugSpec; }
 
 
+    @Basic
+    @Column(name = "approval_no", nullable = true, length = 500)
+    public String getApprovalNo() { return approvalNo; }
+
+    public void setApprovalNo(String approvalNo) { this.approvalNo = approvalNo; }
+
+    @Basic
+    @Column(name = "approval_no_end_date", nullable = true, length = 50)
+    public String getApprovalNoEndDate() { return approvalNoEndDate; }
+
+    public void setApprovalNoEndDate(String approvalNoEndDate) {  this.approvalNoEndDate = approvalNoEndDate; }
 
     @Basic
     @Column(name = "firm_id", nullable = true, length = 64)
@@ -68,7 +87,7 @@ public class DrugPackageInfo extends BaseEntity {
     public void setDrugCode(String drugCode) {
         this.drugCode = drugCode;
     }
-
+    @Basic
     @Column(name="firm_name")
     public String getFirmName() {
         return firmName;
