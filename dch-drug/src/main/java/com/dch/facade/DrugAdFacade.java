@@ -37,10 +37,6 @@ public class DrugAdFacade extends BaseFacade {
         String hql="from DrugAd where status<> '-1' ";
         String hqlCount="select count(*) from DrugAd where status<> '-1'";
 
-        if(StringUtils.isEmptyParam(drugId)&&StringUtils.isEmptyParam(drugCode)){
-
-            throw new Exception("所传参数不可以为空哦！");
-        }
         if(drugId!=null&&!"".equals(drugId)){
             hql+="and drugId='"+ drugId +"' ";
             hqlCount+="and drugId='"+ drugId +"' ";

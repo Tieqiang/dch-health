@@ -40,10 +40,11 @@ public class DrugNewResearchPolicyService {
     @GET
     @Path("get-policys")
     public Page<DrugNewResearchPolicy> getNewResearchPolicys(@QueryParam("policyTypeFlag") String policyTypeFlag,
+                                                             @QueryParam("policyName") String policyName,
                                                              @QueryParam("perPage") int perPage,
                                                              @QueryParam("currentPage") int currentPage){
 
-        return drugNewResearchPolicyFacade.getNewResearchPolicys(policyTypeFlag,perPage,currentPage);
+        return drugNewResearchPolicyFacade.getNewResearchPolicys(policyTypeFlag,perPage,currentPage,policyName);
     }
 
     @GET

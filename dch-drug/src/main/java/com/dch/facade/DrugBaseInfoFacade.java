@@ -173,7 +173,14 @@ public class DrugBaseInfoFacade extends BaseFacade{
         Page<DrugBaseInfo> drugBaseInfoPage = new Page<>();
         Long counts = createQuery(Long.class,hqlCount,new ArrayList<Object>()).getSingleResult();
         drugBaseInfoPage.setCounts(counts);
+        if(perPage<=0){
+            perPage=50 ;
+        }
         if(perPage>0){
+            if(currentPage<=0){
+                currentPage=1 ;
+            }
+
             typedQuery.setFirstResult((currentPage-1)*perPage) ;
             typedQuery.setMaxResults(perPage);
             drugBaseInfoPage.setPerPage((long) perPage);
@@ -214,7 +221,7 @@ public class DrugBaseInfoFacade extends BaseFacade{
         Long counts = createQuery(Long.class,hqlCount,new ArrayList<Object>()).getSingleResult();
         drugBaseInfoPage.setCounts(counts);
         if(perPage<=0){
-            perPage=100 ;
+            perPage=50 ;
         }
         if(perPage>0){
 
@@ -223,7 +230,7 @@ public class DrugBaseInfoFacade extends BaseFacade{
             }
 
             typedQuery.setFirstResult((currentPage-1)*perPage) ;
-            typedQuery.setMaxResults(perPage*currentPage);
+            typedQuery.setMaxResults(perPage);
             drugBaseInfoPage.setPerPage((long) perPage);
         }
         List<DrugNameDict> drugBaseInfoList = typedQuery.getResultList();
