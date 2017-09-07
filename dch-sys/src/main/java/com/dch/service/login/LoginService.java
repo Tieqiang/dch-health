@@ -3,6 +3,7 @@ package com.dch.service.login;
 import com.dch.entity.User;
 import com.dch.facade.UserFacade;
 import com.dch.facade.common.BaseFacade;
+import com.dch.facade.common.VO.ReturnInfo;
 import com.dch.security.UsernamePasswordToken;
 import com.dch.util.UserUtils;
 import com.dch.vo.UserVo;
@@ -112,12 +113,13 @@ public class LoginService {
      * 用户退出登录
      * @return
      */
-    @Produces("text/plain")
+//    @Produces("text/plain")
     @POST
     @Path("logout")
     public Response logOut(){
+        System.out.println("我的请求");
         Subject subject = SecurityUtils.getSubject();
         subject.logout();
-        return Response.status(Response.Status.OK).entity("success").build();
+        return Response.status(Response.Status.OK).entity(new ReturnInfo("true","退出成功")).build();
     }
 }
