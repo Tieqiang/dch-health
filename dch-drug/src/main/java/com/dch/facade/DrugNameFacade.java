@@ -23,30 +23,45 @@ public class DrugNameFacade extends BaseFacade{
     @Transactional
     public DrugNameDict mergeDrugName(DrugNameDict drugNameDict) throws Exception{
         if(!"-1".equals(drugNameDict.getStatus())){
-            String hql = "from DrugNameDict where status<>'-1' and drugCode = '"+drugNameDict.getDrugCode()+"'" +
-                         " and drugName = '"+drugNameDict.getDrugName()+"' and id<> '"+drugNameDict.getId()+"'";
-          List<DrugNameDict> drugNameDictList = createQuery(DrugNameDict.class,hql,new ArrayList<Object>()).getResultList();
-          if(drugNameDictList!=null && !drugNameDictList.isEmpty()){
-              throw new Exception("药品名称字典已存在，请修改");
-          }
-          if(!StringUtils.isEmptyParam(drugNameDict.getId())){
-              DrugNameDict dbDrugNameDict = get(DrugNameDict.class,drugNameDict.getId());
-              if(drugNameDict.getDrugName()!=null && !drugNameDict.getDrugName().equals(dbDrugNameDict.getDrugName())){
-                  String baseHql = " from DrugBaseInfo where status<>'-1' and drugCode='"+drugNameDict.getDrugCode()+"' and drugName = '"+dbDrugNameDict.getDrugName()+"'";
-                  List<DrugBaseInfo> drugBaseInfoList = createQuery(DrugBaseInfo.class,baseHql,new ArrayList<Object>()).getResultList();
-                  if(drugBaseInfoList!=null && !drugBaseInfoList.isEmpty()){
-                      DrugBaseInfo drugBaseInfo = drugBaseInfoList.get(0);
-                      drugBaseInfo.setDrugName(drugNameDict.getDrugName());
-                      merge(drugBaseInfo);
-                  }
-              }
-          }
-          drugNameDict.setInputCode(PinYin2Abbreviation.cn2py(drugNameDict.getDrugName()));
-          return merge(drugNameDict);
+            String hql = "from DrugNameDict where status<>'-1' and drugId = '"+drugNameDict.getDrugId()+"'" +
+                    " and drugName = '"+drugNameDict.getDrugName()+"' and id<> '"+drugNameDict.getId()+"'";
+            List<DrugNameDict> drugNameDictList = createQuery(DrugNameDict.class,hql,new ArrayList<Object>()).getResultList();
+            if(drugNameDictList!=null && !drugNameDictList.isEmpty()){
+                throw new Exception("药品名称字典已存在，请修改");
+            }
+            if(!StringUtils.isEmptyParam(drugNameDict.getId())){
+                DrugNameDict dbDrugNameDict = get(DrugNameDict.class,drugNameDict.getId());
+                if(drugNameDict.getDrugName()!=null && !drugNameDict.getDrugName().equals(dbDrugNameDict.getDrugName())){
+                    List<DrugBaseInfo> drugBaseInfoList = getDrugBaseInfos(drugNameDict.getDrugId(),drugNameDict.getDrugName());
+                    if(drugBaseInfoList!=null && !drugBaseInfoList.isEmpty()){
+                        DrugBaseInfo drugBaseInfo = drugBaseInfoList.get(0);
+                        drugBaseInfo.setDrugName(drugNameDict.getDrugName());
+                        merge(drugBaseInfo);
+                    }
+                }
+            }
+            drugNameDict.setInputCode(PinYin2Abbreviation.cn2py(drugNameDict.getDrugName()));
+            return merge(drugNameDict);
+        }else{//删除药品字典名称 正名不允许删除
+            List<DrugBaseInfo> drugBaseInfoList = getDrugBaseInfos(drugNameDict.getDrugId(),drugNameDict.getDrugName());
+            if(drugBaseInfoList!=null && !drugBaseInfoList.isEmpty()){
+                throw new Exception("药品正名不允许删除！");
+            }
+            return merge(drugNameDict);
         }
-        return merge(drugNameDict);
     }
 
+    /**
+     * 根据药品id和药品名称查询药品基本信息
+     * @param drugId
+     * @param drugName
+     * @return
+     */
+    public List<DrugBaseInfo> getDrugBaseInfos(String drugId,String drugName){
+        String baseHql = " from DrugBaseInfo where status<>'-1' and id='"+drugId+"' and drugName = '"+drugName+"'";
+        List<DrugBaseInfo> drugBaseInfoList = createQuery(DrugBaseInfo.class,baseHql,new ArrayList<Object>()).getResultList();
+        return drugBaseInfoList;
+    }
     public Page<DrugNameDict> getDrugNames(String drugCode, String inputCode, int perPage, int currentPage, String drugId) {
         Page<DrugNameDict> drugNameDictPage = new Page<>();
         String hql = " from DrugNameDict where status<>'-1' ";

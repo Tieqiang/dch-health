@@ -38,6 +38,7 @@ public class DrugBaseInfoFacade extends BaseFacade{
             merge(drugNameDict);
             //生成DrugPackageInfo
             DrugPackageInfo drugPackageInfo = new DrugPackageInfo();
+            drugPackageInfo.setPackageSpec(drugBaseInfo.getSpec());
             drugPackageInfo.setDrugCode(code);
             drugPackageInfo.setDrugId(merge.getId());
             drugPackageInfo.setStatus("1");
@@ -47,7 +48,7 @@ public class DrugBaseInfoFacade extends BaseFacade{
         if(!StringUtils.isEmptyParam(drugBaseInfo.getId()) && !"-1".equals(drugBaseInfo.getStatus())){//修改
             DrugBaseInfo dbDrugBaseInfo = get(DrugBaseInfo.class,drugBaseInfo.getId());
             DrugNameDict drugNameDict = getDrugNameDictByIdAndName(dbDrugBaseInfo.getId(),dbDrugBaseInfo.getDrugName());
-            DrugPackageInfo drugPackageInfo = getDrugPackageInfoByDrugId(drugBaseInfo.getId());
+            DrugPackageInfo drugPackageInfo = getDrugPackageInfoByDrugIdAndSpec(drugBaseInfo.getId(),drugBaseInfo.getSpec());
             if(drugBaseInfo.getClassId()!=null && !drugBaseInfo.getClassId().equals(dbDrugBaseInfo.getClassId())){
                 String code = getDrugCodeBySequenc(drugBaseInfo.getClassId());
                 drugBaseInfo.setDrugCode(code);
@@ -65,11 +66,23 @@ public class DrugBaseInfoFacade extends BaseFacade{
             merge(drugPackageInfo);
             return merge;
         }
+        if("-1".equals(drugBaseInfo.getStatus())){//删除则删除药品基本信息的别名
+            deleteDrugNameDicts(drugBaseInfo.getId());
+        }
         return merge(drugBaseInfo);
     }
 
-    public DrugPackageInfo getDrugPackageInfoByDrugId(String drugId) throws Exception{
-        String hql = "from DrugPackageInfo where status<>'-1' and drugId = '"+drugId+"'";
+    /**
+     * 根据drugId删除药品基本信息的别名信息
+     * @param drugId
+     */
+    public void deleteDrugNameDicts(String drugId){
+        String hql = "update DrugNameDict set status='-1' where drugId = '"+drugId+"'";
+        excHql(hql);
+    }
+
+    public DrugPackageInfo getDrugPackageInfoByDrugIdAndSpec(String drugId,String spec) throws Exception{
+        String hql = "from DrugPackageInfo where status<>'-1' and drugId = '"+drugId+"' and packageSpec = '"+spec+"'";
         List<DrugPackageInfo> drugPackageInfoList = createQuery(DrugPackageInfo.class,hql,new ArrayList<Object>()).getResultList();
         if(drugPackageInfoList!=null && !drugPackageInfoList.isEmpty()){
             return drugPackageInfoList.get(0);
