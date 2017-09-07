@@ -206,18 +206,19 @@ public class CmsContentFacade extends BaseFacade{
             throw new Exception("获取当前新闻信息失败");
         }
 
-        String hql = "from CmsContent as cc where cc.status<> '-1'" ;
+        String hql = "from CmsContent as cc where cc.status<> '-1' cc.pubStatus='1' and cc.pubTime<=:nowDate" ;
 
         if("1".equals(preFlag)){
-            hql+=" and cc.createDate>:theTime order by cc.createDate asc" ;
+            hql+=" and cc.pubTime>:theTime order by cc.pubTime asc" ;
         }else if("0".equals(preFlag)){
-            hql+=" and cc.createDate<:theTime order by cc.createDate desc" ;
+            hql+=" and cc.pubTime<:theTime order by cc.pubTime desc" ;
         }else{
             throw new Exception("preFlag 参数有误");
         }
 
         TypedQuery<CmsContent> cmsContentTypedQuery = createQuery(CmsContent.class, hql, new ArrayList<Object>());
-        cmsContentTypedQuery.setParameter("theTime",curr.getCreateDate(),TemporalType.TIMESTAMP);
+        cmsContentTypedQuery.setParameter("theTime",curr.getPubTime(),TemporalType.TIMESTAMP);
+        cmsContentTypedQuery.setParameter("nowDate",new Timestamp(new Date().getTime()),TemporalType.TIMESTAMP);
 
         List<CmsContent> resultList = cmsContentTypedQuery.getResultList();
         if(resultList.size()>0){
