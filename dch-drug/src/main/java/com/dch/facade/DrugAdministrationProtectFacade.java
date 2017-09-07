@@ -32,25 +32,16 @@ public class DrugAdministrationProtectFacade extends BaseFacade {
      * @param perPage
      *@param currentPage @return
      */
-    public Page<DrugAdministrationProtect> getAdministrationProtects(String drugId, int perPage, int currentPage) {
+    public List<DrugAdministrationProtect> getAdministrationProtects(String drugId, int perPage, int currentPage) {
         String hql="from DrugAdministrationProtect where status <> '-1' ";
-        String hqlCount="select count(*) from DrugAdministrationProtect where status <> '-1' ";
         if(drugId!=null && !"".equals(drugId)){
             hql+="and drugId = '" +drugId+ "'";
-            hqlCount+="and drugId = '" +drugId+ "'";
         }
-        TypedQuery<DrugAdministrationProtect> query = createQuery(DrugAdministrationProtect.class, hql, new ArrayList<>());
-        Long counts = createQuery(Long.class,hqlCount,new ArrayList<Object>()).getSingleResult();
-        Page page =new Page();
-        if (perPage > 0) {
-            query.setFirstResult((currentPage-1) * perPage);
-            query.setMaxResults(perPage);
-            page.setPerPage((long) perPage);
+        List<DrugAdministrationProtect> drugAdministrationProtectList = createQuery(DrugAdministrationProtect.class, hql, new ArrayList<>()).getResultList();
+        if(drugAdministrationProtectList!=null && !drugAdministrationProtectList.isEmpty()){
+            drugAdministrationProtectList = drugAdministrationProtectList.subList(0,1);
         }
-        List<DrugAdministrationProtect> drugAdministrationProtectList = query.getResultList();
-        page.setData(drugAdministrationProtectList);
-        page.setCounts(counts);
-        return page;
+        return drugAdministrationProtectList;
     }
 
     /**

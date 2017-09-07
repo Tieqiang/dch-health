@@ -65,7 +65,19 @@ public class DrugBaseInfoFacade extends BaseFacade{
             merge(drugPackageInfo);
             return merge;
         }
+        if("-1".equals(drugBaseInfo.getStatus())){//删除则删除药品基本信息的别名
+            deleteDrugNameDicts(drugBaseInfo.getId());
+        }
         return merge(drugBaseInfo);
+    }
+
+    /**
+     * 根据drugId删除药品基本信息的别名信息
+     * @param drugId
+     */
+    public void deleteDrugNameDicts(String drugId){
+        String hql = "delete from DrugNameDict where drugId = '"+drugId+"'";
+        excHql(hql);
     }
 
     public DrugPackageInfo getDrugPackageInfoByDrugId(String drugId) throws Exception{

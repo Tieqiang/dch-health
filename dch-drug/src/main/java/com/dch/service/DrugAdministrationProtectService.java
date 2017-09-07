@@ -39,7 +39,7 @@ public class DrugAdministrationProtectService {
      */
     @GET
     @Path("get-protects")
-    public Page<DrugAdministrationProtect> getAdministrationProtects(@QueryParam("drugId") String drugId,
+    public List<DrugAdministrationProtect> getAdministrationProtects(@QueryParam("drugId") String drugId,
                                                                      @QueryParam("perPage") int perPage,
                                                                      @QueryParam("currentPage") int currentPage){
         return drugAdministrationProtectFacade.getAdministrationProtects(drugId,perPage,currentPage);
