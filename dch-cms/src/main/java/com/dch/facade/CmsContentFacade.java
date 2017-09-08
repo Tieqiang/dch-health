@@ -172,8 +172,11 @@ public class CmsContentFacade extends BaseFacade{
 
         if(categoryId!=null&&!"".equals(categoryId)){
             hql+=" and cc.categoryId='"+categoryId+"'";
-            hql+=" and cc.categoryId='"+categoryId+"'";
+            hqlCount+=" and cc.categoryId='"+categoryId+"'";
         }
+        hql+=" order by cc.pubTime desc" ;
+        hqlCount+=" order by cc.pubTime desc" ;
+
         TypedQuery<CmsContent> cmsContentTypedQuery = createQuery(CmsContent.class, hql, new ArrayList<Object>());
         Long counts = createQuery(Long.class,hqlCount,new ArrayList<Object>()).getSingleResult();
         Page<CmsContent> page = new Page<>();
@@ -206,7 +209,7 @@ public class CmsContentFacade extends BaseFacade{
             throw new Exception("获取当前新闻信息失败");
         }
 
-        String hql = "from CmsContent as cc where cc.status<> '-1' cc.pubStatus='1' and cc.pubTime<=:nowDate" ;
+        String hql = "from CmsContent as cc where cc.status<> '-1' and cc.pubStatus='1' and cc.pubTime<=:nowDate" ;
 
         if("1".equals(preFlag)){
             hql+=" and cc.pubTime>:theTime order by cc.pubTime asc" ;
