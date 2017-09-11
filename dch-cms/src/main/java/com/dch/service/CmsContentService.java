@@ -156,8 +156,9 @@ public class CmsContentService {
     public Page<CmsContent> getContentsByLabel(@QueryParam("labelName")String labelName,
                                                @QueryParam("perPage")int perPage,
                                                @QueryParam("currentPage")int currentPage,
-                                               @QueryParam("categoryId")String categoryId){
-        return cmsContentFacade.getContentByLabel(labelName,perPage,currentPage,categoryId);
+                                               @QueryParam("categoryId")String categoryId,
+                                               @QueryParam("pubFilterFlag")String pubFilterFlag){
+        return cmsContentFacade.getContentByLabel(labelName,perPage,currentPage,categoryId,pubFilterFlag);
     }
 
     /**

@@ -164,7 +164,7 @@ public class CmsContentFacade extends BaseFacade{
         return cmsContentLabels;
     }
 
-    public Page<CmsContent> getContentByLabel(String labelName, int perPage, int currentPage, String categoryId) {
+    public Page<CmsContent> getContentByLabel(String labelName, int perPage, int currentPage, String categoryId,String pubFilterFlag) {
         String hql = "select cc from CmsContent as cc ,CmsContentLabel ccl where cc.id=ccl.contentId and cc.status<>'-1' and " +
                 "ccl.labelName='"+labelName+"'" ;
         String hqlCount = "select count(cc) from CmsContent as cc ,CmsContentLabel ccl where cc.id=ccl.contentId and cc.status<>'-1' and " +
@@ -174,12 +174,34 @@ public class CmsContentFacade extends BaseFacade{
             hql+=" and cc.categoryId='"+categoryId+"'";
             hqlCount+=" and cc.categoryId='"+categoryId+"'";
         }
+
+        if(!"0".equals(pubFilterFlag)){
+            //表示不根据发布时间进行过滤
+            hql+="  and cc.pubStatus='1' and cc.pubTime<=:nowDate" ;
+            hqlCount+=" and cc.pubStatus='1' and cc.pubTime<=:nowDate";
+        }
+
+
         hql+=" order by cc.pubTime desc" ;
         hqlCount+=" order by cc.pubTime desc" ;
 
+
         TypedQuery<CmsContent> cmsContentTypedQuery = createQuery(CmsContent.class, hql, new ArrayList<Object>());
-        Long counts = createQuery(Long.class,hqlCount,new ArrayList<Object>()).getSingleResult();
+        TypedQuery<Long> query = createQuery(Long.class, hqlCount, new ArrayList<Object>());
+
         Page<CmsContent> page = new Page<>();
+
+
+        if(!"0".equals(pubFilterFlag)){
+            //表示不根据发布时间进行过滤
+            cmsContentTypedQuery.setParameter("nowDate",new Timestamp(new Date().getTime()),TemporalType.TIMESTAMP);
+            query.setParameter("nowDate",new Timestamp(new Date().getTime()),TemporalType.TIMESTAMP);
+        }
+
+        Long counts = query.getSingleResult();
+
+
+
         if(perPage>0){
             cmsContentTypedQuery.setFirstResult(perPage*(currentPage-1));
             cmsContentTypedQuery.setMaxResults(perPage);
