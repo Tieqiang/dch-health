@@ -7,7 +7,7 @@ import java.io.Serializable;
  */
 public class SolrVo implements Serializable{
     private String id;
-    private String categoryId;
+    private String categoryCode;
     private String title;
     private String desc;
     private String label;
@@ -53,19 +53,19 @@ public class SolrVo implements Serializable{
         this.category = category;
     }
 
-    public String getCategoryId() {
-        return categoryId;
+    public String getCategoryCode() {
+        return categoryCode;
     }
 
-    public void setCategoryId(String categoryId) {
-        this.categoryId = categoryId;
+    public void setCategoryCode(String categoryCode) {
+        this.categoryCode = categoryCode;
     }
 
     @Override
     public String toString() {
         return "SolrVo{" +
                 "id='" + id + '\'' +
-                ", categoryId='" + categoryId + '\'' +
+                ", categoryCode='" + categoryCode + '\'' +
                 ", title='" + title + '\'' +
                 ", desc='" + desc + '\'' +
                 ", label='" + label + '\'' +

@@ -53,7 +53,7 @@ public class FrontCategorySearchService {
 
     /**
      * 根据关键字进行分类信息查询
-     * @param categoryId
+     * @param categoryCode
      * @param keyWords
      * @param perPage
      * @param currentPage
@@ -62,12 +62,11 @@ public class FrontCategorySearchService {
      */
     @Path("get-categorys-by-keywords")
     @GET
-    public <T> Page<T> getFrontCategorysByKeyWords(@QueryParam("categoryId") String categoryId,
-                                                   @QueryParam("type") String type,
+    public  Page<SolrVo> getFrontCategorysByKeyWords(@QueryParam("categoryCode") String categoryCode,
                                                     @QueryParam("keyWords") String keyWords,
                                                     @QueryParam("perPage") int perPage,
                                                     @QueryParam("currentPage") int currentPage) throws Exception {
-        return frontCategorySearchFacade.getFrontCategorysByKeyWords(type,categoryId,keyWords,perPage,currentPage);
+        return frontCategorySearchFacade.getFrontCategorysByKeyWords(categoryCode,keyWords,perPage,currentPage);
     }
 
 
@@ -84,14 +83,15 @@ public class FrontCategorySearchService {
         List<DrugAd> drugAdList = frontCategorySearchFacade.createQuery(DrugAd.class,hql,new ArrayList<Object>()).getResultList();
         for(int i=0;i<drugAdList.size();i++){
             DrugAd drugAds = drugAdList.get(i);
-            DrugAdVo solrDrugAd = new DrugAdVo();
-            solrDrugAd.setId(drugAds.getId());
-            solrDrugAd.setDrugId(drugAds.getDrugId());
-            solrDrugAd.setAdType(drugAds.getAdType());
-            solrDrugAd.setDrugCode(drugAds.getDrugCode());
-            solrDrugAd.setDrugName(drugAds.getDrugName());
-            baseSolrFacade.addObjectMessageToMq(solrDrugAd);
-            ids.add(solrDrugAd.getId());
+            SolrVo solrVo = new SolrVo();
+            solrVo.setTitle(drugAds.getDrugName());
+            solrVo.setDesc(drugAds.getDrugName()+","+drugAds.getAdType()+","+drugAds.getAdNo());
+            solrVo.setCategory(drugAds.getAdType());
+            solrVo.setCategoryCode("ypgg003");
+            solrVo.setLabel(drugAds.getAdType());
+            solrVo.setId(drugAds.getId());
+            baseSolrFacade.addObjectMessageToMq(solrVo);
+            ids.add(drugAds.getId());
         }
         return ids;
     }
@@ -107,15 +107,15 @@ public class FrontCategorySearchService {
         List<DrugBaseInfo> drugBaseInfoList = frontCategorySearchFacade.createQuery(DrugBaseInfo.class,hql,new ArrayList<Object>()).getResultList();
         for(int i=0;i<drugBaseInfoList.size();i++){
             DrugBaseInfo baseInfo = drugBaseInfoList.get(i);
-            DrugBaseInfoVo solrBaseInfo = new DrugBaseInfoVo();
-            solrBaseInfo.setId(baseInfo.getId());
-            solrBaseInfo.setClassName(baseInfo.getClassName());
-            solrBaseInfo.setCode(baseInfo.getDrugCode());
-            solrBaseInfo.setDrugCategory(baseInfo.getDrugCategory());
-            solrBaseInfo.setName(baseInfo.getDrugName());
-            solrBaseInfo.setToxi(baseInfo.getToxi());
-            baseSolrFacade.addObjectMessageToMq(solrBaseInfo);
-            ids.add(solrBaseInfo.getId());
+            SolrVo solrVo = new SolrVo();
+            solrVo.setTitle(baseInfo.getDrugName());
+            solrVo.setDesc(baseInfo.getDrugName()+","+baseInfo.getClassName()+","+baseInfo.getToxi());
+            solrVo.setCategory(baseInfo.getDrugCategory());
+            solrVo.setId(baseInfo.getId());
+            solrVo.setLabel(baseInfo.getClassName());
+            solrVo.setCategoryCode("ywjbxx001");
+            baseSolrFacade.addObjectMessageToMq(solrVo);
+            ids.add(solrVo.getId());
         }
         return ids;
     }
