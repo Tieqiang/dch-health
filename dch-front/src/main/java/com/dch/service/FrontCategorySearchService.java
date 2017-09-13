@@ -38,6 +38,12 @@ public class FrontCategorySearchService {
         return frontCategorySearchFacade.getFrontFirstCategorys();
     }
 
+    @GET
+    @Path("get-categorys")
+    public List<FrontSearchCategory> getFrontCategorys(){
+        return frontCategorySearchFacade.getFrontCategorys();
+    }
+
     /**
      *根据分类id查询分类下的子分类
      * @param categoryId

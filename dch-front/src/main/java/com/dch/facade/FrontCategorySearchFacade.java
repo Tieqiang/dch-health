@@ -88,4 +88,12 @@ public class FrontCategorySearchFacade extends BaseFacade {
         }
         return voPage;
     }
+
+
+    public List<FrontSearchCategory> getFrontCategorys() {
+
+        String hql = "from FrontSearchCategory a where a.status<> '-1'" ;
+        List<FrontSearchCategory> list = createQuery(FrontSearchCategory.class, hql, new ArrayList<Object>()).getResultList();
+        return list;
+    }
 }
