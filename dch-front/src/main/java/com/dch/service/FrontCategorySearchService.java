@@ -3,6 +3,7 @@ package com.dch.service;
 import com.dch.entity.DrugAd;
 import com.dch.entity.DrugBaseInfo;
 import com.dch.entity.FrontSearchCategory;
+import com.dch.entity.FrontSearchCategoryField;
 import com.dch.facade.BaseSolrFacade;
 import com.dch.facade.FrontCategorySearchFacade;
 import com.dch.facade.common.VO.Page;
@@ -11,11 +12,9 @@ import com.dch.vo.DrugBaseInfoVo;
 import com.dch.vo.SolrVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -118,6 +117,33 @@ public class FrontCategorySearchService {
             ids.add(solrBaseInfo.getId());
         }
         return ids;
+    }
+
+
+    /**
+     * 保存分类信息
+     * @param frontSearchCategory
+     * @return
+     */
+    @POST
+    @Path("merge-category")
+    @Transactional
+    public FrontSearchCategory mergeCategorySearch(FrontSearchCategory frontSearchCategory){
+        FrontSearchCategory merge = frontCategorySearchFacade.merge(frontSearchCategory);
+        return merge;
+    }
+
+    /**
+     * 保存分类字段
+     * @param field
+     * @return
+     */
+    @POST
+    @Transactional
+    @Path("merge-category-fields")
+    public FrontSearchCategoryField mergeCategorySearchFields(FrontSearchCategoryField field){
+        FrontSearchCategoryField merge = frontCategorySearchFacade.merge(field);
+        return merge;
     }
 
 }
