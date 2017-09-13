@@ -12,6 +12,7 @@ public class FrontSearchCategory {
     private String id;
     private String parentId;
     private String categoryName;
+    private String categoryCode ;
     private String dataApiPath;
     private String viewPath;
     private Timestamp createDate;
@@ -118,6 +119,15 @@ public class FrontSearchCategory {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    @Column(name="category_code")
+    public String getCategoryCode() {
+        return categoryCode;
+    }
+
+    public void setCategoryCode(String categoryCode) {
+        this.categoryCode = categoryCode;
     }
 
     @Override
