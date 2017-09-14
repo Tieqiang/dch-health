@@ -56,11 +56,11 @@ public class FrontCategorySearchFacade extends BaseFacade {
             throw new Exception("参数为空！");
         }
         if (categoryCode != null && !"".equals(categoryCode)) {
-            param += "categoryCode:" + categoryCode + " AND ";
+            param += "categoryCode:" + categoryCode ;
         }
 
         if (keyWords != null && !"".equals(keyWords)) {
-            param += "categorykeywords:" + keyWords;
+            param += "AND categorykeywords:" + keyWords;
         }
         String hl = "title,desc,label";
         return baseSolrFacade.getSolrObjectByParamAndPageParm(param, hl, perPage, currentPage, SolrVo.class);

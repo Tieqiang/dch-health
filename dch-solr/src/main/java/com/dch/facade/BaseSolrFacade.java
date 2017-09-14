@@ -157,28 +157,34 @@ public class BaseSolrFacade {
             param = param+" AND tableName:"+type.getSimpleName();
         }
         query.setQuery(param);
-        //开启高亮
-        query.setHighlight(true);
-        //高亮显示的格式
-        query.setHighlightSimplePre("<font color='red'>");
-        query.setHighlightSimplePost("</font>");
-        if(hlFields!=null && !"".equals(hlFields)){
-                //我需要那几个字段进行高亮
-                query.setParam("hl.fl", hlFields);
 
+        if(hlFields!=null && !"".equals(hlFields)){
+            //开启高亮
+            query.setHighlight(true);
+            //高亮显示的格式
+            query.setHighlightSimplePre("<font color='red'>");
+            query.setHighlightSimplePost("</font>");
+            //我需要那几个字段进行高亮
+            query.setParam("hl.fl", hlFields);
+            query.setHighlightSnippets(2);//结果分片数，默认为1
+            query.setHighlightFragsize(10000);//每个分片的最大长度，默认为100
         }
-        query.setHighlightSnippets(2);//结果分片数，默认为1
-        query.setHighlightFragsize(10000);//每个分片的最大长度，默认为100
-        if(currentPage>0){
-            query.setStart((currentPage-1)*perPage);
-            query.setRows(perPage);
+        if(currentPage<=0){
+            currentPage = 1;
         }
+        if(perPage<=0){
+            perPage = 15;
+        }
+        query.setStart((currentPage-1)*perPage);
+        query.setRows(perPage);
+
         QueryResponse queryResponse=httpSolrServer.query(query);
         //返回所有的结果...
         SolrDocumentList childDocs=queryResponse.getResults();
+        Long total = childDocs.getNumFound();
         Map<String, Map<String, List<String>>> maplist=queryResponse.getHighlighting();
         resul.setPerPage((long)perPage);
-        resul.setCounts((long)childDocs.size());
+        resul.setCounts((long)total);
         for(SolrDocument sd : childDocs){
             resultList.add(getDto(type,sd,maplist));
         }
