@@ -60,7 +60,7 @@ public class FrontCategorySearchFacade extends BaseFacade {
         }
 
         if (keyWords != null && !"".equals(keyWords)) {
-            param += "AND categorykeywords:" + keyWords;
+            param += " AND categorykeywords:" + keyWords;
         }
         String hl = "title,desc,label";
         return baseSolrFacade.getSolrObjectByParamAndPageParm(param, hl, perPage, currentPage, SolrVo.class);
