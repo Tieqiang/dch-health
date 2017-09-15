@@ -21,6 +21,7 @@
         <module>dch-cms</module>
         <module>dch-solr</module>
         <module>dch-disease</module>
+        <module>dch-mr</module>
     </modules>
 
 
