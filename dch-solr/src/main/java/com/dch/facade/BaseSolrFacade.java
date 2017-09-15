@@ -180,7 +180,6 @@ public class BaseSolrFacade {
         query.setRows(perPage);
 
         QueryResponse queryResponse = httpSolrServer.query(query, SolrRequest.METHOD.POST);
-
         //返回所有的结果...
         SolrDocumentList childDocs=queryResponse.getResults();
         Long total = childDocs.getNumFound();
