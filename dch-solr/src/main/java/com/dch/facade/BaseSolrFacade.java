@@ -2,6 +2,7 @@ package com.dch.facade;
 
 import com.dch.facade.common.VO.Page;
 import org.apache.solr.client.solrj.SolrQuery;
+import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.apache.solr.client.solrj.response.QueryResponse;
@@ -178,7 +179,8 @@ public class BaseSolrFacade {
         query.setStart((currentPage-1)*perPage);
         query.setRows(perPage);
 
-        QueryResponse queryResponse=httpSolrServer.query(query);
+        QueryResponse queryResponse = httpSolrServer.query(query, SolrRequest.METHOD.POST);
+
         //返回所有的结果...
         SolrDocumentList childDocs=queryResponse.getResults();
         Long total = childDocs.getNumFound();
