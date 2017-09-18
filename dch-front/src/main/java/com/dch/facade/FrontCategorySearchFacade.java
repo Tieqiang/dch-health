@@ -50,23 +50,27 @@ public class FrontCategorySearchFacade extends BaseFacade {
      * @throws Exception
      */
     public Page<SolrVo> getFrontCategorysByKeyWords(String categoryCode, String keyWords, int perPage, int currentPage) throws Exception {
-        String param = "";
+        Page<SolrVo> solrVoPage = null;
+        try {
+            String param = "";
+            if (StringUtils.isEmptyParam(categoryCode) && StringUtils.isEmptyParam(keyWords)) {
+                throw new Exception("参数为空！");
+            }
+            if (categoryCode != null && !"".equals(categoryCode)) {
+                param += "categoryCode:" + categoryCode ;
+            }
 
-        if (StringUtils.isEmptyParam(categoryCode) && StringUtils.isEmptyParam(keyWords)) {
-            throw new Exception("参数为空！");
+            keyWords = StringUtils.remeveHtmlLabel(keyWords);
+            if (keyWords != null && !"".equals(keyWords)) {
+                param += " AND categorykeywords:" + keyWords;
+            }
+            String hl = "title,desc,label";
+            solrVoPage = baseSolrFacade.getSolrObjectByParamAndPageParm(param, hl, perPage, currentPage, SolrVo.class);
+        }catch (Exception e){
+            e.printStackTrace();
+            throw e;
         }
-        if (categoryCode != null && !"".equals(categoryCode)) {
-            param += "categoryCode:" + categoryCode ;
-        }
-
-        if (keyWords != null && !"".equals(keyWords)) {
-            param += " AND categorykeywords:" + keyWords;
-        }
-        String hl = "title,desc,label";
-        return baseSolrFacade.getSolrObjectByParamAndPageParm(param, hl, perPage, currentPage, SolrVo.class);
-
-
-
+        return solrVoPage;
     }
 
 

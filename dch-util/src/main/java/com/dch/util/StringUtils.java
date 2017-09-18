@@ -4,9 +4,16 @@ package com.dch.util;
 import java.io.*;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 public class StringUtils {
+    // 定义HTML标签的正则表达式
+    private static String regEx_html = "<[^>]+>";
+    // 定义一些特殊字符的正则表达式 如：&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    private static String regEx_special = "\\&[a-zA-Z]{1,10};";
+
     /**
      * 将驼峰式命名的字符串转换为下划线大写方式。如果转换前的驼峰式命名的字符串为空，则返回空字符串。</br>
      * 例如：HelloWorld->HELLO_WORLD
@@ -148,4 +155,24 @@ public class StringUtils {
         return isEmpty;
     }
 
+    public static String remeveHtmlLabel(String input){
+        if(isEmptyParam(input)){
+            return input;
+        }
+        String htmlStr = input; // 含html标签的字符串
+        String textStr = "";
+        Pattern p_html = Pattern.compile(regEx_html, Pattern.CASE_INSENSITIVE);
+        Matcher m_html = p_html.matcher(htmlStr);
+        htmlStr = m_html.replaceAll(""); // 过滤html标签
+        Pattern p_special = Pattern.compile(regEx_special, Pattern.CASE_INSENSITIVE);
+        Matcher m_special = p_special.matcher(htmlStr);
+        htmlStr = m_special.replaceAll(""); // 过滤特殊标签
+
+        Pattern p = Pattern.compile("\\s*|\t|\r|\n");
+        Matcher m = p.matcher(htmlStr);
+        htmlStr = m.replaceAll("");
+        htmlStr = htmlStr.replaceAll("[\\pP\\pS\\pZ]", "");
+        textStr = htmlStr;
+        return textStr;
+    }
 }
