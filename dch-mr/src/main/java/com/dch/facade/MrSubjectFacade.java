@@ -2,6 +2,8 @@ package com.dch.facade;
 
 import com.dch.entity.MrSubject;
 import com.dch.facade.common.BaseFacade;
+import com.dch.vo.SolrVo;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.transaction.Transactional;
@@ -12,6 +14,9 @@ import java.util.List;
 @Component
 public class MrSubjectFacade extends BaseFacade {
 
+    @Autowired
+    private BaseSolrFacade baseSolrFacade;
+
 
     /**
      *添加、删除、修改病例
@@ -21,6 +26,14 @@ public class MrSubjectFacade extends BaseFacade {
     @Transactional
     public Response mergeMrSubject(MrSubject mrSubject) {
         MrSubject merge = merge(mrSubject);
+        SolrVo solrVo=new SolrVo();
+        solrVo.setTitle(merge.getSubjectName());
+        solrVo.setDesc(merge.getSubjectName()+","+merge.getSubjectCode());
+        solrVo.setCategory(merge.getSubjectName());
+        solrVo.setId(merge.getId());
+        solrVo.setLabel(merge.getSubjectName());
+        solrVo.setCategoryCode(merge.getSubjectCode());
+        baseSolrFacade.addObjectMessageToMq(solrVo);
         return Response.status(Response.Status.OK).entity(merge).build();
     }
 

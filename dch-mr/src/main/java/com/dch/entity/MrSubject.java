@@ -13,8 +13,13 @@ import java.sql.Timestamp;
 public class MrSubject extends BaseEntity {
     private String subjectName;
     private String parentSubjectId;
+    private String subjectCode;
 
+    @Basic
+    @Column(name = "subject_code", nullable = true, length = 10)
+    public String getSubjectCode() { return subjectCode; }
 
+    public void setSubjectCode(String subjectCode) { this.subjectCode = subjectCode; }
 
     @Basic
     @Column(name = "subject_name", nullable = true, length = 200)

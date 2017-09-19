@@ -4,6 +4,8 @@ import com.dch.entity.MrFile;
 import com.dch.entity.MrSubject;
 import com.dch.facade.common.BaseFacade;
 import com.dch.facade.common.VO.Page;
+import com.dch.vo.SolrVo;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.persistence.TypedQuery;
@@ -15,6 +17,9 @@ import java.util.List;
 @Component
 public class MrFileFacade extends BaseFacade {
 
+    @Autowired
+    private BaseSolrFacade baseSolrFacade;
+
     /**
      * 添加、删除、修改病例内容
      * @param mrFile
@@ -23,6 +28,14 @@ public class MrFileFacade extends BaseFacade {
     @Transactional
     public Response mergeMrFileContent(MrFile mrFile) {
         MrFile merge = merge(mrFile);
+        SolrVo solrVo=new SolrVo();
+        solrVo.setTitle(merge.getFileTitle());
+        solrVo.setDesc(merge.getFileTitle()+","+merge.getFileContent()+","+merge.getKeyWords());
+        solrVo.setCategory(merge.getAttachmentFileId());
+        solrVo.setId(merge.getId());
+        solrVo.setLabel(merge.getKeyWords());
+        solrVo.setCategoryCode(merge.getSubjectCode());
+        baseSolrFacade.addObjectMessageToMq(solrVo);
         return Response.status(Response.Status.OK).entity(merge).build();
     }
 
