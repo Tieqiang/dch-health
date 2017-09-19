@@ -7,9 +7,9 @@ import com.dch.entity.FrontSearchCategoryField;
 import com.dch.facade.BaseSolrFacade;
 import com.dch.facade.FrontCategorySearchFacade;
 import com.dch.facade.common.VO.Page;
-import com.dch.vo.DrugAdVo;
-import com.dch.vo.DrugBaseInfoVo;
+import com.dch.vo.PageParam;
 import com.dch.vo.SolrVo;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +22,7 @@ import java.util.List;
 @Produces("application/json")
 @Controller
 public class FrontCategorySearchService {
+
     @Autowired
     private FrontCategorySearchFacade frontCategorySearchFacade;
 
@@ -52,26 +53,19 @@ public class FrontCategorySearchService {
     @Path("get-child-categorys")
     @GET
     public List<FrontSearchCategory> getFrontChildCategorys(@QueryParam("categoryId") String categoryId) throws Exception {
-
         return frontCategorySearchFacade.getFrontChildCategorys(categoryId);
     }
 
     /**
      * 根据关键字进行分类信息查询
-     * @param categoryCode
-     * @param keyWords
-     * @param perPage
-     * @param currentPage
+     * @param pageParam
      * @return
      * @throws Exception
      */
+    @POST
     @Path("get-categorys-by-keywords")
-    @GET
-    public  Page<SolrVo> getFrontCategorysByKeyWords(@QueryParam("categoryCode") String categoryCode,
-                                                    @QueryParam("keyWords") String keyWords,
-                                                    @QueryParam("perPage") int perPage,
-                                                    @QueryParam("currentPage") int currentPage) throws Exception {
-        return frontCategorySearchFacade.getFrontCategorysByKeyWords(categoryCode,keyWords,perPage,currentPage);
+    public  Page<SolrVo> getFrontCategorysByKeyWords(PageParam pageParam) throws Exception {
+        return frontCategorySearchFacade.getFrontCategorysByKeyWords(pageParam.getCategoryCode(),pageParam.getKeyWords(),pageParam.getPerPage(),pageParam.getCurrentPage());
     }
 
 
