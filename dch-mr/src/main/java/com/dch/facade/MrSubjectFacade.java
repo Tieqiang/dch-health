@@ -2,6 +2,8 @@ package com.dch.facade;
 
 import com.dch.entity.MrSubject;
 import com.dch.facade.common.BaseFacade;
+import com.dch.util.PinYin2Abbreviation;
+import com.dch.util.StringUtils;
 import com.dch.vo.SolrVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -24,7 +26,11 @@ public class MrSubjectFacade extends BaseFacade {
      * @return
      */
     @Transactional
-    public Response mergeMrSubject(MrSubject mrSubject) {
+    public MrSubject mergeMrSubject(MrSubject mrSubject) {
+        //添加生成code
+        if(StringUtils.isEmptyParam(mrSubject.getId())){
+            mrSubject.setSubjectCode(PinYin2Abbreviation.cn2py(mrSubject.getSubjectName()));
+        }
         MrSubject merge = merge(mrSubject);
         SolrVo solrVo=new SolrVo();
         solrVo.setTitle(merge.getSubjectName());
@@ -34,7 +40,7 @@ public class MrSubjectFacade extends BaseFacade {
         solrVo.setLabel(merge.getSubjectName());
         solrVo.setCategoryCode(merge.getSubjectCode());
         baseSolrFacade.addObjectMessageToMq(solrVo);
-        return Response.status(Response.Status.OK).entity(merge).build();
+        return merge;
     }
 
     /**

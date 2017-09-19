@@ -4,6 +4,8 @@ import com.dch.entity.MrFile;
 import com.dch.entity.MrSubject;
 import com.dch.facade.common.BaseFacade;
 import com.dch.facade.common.VO.Page;
+import com.dch.util.PinYin2Abbreviation;
+import com.dch.util.StringUtils;
 import com.dch.vo.SolrVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -26,7 +28,11 @@ public class MrFileFacade extends BaseFacade {
      * @return
      */
     @Transactional
-    public Response mergeMrFileContent(MrFile mrFile) {
+    public MrFile mergeMrFileContent(MrFile mrFile) {
+        //添加生成code
+        if(StringUtils.isEmptyParam(mrFile.getId())){
+            mrFile.setSubjectCode(PinYin2Abbreviation.cn2py(mrFile.getFileTitle()));
+        }
         MrFile merge = merge(mrFile);
         SolrVo solrVo=new SolrVo();
         solrVo.setTitle(merge.getFileTitle());
@@ -36,7 +42,7 @@ public class MrFileFacade extends BaseFacade {
         solrVo.setLabel(merge.getKeyWords());
         solrVo.setCategoryCode(merge.getSubjectCode());
         baseSolrFacade.addObjectMessageToMq(solrVo);
-        return Response.status(Response.Status.OK).entity(merge).build();
+        return merge;
     }
 
     /**
