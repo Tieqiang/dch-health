@@ -2,8 +2,10 @@ package com.dch.service;
 
 import com.dch.entity.DiseaseContent;
 import com.dch.entity.DiseaseNameDict;
+import com.dch.facade.BaseSolrFacade;
 import com.dch.facade.DiseaseContentFacade;
 import com.dch.facade.common.VO.Page;
+import com.dch.vo.SolrVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +25,9 @@ public class DiseaseContentService {
     @Autowired
     private DiseaseContentFacade diseaseContentFacade ;
 
+    @Autowired
+    private BaseSolrFacade baseSolrFacade;
+
     /**
      * 添加 、删除、修改分类
      * @param diseaseContent
@@ -33,6 +38,14 @@ public class DiseaseContentService {
     @Transactional
     public Response mergeDiseaseContent(DiseaseContent diseaseContent){
         DiseaseContent content = diseaseContentFacade.merge(diseaseContent);
+
+        SolrVo solrVo = new SolrVo();
+        solrVo.setDesc(content.getName()+"\b\r"+content.getContent());
+        solrVo.setCategoryCode("jbzs");
+        solrVo.setTitle(content.getName());
+        solrVo.setCategory("疾病知识");
+        baseSolrFacade.addObjectMessageToMq(solrVo);
+
         return Response.status(Response.Status.OK).entity(content).build();
     }
 
