@@ -14,7 +14,6 @@ public class MrFile extends BaseEntity {
 
     private String fileTitle;
     private String subjectCode;
-    private String status;
     private String fileContent;
     private String attachmentFileId;
     private String keyWords;
@@ -39,16 +38,6 @@ public class MrFile extends BaseEntity {
 
     public void setSubjectCode(String subjectCode) {
         this.subjectCode = subjectCode;
-    }
-
-    @Basic
-    @Column(name = "status", nullable = true, length = 2)
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
     }
 
     @Basic
