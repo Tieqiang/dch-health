@@ -1,7 +1,13 @@
 package com.dch.service;
 
+import com.dch.entity.MrFile;
 import com.dch.facade.RedisFacade;
+import com.dch.facade.common.BaseFacade;
 import org.jboss.logging.annotations.Pos;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.ListOperations;
@@ -10,6 +16,7 @@ import org.springframework.data.redis.hash.HashMapper;
 //import org.springframework.data.redis.hash.ObjectHashMapper;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.validation.OverridesAttribute;
@@ -17,6 +24,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -34,6 +42,9 @@ public class RedisTest {
 
     @Autowired
     private RedisFacade redisFacade ;
+
+    @Autowired
+    private BaseFacade baseFacade ;
 
     @Resource(name="redisTemplate")
     private ListOperations<String, String> listOps;
@@ -69,6 +80,49 @@ public class RedisTest {
     @Path("get-person")
     public Person getPerson(@QueryParam("f") String firstName) throws IOException, ClassNotFoundException {
         return redisFacade.readObject(firstName);
+    }
+
+    @Transactional
+    @Path("merge")
+    @GET
+    public Response clearData(){
+        List<MrFile> all = baseFacade.findAll(MrFile.class);
+        int i = 0 ;
+        for(MrFile file:all){
+            clearFile(file);
+            System.out.println("处理数据第"+i+"条");
+            baseFacade.merge(file);
+            i++;
+        }
+        return Response.status(Response.Status.OK).build();
+    }
+
+    private void clearFile(MrFile file) {
+        String fileContent = file.getFileContent();
+        if(fileContent==null||"".equals(fileContent)){
+            return ;
+        }
+
+
+        Document document = Jsoup.parse(fileContent);
+        Iterator<Element> img = document.getElementsByTag("img").iterator();
+        while(img.hasNext()){
+            Element next = img.next();
+            String src = next.attr("src");
+            if(!src.startsWith("/")){
+                src="/"+src;
+            }
+            next.attr("src",src);
+        }
+
+
+        Elements content_share = document.getElementsByClass("content_share");
+        Elements readCT = document.getElementsByClass("readCT");
+        content_share.remove();
+        readCT.remove();
+
+        String html = document.html();
+        file.setFileContent(html);
     }
 
 }

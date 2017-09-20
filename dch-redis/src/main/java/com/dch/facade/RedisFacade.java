@@ -25,10 +25,10 @@ public class RedisFacade {
     @Resource(name="redisTemplate")
     private ValueOperations<String,Object> valueOperations ;
 
-    @Resource
+    @Resource(name="redisTemplate")
     private ValueOperations<String,byte[]> byteValueOperations ;
 
-    @Resource
+    @Resource(name="redisTemplate")
     private ValueOperations<String ,String > stringValueOperations ;
 
 
