@@ -63,7 +63,7 @@ public class MrSubjectFacade extends BaseFacade {
         if(subjectList!=null&& !subjectList.isEmpty()){
             return subjectList.get(0);
         }else{
-            throw new Exception("不存在哦。。");
+            throw new Exception("该查询的学科信息不存在。。");
         }
     }
 
