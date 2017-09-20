@@ -29,10 +29,6 @@ public class MrFileFacade extends BaseFacade {
      */
     @Transactional
     public MrFile mergeMrFileContent(MrFile mrFile) {
-        //添加生成code
-        if(StringUtils.isEmptyParam(mrFile.getId())){
-            mrFile.setSubjectCode(PinYin2Abbreviation.cn2py(mrFile.getFileTitle()));
-        }
         MrFile merge = merge(mrFile);
         SolrVo solrVo=new SolrVo();
         solrVo.setTitle(merge.getFileTitle());

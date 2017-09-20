@@ -27,10 +27,6 @@ public class MrSubjectFacade extends BaseFacade {
      */
     @Transactional
     public MrSubject mergeMrSubject(MrSubject mrSubject) {
-        //添加生成code
-        if(StringUtils.isEmptyParam(mrSubject.getId())){
-            mrSubject.setSubjectCode(PinYin2Abbreviation.cn2py(mrSubject.getSubjectName()));
-        }
         MrSubject merge = merge(mrSubject);
         SolrVo solrVo=new SolrVo();
         solrVo.setTitle(merge.getSubjectName());
