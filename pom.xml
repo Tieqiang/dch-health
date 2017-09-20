@@ -22,6 +22,7 @@
         <module>dch-solr</module>
         <module>dch-disease</module>
         <module>dch-mr</module>
+        <module>dch-redis</module>
     </modules>
 
 
