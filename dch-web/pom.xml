@@ -64,6 +64,13 @@
             <artifactId>dch-disease</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>com.dch</groupId>
+            <artifactId>dch-redis</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+
+
         <!--<dependency>-->
             <!--<groupId>com.dch</groupId>-->
             <!--<artifactId>dch-hdfs</artifactId>-->
@@ -497,6 +504,20 @@
             <groupId>redis.clients</groupId>
             <artifactId>jedis</artifactId>
             <version>2.7.3</version>
+        </dependency>
+
+        <dependency>
+            <!-- jsoup HTML parser library @ https://jsoup.org/ -->
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>1.10.3</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/com.google.code.gson/gson -->
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.2.4</version>
         </dependency>
 
     </dependencies>

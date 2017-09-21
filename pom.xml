@@ -22,6 +22,7 @@
         <module>dch-solr</module>
         <module>dch-disease</module>
         <module>dch-mr</module>
+        <module>dch-redis</module>
     </modules>
 
 
@@ -507,6 +508,20 @@
                         <artifactId>spring-context-support</artifactId>
                     </exclusion>
                 </exclusions>
+            </dependency>
+
+            <dependency>
+                <!-- jsoup HTML parser library @ https://jsoup.org/ -->
+                <groupId>org.jsoup</groupId>
+                <artifactId>jsoup</artifactId>
+                <version>1.10.3</version>
+            </dependency>
+
+            <!-- https://mvnrepository.com/artifact/com.google.code.gson/gson -->
+            <dependency>
+                <groupId>com.google.code.gson</groupId>
+                <artifactId>gson</artifactId>
+                <version>2.2.4</version>
             </dependency>
 
         </dependencies>
