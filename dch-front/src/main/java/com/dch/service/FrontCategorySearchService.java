@@ -65,7 +65,7 @@ public class FrontCategorySearchService {
     @POST
     @Path("get-categorys-by-keywords")
     public  Page<SolrVo> getFrontCategorysByKeyWords(PageParam pageParam) throws Exception {
-        return frontCategorySearchFacade.getFrontCategorysByKeyWords(pageParam.getCategoryCode(),pageParam.getKeyWords(),pageParam.getPerPage(),pageParam.getCurrentPage());
+        return frontCategorySearchFacade.getFrontCategorysByKeyWords(pageParam.getCategoryCode(),pageParam.getKeyWords(),pageParam.getExact(),pageParam.getPerPage(),pageParam.getCurrentPage());
     }
 
 

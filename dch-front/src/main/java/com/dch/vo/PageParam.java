@@ -8,6 +8,7 @@ public class PageParam {
     private String keyWords;
     private int perPage;
     private int currentPage;
+    private String exact;//是否精确查询0:否 1:是
 
     public String getCategoryCode() {
         return categoryCode;
@@ -39,5 +40,13 @@ public class PageParam {
 
     public void setCurrentPage(int currentPage) {
         this.currentPage = currentPage;
+    }
+
+    public String getExact() {
+        return exact;
+    }
+
+    public void setExact(String exact) {
+        this.exact = exact;
     }
 }

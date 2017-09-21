@@ -44,15 +44,17 @@ public class FrontCategorySearchFacade extends BaseFacade {
      *
      * @param categoryCode
      * @param keyWords
+     * @param exact 是否精确查询 0:否 1:是
      * @param perPage
      * @param currentPage
      * @return
      * @throws Exception
      */
-    public Page<SolrVo> getFrontCategorysByKeyWords(String categoryCode, String keyWords, int perPage, int currentPage) throws Exception {
+    public Page<SolrVo> getFrontCategorysByKeyWords(String categoryCode, String keyWords,String exact,int perPage, int currentPage) throws Exception {
         Page<SolrVo> solrVoPage = null;
         try {
             String param = "";
+            keyWords = keyWords.trim();
             if (StringUtils.isEmptyParam(categoryCode) && StringUtils.isEmptyParam(keyWords)) {
                 throw new Exception("参数为空！");
             }
@@ -61,11 +63,27 @@ public class FrontCategorySearchFacade extends BaseFacade {
             }
 
             keyWords = StringUtils.remeveHtmlLabel(keyWords);
-            if (keyWords != null && !"".equals(keyWords)) {
-                param += " AND categorykeywords:" + keyWords;
+            String filterKeyWords = "categorykeywords:(" + keyWords+")";
+            if("1".equals(exact)){//精确查询
+                if (keyWords != null && !"".equals(keyWords)) {
+                    if(keyWords.indexOf(" ")!=-1){
+                        keyWords = keyWords.replace(" ","* *");
+                        keyWords = "(*"+keyWords+"*)";
+                    }else{
+                        keyWords = "*"+keyWords+"*";//模糊匹配
+                    }
+                   param += " AND exactkeywords:" + keyWords;
+                }
+            }else{//ik分词 智能查询
+                if (keyWords != null && !"".equals(keyWords)) {
+                    if(keyWords.indexOf(" ")!=-1){
+                        keyWords = "("+keyWords+")";
+                    }
+                    param += " AND categorykeywords:" + keyWords;
+                }
             }
             String hl = "title,desc,label";
-            solrVoPage = baseSolrFacade.getSolrObjectByParamAndPageParm(param, hl, perPage, currentPage, SolrVo.class);
+            solrVoPage = baseSolrFacade.getSolrObjectByParamAndPageParm(param,hl,perPage, currentPage, SolrVo.class);
         }catch (Exception e){
             e.printStackTrace();
             throw e;
