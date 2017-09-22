@@ -27,10 +27,6 @@ public class MrSubjectFacade extends BaseFacade {
      */
     @Transactional
     public MrSubject mergeMrSubject(MrSubject mrSubject) {
-        //添加生成code
-        if(StringUtils.isEmptyParam(mrSubject.getId())){
-            mrSubject.setSubjectCode(PinYin2Abbreviation.cn2py(mrSubject.getSubjectName()));
-        }
         MrSubject merge = merge(mrSubject);
         SolrVo solrVo=new SolrVo();
         solrVo.setTitle(merge.getSubjectName());
@@ -63,7 +59,7 @@ public class MrSubjectFacade extends BaseFacade {
         if(subjectList!=null&& !subjectList.isEmpty()){
             return subjectList.get(0);
         }else{
-            throw new Exception("不存在哦。。");
+            throw new Exception("该查询的学科信息不存在。。");
         }
     }
 

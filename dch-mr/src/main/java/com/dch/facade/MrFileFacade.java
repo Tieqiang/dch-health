@@ -29,15 +29,11 @@ public class MrFileFacade extends BaseFacade {
      */
     @Transactional
     public MrFile mergeMrFileContent(MrFile mrFile) {
-        //添加生成code
-        if(StringUtils.isEmptyParam(mrFile.getId())){
-            mrFile.setSubjectCode(PinYin2Abbreviation.cn2py(mrFile.getFileTitle()));
-        }
         MrFile merge = merge(mrFile);
         SolrVo solrVo=new SolrVo();
         solrVo.setTitle(merge.getFileTitle());
-        solrVo.setDesc(merge.getFileTitle()+","+merge.getFileContent()+","+merge.getKeyWords());
-        solrVo.setCategory(merge.getAttachmentFileId());
+        solrVo.setDesc(merge.getFileContent());
+        solrVo.setCategory(merge.getSubjectCode());
         solrVo.setId(merge.getId());
         solrVo.setLabel(merge.getKeyWords());
         solrVo.setCategoryCode(merge.getSubjectCode());
@@ -57,7 +53,7 @@ public class MrFileFacade extends BaseFacade {
         if(mrFileList!=null&& !mrFileList.isEmpty()){
             return mrFileList.get(0);
         }else{
-            throw new Exception("不存在哦。。");
+            throw new Exception("该查询的文章内容不存在。。");
         }
     }
 
