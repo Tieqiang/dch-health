@@ -104,7 +104,7 @@ public class FrontCountService {
      */
     @GET
     @Path("get-all-drug-firms")
-    public List<DrugFirm> getAllDrugFirms(){
+    public List<DrugCountryVo> getAllDrugFirms(){
         return frontCountFacade.getAllDrugFirms();
     }
 

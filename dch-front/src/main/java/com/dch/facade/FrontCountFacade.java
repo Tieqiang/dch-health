@@ -102,10 +102,21 @@ public class FrontCountFacade extends BaseFacade {
      * 获取所有厂商信息
      * @return
      */
-    public List<DrugFirm> getAllDrugFirms(){
-        String hql = " from DrugFirm where status <>'-1'";
-        List<DrugFirm> drugFirmList = createQuery(DrugFirm.class,hql,new ArrayList<Object>()).getResultList();
-        return drugFirmList;
+    public List<DrugCountryVo> getAllDrugFirms(){
+        List<DrugCountryVo> drugCountryVoList = new ArrayList<>();
+        String sql = "select count(*),address_province from drug_firm where status <>'-1' group by address_province";
+        List list = createNativeQuery(sql).getResultList();
+        if(list!=null && !list.isEmpty()){
+            int size = list.size();
+            for(int i=0;i<size;i++){
+                DrugCountryVo drugCountryVo = new DrugCountryVo();
+                Object[] params = (Object[])list.get(i);
+                drugCountryVo.setCount(Integer.valueOf(params[0].toString()));
+                drugCountryVo.setCountry((String) params[1]);
+                drugCountryVoList.add(drugCountryVo);
+            }
+        }
+        return drugCountryVoList;
     }
 
     /**
@@ -113,11 +124,22 @@ public class FrontCountFacade extends BaseFacade {
      * @return
      */
     public List<DrugCountryVo> getDrugCountryVos(){
-        String hql = "select new com.dch.vo.DrugCountryVo(b.id,b.drugName,b.drugCode,b.className,b.spec,b.toxi,b.drugCategory," +
-                "b.rxFlag,f.addressProvince) from DrugBaseInfo as b,DrugPackageInfo as p,DrugFirm as f where b.id = p.drugId" +
-                " and p.firmId = f.id and  b.status = '1' and p.status = '1' and f.status = '1'" +
-                " group by b.id";
-        List<DrugCountryVo> drugCountryVoList = createQuery(DrugCountryVo.class,hql,new ArrayList<Object>()).getResultList();
+        List<DrugCountryVo> drugCountryVoList = new ArrayList<>();
+        String sql = "select count(distinct p.drug_Id),f.address_province" +
+                " from drug_package_info as p,drug_firm as f where " +
+                " p.firm_id = f.id and p.status = '1' and f.status = '1'" +
+                " group by f.address_province";
+        List list = createNativeQuery(sql).getResultList();
+        if(list!=null && !list.isEmpty()){
+            int size = list.size();
+            for(int i=0;i<size;i++){
+                DrugCountryVo drugCountryVo = new DrugCountryVo();
+                Object[] params = (Object[])list.get(i);
+                drugCountryVo.setCount(Integer.valueOf(params[0].toString()));
+                drugCountryVo.setCountry((String) params[1]);
+                drugCountryVoList.add(drugCountryVo);
+            }
+        }
         return drugCountryVoList;
     }
 }
