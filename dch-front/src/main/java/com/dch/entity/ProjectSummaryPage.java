@@ -13,6 +13,7 @@ public class ProjectSummaryPage extends BaseEntity {
     private String pageName;
     private String icon;
     private String content;
+    private String viewPath ;
     private String publishStatus;
     private String projectId;
     private Integer orderNo;
@@ -75,6 +76,16 @@ public class ProjectSummaryPage extends BaseEntity {
 
     public void setOrderNo(Integer orderNo) {
         this.orderNo = orderNo;
+    }
+
+    @Basic
+    @Column(name="view_path")
+    public String getViewPath() {
+        return viewPath;
+    }
+
+    public void setViewPath(String viewPath) {
+        this.viewPath = viewPath;
     }
 
     @Override
