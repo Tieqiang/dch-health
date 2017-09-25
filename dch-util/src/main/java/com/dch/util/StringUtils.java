@@ -168,11 +168,14 @@ public class StringUtils {
         Matcher m_special = p_special.matcher(htmlStr);
         htmlStr = m_special.replaceAll(""); // 过滤特殊标签
 
-        Pattern p = Pattern.compile("\\s*|\t|\r|\n");
+        Pattern p = Pattern.compile("\t|\r|\n");
         Matcher m = p.matcher(htmlStr);
         htmlStr = m.replaceAll("");
-        htmlStr = htmlStr.replaceAll("[\\pP\\pS\\pZ]", "");
+        htmlStr = htmlStr.replaceAll("[\\pP\\pS]", "");
+        htmlStr = htmlStr.replace(":","");
+        htmlStr = htmlStr.replace("：","");
         textStr = htmlStr;
         return textStr;
     }
+
 }

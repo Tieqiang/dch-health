@@ -13,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.jms.core.MessageCreator;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import javax.jms.*;
@@ -151,11 +150,13 @@ public class BaseSolrFacade {
         Page<T> resul = new Page<>();
         List<T> resultList = new ArrayList<>();
         SolrQuery query = new SolrQuery();// 查询
+
         if(param==null||"".equals(param)){
             param = "*:*";
         }
         if(type!=null){
-            param = param+" AND tableName:"+type.getSimpleName();
+            //param = param+" AND tableName:"+type.getSimpleName();
+            query.addFilterQuery("tableName:"+type.getSimpleName());
         }
         query.setQuery(param);
 
@@ -170,6 +171,9 @@ public class BaseSolrFacade {
             query.setHighlightSnippets(2);//结果分片数，默认为1
             query.setHighlightFragsize(10000);//每个分片的最大长度，默认为100
         }
+//        if(isFilter){
+//            query.addFilterQuery(filterKeyWords);
+//        }
         if(currentPage<=0){
             currentPage = 1;
         }
@@ -193,6 +197,92 @@ public class BaseSolrFacade {
         return resul;
     }
 
+    public <T> Page<T> getExactSolrVoByParamAndPageParm(String keyWords,String fiterStr,String hlFields,int perPage,int currentPage, Class<T> type) throws Exception{
+        Page<T> resul = new Page<>();
+        List<T> resultList = new ArrayList<>();
+        SolrQuery query = new SolrQuery();// 查询
+        //设置默认查询
+        query.set("df", "exactkeywords");
+        String orignKeyWords = keyWords;
+        if (keyWords != null && !"".equals(keyWords)) {
+            if(keyWords.indexOf(" ")!=-1){
+                keyWords = keyWords.replace(" ","* *");
+                keyWords = "(*"+keyWords+"*)";
+            }else{
+                keyWords = "*"+keyWords+"*";//模糊匹配
+            }
+        }else {
+            keyWords = "*:*";
+        }
+        if(type!=null){
+            if(fiterStr!=null && !"".equals(fiterStr)){
+                query.addFilterQuery(fiterStr+" AND tableName:"+type.getSimpleName());
+            }else{
+                query.addFilterQuery("tableName:"+type.getSimpleName());
+            }
+        }
+        query.setQuery(keyWords);
+
+        if(hlFields!=null && !"".equals(hlFields)){
+            //开启高亮
+            query.setHighlight(true);
+            //高亮显示的格式
+            query.setHighlightSimplePre("<font color='red'>");
+            query.setHighlightSimplePost("</font>");
+            //我需要那几个字段进行高亮
+            query.setParam("hl.fl", hlFields);
+            //query.set("hl.preserveMulti","true");
+            query.set("hl.highlightMultiTerm","true");
+            query.set("hl.usePhraseHighlighter","true");
+            query.setHighlightSnippets(2);//结果分片数，默认为1
+            query.setHighlightFragsize(10000);//每个分片的最大长度，默认为100
+        }
+
+        if(currentPage<=0){
+            currentPage = 1;
+        }
+        if(perPage<=0){
+            perPage = 15;
+        }
+        query.setStart((currentPage-1)*perPage);
+        query.setRows(perPage);
+
+        QueryResponse queryResponse = httpSolrServer.query(query, SolrRequest.METHOD.POST);
+        //返回所有的结果...
+        SolrDocumentList childDocs=queryResponse.getResults();
+        Long total = childDocs.getNumFound();
+        Map<String, Map<String, List<String>>> maplist=queryResponse.getHighlighting();
+        resul.setPerPage((long)perPage);
+        resul.setCounts((long)total);
+        for(SolrDocument sd : childDocs){
+            resultList.add(getSolrVo(type,sd,orignKeyWords));
+        }
+        resul.setData(resultList);
+        return resul;
+    }
+
+    public <T> T getSolrVo(Class<T> type,SolrDocument doc,String keyWords) throws Exception{
+        Object id=doc.get("id");
+        T ret  = (T)Class.forName(type.getName()).newInstance();
+        Field[] fileds = ret.getClass().getDeclaredFields();
+        String[] strArray = keyWords.split(" ");
+        for(Field field:fileds){
+            String value = doc.getFieldValue(field.getName())==null?"":doc.getFieldValue(field.getName()).toString();
+            field.setAccessible(true); // 设置些属性是可以访问的
+            field.set(ret,getHilightValue(value,strArray));
+        }
+        return ret;
+    }
+
+    public String getHilightValue(String value,String[] strArray){
+        if(strArray==null || strArray.length<1){
+            return value;
+        }
+        for(String key:strArray){
+            value = value.replace(key,"<font color='red'>"+key+"</font>");
+        }
+        return value;
+    }
     public <T> T getDto(Class<T> type,SolrDocument doc,Map<String, Map<String, List<String>>> hlMap) throws Exception{
         Object id=doc.get("id");
         Map<String, List<String>>  fieldMap = (hlMap==null?null:hlMap.get(id));

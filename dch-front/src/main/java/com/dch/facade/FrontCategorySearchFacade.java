@@ -3,9 +3,8 @@ package com.dch.facade;
 import com.dch.entity.FrontSearchCategory;
 import com.dch.facade.common.BaseFacade;
 import com.dch.facade.common.VO.Page;
+import com.dch.util.LogHome;
 import com.dch.util.StringUtils;
-import com.dch.vo.DrugAdVo;
-import com.dch.vo.DrugBaseInfoVo;
 import com.dch.vo.SolrVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -63,17 +62,13 @@ public class FrontCategorySearchFacade extends BaseFacade {
             }
 
             keyWords = StringUtils.remeveHtmlLabel(keyWords);
-            String filterKeyWords = "categorykeywords:(" + keyWords+")";
+            String hl = "title,desc,label";
             if("1".equals(exact)){//精确查询
-                if (keyWords != null && !"".equals(keyWords)) {
-                    if(keyWords.indexOf(" ")!=-1){
-                        keyWords = keyWords.replace(" ","* *");
-                        keyWords = "(*"+keyWords+"*)";
-                    }else{
-                        keyWords = "*"+keyWords+"*";//模糊匹配
-                    }
-                   param += " AND exactkeywords:" + keyWords;
+                String filterStr = "";
+                if (categoryCode != null && !"".equals(categoryCode)) {
+                    filterStr = "categoryCode:" + categoryCode ;
                 }
+                solrVoPage = baseSolrFacade.getExactSolrVoByParamAndPageParm(keyWords,filterStr,hl,perPage, currentPage, SolrVo.class);
             }else{//ik分词 智能查询
                 if (keyWords != null && !"".equals(keyWords)) {
                     if(keyWords.indexOf(" ")!=-1){
@@ -81,13 +76,13 @@ public class FrontCategorySearchFacade extends BaseFacade {
                     }
                     param += " AND categorykeywords:" + keyWords;
                 }
+                solrVoPage = baseSolrFacade.getSolrObjectByParamAndPageParm(param,hl,perPage, currentPage, SolrVo.class);
             }
-            String hl = "title,desc,label";
-            solrVoPage = baseSolrFacade.getSolrObjectByParamAndPageParm(param,hl,perPage, currentPage, SolrVo.class);
         }catch (Exception e){
             e.printStackTrace();
             throw e;
         }
+        LogHome.getLog().info("关键字:"+keyWords);
         return solrVoPage;
     }
 
