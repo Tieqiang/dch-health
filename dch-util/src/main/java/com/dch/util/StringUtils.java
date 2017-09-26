@@ -175,6 +175,7 @@ public class StringUtils {
         htmlStr = htmlStr.replace(":","");
         htmlStr = htmlStr.replace("：","");
         textStr = htmlStr;
+        textStr = textStr.replaceAll(" +"," ");
         return textStr;
     }
 

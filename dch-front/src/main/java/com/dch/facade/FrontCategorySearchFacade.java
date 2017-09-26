@@ -60,16 +60,9 @@ public class FrontCategorySearchFacade extends BaseFacade {
             if (categoryCode != null && !"".equals(categoryCode)) {
                 param += "categoryCode:" + categoryCode ;
             }
-
             keyWords = StringUtils.remeveHtmlLabel(keyWords);
             String hl = "title,desc,label";
             if("1".equals(exact)){//精确查询
-                String filterStr = "";
-                if (categoryCode != null && !"".equals(categoryCode)) {
-                    filterStr = "categoryCode:" + categoryCode ;
-                }
-                solrVoPage = baseSolrFacade.getExactSolrVoByParamAndPageParm(keyWords,filterStr,hl,perPage, currentPage, SolrVo.class);
-            }else{//ik分词 智能查询
                 if (keyWords != null && !"".equals(keyWords)) {
                     if(keyWords.indexOf(" ")!=-1){
                         keyWords = "("+keyWords+")";
@@ -77,6 +70,12 @@ public class FrontCategorySearchFacade extends BaseFacade {
                     param += " AND categorykeywords:" + keyWords;
                 }
                 solrVoPage = baseSolrFacade.getSolrObjectByParamAndPageParm(param,hl,perPage, currentPage, SolrVo.class);
+            }else{//ik分词 智能查询
+                String filterStr = "";
+                if (categoryCode != null && !"".equals(categoryCode)) {
+                    filterStr = "categoryCode:" + categoryCode ;
+                }
+                solrVoPage = baseSolrFacade.getExactSolrVoByParamAndPageParm(keyWords,filterStr,hl,perPage, currentPage, SolrVo.class);
             }
         }catch (Exception e){
             e.printStackTrace();
