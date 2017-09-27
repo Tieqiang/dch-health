@@ -272,7 +272,7 @@ public class BaseFacade {
             currentPage=1;
         }
         typedQuery.setFirstResult((currentPage-1)*perPage);
-        typedQuery.setMaxResults(currentPage*perPage);
+        typedQuery.setMaxResults(perPage);
         resultPage.setPerPage((long)perPage);
         List<T> resultList = typedQuery.getResultList();
         resultPage.setData(resultList);
