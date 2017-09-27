@@ -9,8 +9,8 @@ import java.sql.Timestamp;
  * Created by Administrator on 2017/9/27.
  */
 @Entity
-@Table(name = "template_data_elment", schema = "dch", catalog = "")
-public class TemplateDataElment extends BaseEntity{
+@Table(name = "template_data_element", schema = "dch", catalog = "")
+public class TemplateDataElement extends BaseEntity{
     private String dataElementName;
     private String dataElementCode;
     private String parentDataId;
