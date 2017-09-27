@@ -11,8 +11,19 @@ import java.sql.Timestamp;
 @Entity
 @Table(name = "project_infomations", schema = "dch", catalog = "")
 public class ProjectInfomation extends BaseEntity{
+    private String projectId;
     private String infoTitle;
     private String infoContent;
+
+    @Basic
+    @Column(name = "project_id", nullable = true, length = 500)
+    public String getProjectId() {
+        return projectId;
+    }
+
+    public void setProjectId(String projectId) {
+        this.projectId = projectId;
+    }
 
     @Basic
     @Column(name = "info_title", nullable = true, length = 500)
