@@ -10,7 +10,7 @@ import java.sql.Timestamp;
  */
 @Entity
 @Table(name = "project_infomations", schema = "dch", catalog = "")
-public class ProjectInfomations extends BaseEntity{
+public class ProjectInfomation extends BaseEntity{
     private String infoTitle;
     private String infoContent;
 
