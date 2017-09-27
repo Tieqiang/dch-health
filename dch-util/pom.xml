@@ -23,9 +23,25 @@
         </plugins>
     </build>
 
+    <properties>
+        <!-- log4j日志文件管理包版本 -->
+        <log4j.version>1.2.12</log4j.version>
+    </properties>
+
     <dependencies>
-
-
+            <!-- 日志文件管理包 -->
+            <!-- log start -->
+            <dependency>
+                <groupId>log4j</groupId>
+                <artifactId>log4j</artifactId>
+                <version>${log4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>jcl-over-slf4j</artifactId>
+                <version>1.5.8</version>
+            </dependency>
+            <!-- log end -->
 
         <!-- hibernate -->
         <dependency>
@@ -114,6 +130,11 @@
             <groupId>org.crazycake</groupId>
             <artifactId>shiro-redis</artifactId>
             <version>2.4.2.1-RELEASE</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+            <version>RELEASE</version>
         </dependency>
     </dependencies>
 
