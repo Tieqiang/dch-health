@@ -134,7 +134,6 @@
         <dependency>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
-            <version>RELEASE</version>
         </dependency>
     </dependencies>
 
