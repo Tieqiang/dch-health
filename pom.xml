@@ -23,9 +23,21 @@
         <module>dch-disease</module>
         <module>dch-mr</module>
         <module>dch-redis</module>
-        <module>dch-template</module>
         <module>dch-project</module>
+        <module>dch-template</module>
     </modules>
+    <dependencies>
+        <dependency>
+            <groupId>org.hibernate.javax.persistence</groupId>
+            <artifactId>hibernate-jpa-2.1-api</artifactId>
+            <version>1.0.0.Final</version>
+        </dependency>
+        <dependency>
+            <groupId>com.dch</groupId>
+            <artifactId>dch-base</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
 
 
     <properties>
