@@ -23,6 +23,8 @@
         <module>dch-disease</module>
         <module>dch-mr</module>
         <module>dch-redis</module>
+        <module>dch-project</module>
+        <module>dch-template</module>
     </modules>
 
 
