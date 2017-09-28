@@ -20,6 +20,13 @@ public class TemplateDataElement extends BaseEntity{
     private String childrenFlag;
     private String dataGroupId;
     private String hasGroupId;
+    private String templateId;
+
+    @Basic
+    @Column(name = "template_id", nullable = true, length = 64)
+    public String getTemplateId() { return templateId; }
+
+    public void setTemplateId(String templateId) { this.templateId = templateId; }
 
     @Basic
     @Column(name = "data_element_name", nullable = true, length = 200)
