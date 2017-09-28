@@ -33,13 +33,13 @@ public class TemplateDataGroupService {
 
     /**
      * 获取表单的元数据组
-     * @param projectId
+     * @param templateId
      * @return
      */
     @GET
     @Path("get-template-data-groups")
-    public List<TemplateDataGroup> getTemplateGroups(@QueryParam("projectId")String projectId){
-        return templateDataGroupFacade.getTemplateGroups(projectId);
+    public List<TemplateDataGroup> getTemplateGroups(@QueryParam("templateId")String templateId){
+        return templateDataGroupFacade.getTemplateGroups(templateId);
     }
 
     /**
