@@ -30,7 +30,7 @@ public class TemplatePageFacade extends BaseFacade {
      */
     public List<TemplatePage> getTemplatePages(String templateId) {
         String hql=" from TemplatePage where status <> '-1' and templateId = ' "+templateId+" '";
-        List<TemplatePage> templatePageList = createQuery(TemplatePage.class, hql, new ArrayList<>()).getResultList();
+        List<TemplatePage> templatePageList = createQuery(TemplatePage.class, hql, new ArrayList<Object>()).getResultList();
         return templatePageList;
     }
 
@@ -42,7 +42,7 @@ public class TemplatePageFacade extends BaseFacade {
      */
     public TemplatePage getTemplatePage(String pageId) throws Exception {
         String hql=" from TemplatePage where status <> '-1' and id = ' "+pageId+" '";
-        List<TemplatePage> templatePageList = createQuery(TemplatePage.class, hql, new ArrayList<>()).getResultList();
+        List<TemplatePage> templatePageList = createQuery(TemplatePage.class, hql, new ArrayList<Object>()).getResultList();
         if(templatePageList!=null &&templatePageList.size()>0){
             return templatePageList.get(0);
         }else{

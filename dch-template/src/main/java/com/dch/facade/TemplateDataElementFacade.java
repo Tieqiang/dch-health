@@ -1,6 +1,5 @@
 package com.dch.facade;
 
-import com.dch.entity.ProjectMaster;
 import com.dch.entity.TemplateDataElement;
 import com.dch.entity.TemplateDataValue;
 import com.dch.facade.common.BaseFacade;
@@ -45,7 +44,7 @@ public class TemplateDataElementFacade extends BaseFacade {
             hql+="and dataGroupId =' "+ projectId +"'";
             hqlCount+="and dataGroupId =' "+ projectId +"'";
         }
-        TypedQuery<TemplateDataElement> query = createQuery(TemplateDataElement.class, hql, new ArrayList<>());
+        TypedQuery<TemplateDataElement> query = createQuery(TemplateDataElement.class, hql, new ArrayList<Object>());
         Long counts = createQuery(Long.class,hqlCount,new ArrayList<Object>()).getSingleResult();
         Page page =new Page();
         if(perPage<=0){
@@ -82,6 +81,6 @@ public class TemplateDataElementFacade extends BaseFacade {
      */
     public List<TemplateDataValue> getTemplateDataValues(String elementId) {
         String hql=" from TemplateDataValue where status <> '-1' and dataElementId = ' "+elementId+" '";
-        return createQuery(TemplateDataValue.class,hql,new ArrayList<>()).getResultList();
+        return createQuery(TemplateDataValue.class,hql,new ArrayList<Object>()).getResultList();
     }
 }

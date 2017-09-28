@@ -30,7 +30,7 @@ public class ProjectMemberFacade extends BaseFacade {
      */
     public List<ProjectMember> getProjectMembers(String projectId) {
         String hql=" from ProjectMember where status <> '-1' and id = ' "+projectId+" '";
-        List<ProjectMember> projectMemberList = createQuery(ProjectMember.class, hql, new ArrayList<>()).getResultList();
+        List<ProjectMember> projectMemberList = createQuery(ProjectMember.class, hql, new ArrayList<Object>()).getResultList();
         return projectMemberList;
     }
 }

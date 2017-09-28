@@ -45,7 +45,7 @@ public class ProjectMasterFacade extends BaseFacade {
             hql+="and projectPerson =' "+ projectPerson +"'";
             hqlCount+="and projectPerson =' "+ projectPerson +"'";
         }
-        TypedQuery<ProjectMaster> query = createQuery(ProjectMaster.class, hql, new ArrayList<>());
+        TypedQuery<ProjectMaster> query = createQuery(ProjectMaster.class, hql, new ArrayList<Object>());
         Long counts = createQuery(Long.class,hqlCount,new ArrayList<Object>()).getSingleResult();
         Page page =new Page();
         if(perPage<=0){
@@ -72,7 +72,7 @@ public class ProjectMasterFacade extends BaseFacade {
      */
     public ProjectMaster getProjectMaster(String projectId) throws Exception {
         String hql=" from ProjectMaster where status <> '-1' and id = ' "+projectId+" '";
-        List<ProjectMaster> projectMasterList = createQuery(ProjectMaster.class, hql, new ArrayList<>()).getResultList();
+        List<ProjectMaster> projectMasterList = createQuery(ProjectMaster.class, hql, new ArrayList<Object>()).getResultList();
         if(projectMasterList!=null &&projectMasterList.size()>0){
             return projectMasterList.get(0);
         }else{
