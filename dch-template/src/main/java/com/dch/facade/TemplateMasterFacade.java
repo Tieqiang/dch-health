@@ -110,4 +110,15 @@ public class TemplateMasterFacade extends BaseFacade{
             throw new Exception("该表单信息不存在！");
         }
     }
+
+    /**
+     *根据用户id获取所属表单
+     * @param userId
+     * @return
+     */
+    public List<TemplateMaster> getTemplateMastersByCreater(String userId) {
+        String hql = "from TemplateMaster where status<>'-1' and createBy = '"+userId+"'";
+        List<TemplateMaster> templateMasterList = createQuery(TemplateMaster.class,hql,new ArrayList<Object>()).getResultList();
+        return templateMasterList;
+    }
 }

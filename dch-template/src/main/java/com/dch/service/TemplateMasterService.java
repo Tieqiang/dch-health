@@ -8,6 +8,7 @@ import org.springframework.stereotype.Controller;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
+import java.util.List;
 
 /**
  * Created by Administrator on 2017/9/27.
@@ -57,5 +58,16 @@ public class TemplateMasterService {
     @Path("get-template-master")
     public TemplateMaster getTemplateMaster(@QueryParam("templateMasterId")String templateMasterId) throws Exception{
         return templateMasterFacade.getTemplateMaster(templateMasterId);
+    }
+
+    /**
+     * 根据用户id获取所属表单
+     * @param userId
+     * @return
+     */
+    @GET
+    @Path("get-template-masters-By-creater")
+    public List<TemplateMaster> getTemplateMastersByCreater(@QueryParam("userId")String userId){
+        return templateMasterFacade.getTemplateMastersByCreater(userId);
     }
 }

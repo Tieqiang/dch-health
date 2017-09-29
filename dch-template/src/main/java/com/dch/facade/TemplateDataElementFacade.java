@@ -27,7 +27,7 @@ public class TemplateDataElementFacade extends BaseFacade {
     /**
      * 获取元数据
      * @param groupId
-     * @param projectId
+     * @param templateId
      * @param perPage
      * @param currentPage
      * @return
@@ -37,12 +37,12 @@ public class TemplateDataElementFacade extends BaseFacade {
         String hqlCount="select count(*) from TemplateDataElement where status <> '-1' ";
 
         if(groupId!=null&&!"".equals(groupId)){
-            hql+="hasGroupId = '"+groupId+"' ";
-            hqlCount+="and hasGroupId = '"+groupId+"' ";
+            hql+="and dataGroupId = '"+groupId+"' ";
+            hqlCount+="and dataGroupId = '"+groupId+"' ";
         }
         if(templateId!=null&&!"".equals(templateId)){
-            hql+="and templateId =' "+ templateId +"'";
-            hqlCount+="and templateId =' "+ templateId +"'";
+            hql+="and templateId = '"+templateId+"'";
+            hqlCount+="and templateId = '"+templateId+"'";
         }
         TypedQuery<TemplateDataElement> query = createQuery(TemplateDataElement.class, hql, new ArrayList<Object>());
         Long counts = createQuery(Long.class,hqlCount,new ArrayList<Object>()).getSingleResult();
