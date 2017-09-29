@@ -9,6 +9,7 @@ import org.springframework.stereotype.Controller;
 import javax.transaction.Transactional;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
+import java.util.List;
 
 @Path("project/project-master")
 @Produces("application/json")
@@ -56,5 +57,16 @@ public class ProjectMasterService {
     @Path("get-project-master")
     public ProjectMaster getProjectMaster(@QueryParam("projectId") String projectId) throws Exception {
         return projectMasterFacade.getProjectMaster(projectId);
+    }
+
+    /**
+     * 根据用户id获取其创建的项目
+     * @param userId
+     * @return
+     */
+    @GET
+    @Path("get-project-masters-By-creater")
+    public List<ProjectMaster> getProjectMastersByCreater(@QueryParam("userId")String userId){
+        return projectMasterFacade.getProjectMastersByCreater(userId);
     }
 }
