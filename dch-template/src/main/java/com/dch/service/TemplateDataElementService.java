@@ -41,11 +41,11 @@ public class TemplateDataElementService {
      */
     @GET
     @Path("get-template-data-elements")
-    public Page<TemplateDataElement> getTemplateDataElements(@QueryParam("groupId") String groupId,
+    public Page<TemplateDataElement> getTemplateDataElements(@QueryParam("groupId") String groupId,@QueryParam("dataElementName")String dataElementName,
                                                              @QueryParam("templateId") String templateId,
                                                              @QueryParam("perPage") int perPage,
                                                              @QueryParam("currentPage") int currentPage){
-        return templateDataElementFacade.getTemplateDataElements(groupId,templateId,perPage,currentPage);
+        return templateDataElementFacade.getTemplateDataElements(groupId,dataElementName,templateId,perPage,currentPage);
     }
 
     /**
