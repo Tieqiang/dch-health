@@ -2,8 +2,10 @@ package com.dch.entity;
 
 import com.dch.entity.base.BaseEntity;
 
-import javax.persistence.*;
-import java.sql.Timestamp;
+import javax.persistence.Basic;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Table;
 
 /**
  * Created by Administrator on 2017/9/27.
@@ -15,7 +17,7 @@ public class TemplateDataElement extends BaseEntity{
     private String dataElementCode;
     private String parentDataId;
     private String dataStandRefId;
-    private String dataElmentType;
+    private String dataElementType;
     private String dataUnion;
     private String childrenFlag;
     private String dataGroupId;
@@ -62,13 +64,13 @@ public class TemplateDataElement extends BaseEntity{
     }
 
     @Basic
-    @Column(name = "data_elment_type", nullable = true, length = 200)
-    public String getDataElmentType() {
-        return dataElmentType;
+    @Column(name = "data_element_type", nullable = true, length = 200)
+    public String getDataElementType() {
+        return dataElementType;
     }
 
-    public void setDataElmentType(String dataElmentType) {
-        this.dataElmentType = dataElmentType;
+    public void setDataElementType(String dataElmentType) {
+        this.dataElementType = dataElementType;
     }
 
     @Basic

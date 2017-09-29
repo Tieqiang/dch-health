@@ -7,10 +7,6 @@ import com.dch.util.PinYin2Abbreviation;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.List;
@@ -85,7 +81,7 @@ public class DictFacade extends BaseFacade {
      */
     @Transactional
     public Response mergeDictValue(DictValue dictValue) throws Exception{
-        List<DictValue> dictValueList = getDictValueList(dictValue.getKeyName(),dictValue.getId()==null?"":dictValue.getId());
+        List<DictValue> dictValueList = getDictValueList(dictValue.getKeyName(),dictValue.getDictTypeId(),dictValue.getId()==null?"":dictValue.getId());
         if(dictValueList!=null && !dictValueList.isEmpty()){
             throw new Exception("该字典内容信息已存在，请重试");
         }
@@ -99,8 +95,8 @@ public class DictFacade extends BaseFacade {
      * @param id
      * @return
      */
-    public List<DictValue> getDictValueList(String keyName,String id){
-        String hql = " from DictValue where keyName = '"+keyName+"' and id <> '"+id+"'";
+    public List<DictValue> getDictValueList(String keyName,String dictTypeId,String id){
+        String hql = " from DictValue where keyName = '"+keyName+"' and dictTypeId ='"+dictTypeId+"' and id <> '"+id+"'";
         return createQuery(DictValue.class,hql,new ArrayList<Object>()).getResultList();
     }
 
