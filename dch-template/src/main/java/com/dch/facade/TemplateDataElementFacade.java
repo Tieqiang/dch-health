@@ -32,7 +32,7 @@ public class TemplateDataElementFacade extends BaseFacade {
      * @param currentPage
      * @return
      */
-    public Page<TemplateDataElement> getTemplateDataElements(String groupId, String projectId, int perPage, int currentPage) {
+    public Page<TemplateDataElement> getTemplateDataElements(String groupId, String templateId, int perPage, int currentPage) {
         String hql=" from TemplateDataElement where status <> '-1' ";
         String hqlCount="select count(*) from TemplateDataElement where status <> '-1' ";
 
@@ -40,9 +40,9 @@ public class TemplateDataElementFacade extends BaseFacade {
             hql+="hasGroupId = '"+groupId+"' ";
             hqlCount+="and hasGroupId = '"+groupId+"' ";
         }
-        if(projectId!=null&&!"".equals(projectId)){
-            hql+="and dataGroupId =' "+ projectId +"'";
-            hqlCount+="and dataGroupId =' "+ projectId +"'";
+        if(templateId!=null&&!"".equals(templateId)){
+            hql+="and templateId =' "+ templateId +"'";
+            hqlCount+="and templateId =' "+ templateId +"'";
         }
         TypedQuery<TemplateDataElement> query = createQuery(TemplateDataElement.class, hql, new ArrayList<Object>());
         Long counts = createQuery(Long.class,hqlCount,new ArrayList<Object>()).getSingleResult();

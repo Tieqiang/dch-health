@@ -34,7 +34,7 @@ public class TemplateDataElementService {
     /**
      * 获取元数据
      * @param groupId
-     * @param projectId
+     * @param templateId
      * @param perPage
      * @param currentPage
      * @return
@@ -42,10 +42,10 @@ public class TemplateDataElementService {
     @GET
     @Path("get-template-data-elements")
     public Page<TemplateDataElement> getTemplateDataElements(@QueryParam("groupId") String groupId,
-                                                             @QueryParam("projectId") String projectId,
+                                                             @QueryParam("templateId") String templateId,
                                                              @QueryParam("perPage") int perPage,
                                                              @QueryParam("currentPage") int currentPage){
-        return templateDataElementFacade.getTemplateDataElements(groupId,projectId,perPage,currentPage);
+        return templateDataElementFacade.getTemplateDataElements(groupId,templateId,perPage,currentPage);
     }
 
     /**
