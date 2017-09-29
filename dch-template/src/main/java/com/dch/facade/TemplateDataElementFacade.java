@@ -80,7 +80,7 @@ public class TemplateDataElementFacade extends BaseFacade {
      * @return
      */
     public List<TemplateDataValue> getTemplateDataValues(String elementId) {
-        String hql=" from TemplateDataValue where status <> '-1' and dataElementId = ' "+elementId+" '";
+        String hql=" from TemplateDataValue where status <> '-1' and dataElementId = '"+elementId+"'";
         return createQuery(TemplateDataValue.class,hql,new ArrayList<Object>()).getResultList();
     }
 }
