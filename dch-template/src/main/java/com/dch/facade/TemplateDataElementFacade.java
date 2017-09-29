@@ -39,11 +39,13 @@ public class TemplateDataElementFacade extends BaseFacade {
         if(groupId!=null&&!"".equals(groupId)){
             hql+="and dataGroupId = '"+groupId+"' ";
             hqlCount+="and dataGroupId = '"+groupId+"' ";
+        }else{
+            if(templateId!=null&&!"".equals(templateId)){
+                hql+="and templateId = '"+templateId+"' and dataGroupId is null";
+                hqlCount+="and templateId = '"+templateId+"' and dataGroupId is null";
+            }
         }
-        if(templateId!=null&&!"".equals(templateId)){
-            hql+="and templateId = '"+templateId+"'";
-            hqlCount+="and templateId = '"+templateId+"'";
-        }
+
         if(dataElementName!=null && !"".equals(dataElementName)){
             hql+=" and dataElementName like '%"+dataElementName+"%' ";
             hqlCount+=" and dataElementName like '%"+dataElementName+"%' ";
