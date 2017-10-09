@@ -7,9 +7,12 @@ import com.dch.facade.common.VO.Page;
 import org.springframework.stereotype.Component;
 
 import javax.persistence.TypedQuery;
+import javax.transaction.Transactional;
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Component
 public class TemplateDataElementFacade extends BaseFacade {
@@ -107,5 +110,31 @@ public class TemplateDataElementFacade extends BaseFacade {
     public List<TemplateDataValue> getTemplateDataValues(String elementId) {
         String hql=" from TemplateDataValue where status <> '-1' and dataElementId = '"+elementId+"'";
         return createQuery(TemplateDataValue.class,hql,new ArrayList<Object>()).getResultList();
+    }
+
+    /**
+     * 根据传入的元数据值域集合进行保存
+     * @param templateDataValues
+     * @return
+     */
+    @Transactional
+    public Response mergeTemplateDataValues(List<TemplateDataValue> templateDataValues) throws Exception{
+        List<TemplateDataValue> templateDataValueList = new ArrayList<TemplateDataValue>();
+        if(templateDataValues!=null && !templateDataValues.isEmpty()){
+            String hql = "delete from TemplateDataValue where dataElementId = '"+templateDataValues.get(0).getDataElementId()+"'";
+            excHql(hql);
+        }
+        Map<String,String> nameMap = new HashMap<String,String>();
+        for(TemplateDataValue templateDataValue:templateDataValues){
+            if(nameMap.containsKey(templateDataValue.getDataValueName())){
+                throw new Exception("元数据值域名称"+templateDataValue.getDataValueName()+"不允许重复");
+            }else {
+                nameMap.put(templateDataValue.getDataValueName(),templateDataValue.getDataValueName());
+            }
+        }
+        for(TemplateDataValue templateDataValue:templateDataValues){
+            templateDataValueList.add(merge(templateDataValue));
+        }
+        return Response.status(Response.Status.OK).entity(templateDataValueList).build();
     }
 }

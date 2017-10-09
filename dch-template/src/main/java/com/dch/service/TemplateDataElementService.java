@@ -80,14 +80,9 @@ public class TemplateDataElementService {
      * @return
      */
     @POST
-    @Transactional
     @Path("merge-data-values")
-    public Response mergeTemplateDataValues(List<TemplateDataValue> templateDataValues){
-        List<TemplateDataValue> templateDataValueList = new ArrayList<>();
-        for(TemplateDataValue templateDataValue:templateDataValues){
-            templateDataValueList.add(templateDataElementFacade.merge(templateDataValue));
-        }
-        return Response.status(Response.Status.OK).entity(templateDataValueList).build();
+    public Response mergeTemplateDataValues(List<TemplateDataValue> templateDataValues) throws Exception{
+        return templateDataElementFacade.mergeTemplateDataValues(templateDataValues);
     }
 
     /**
@@ -112,7 +107,7 @@ public class TemplateDataElementService {
         }
         String code = PinYin2Abbreviation.cn2py(dataGroupName)+"_"+PinYin2Abbreviation.cn2py(dataName)+"_";
         String realCode = getRealCode(dataElementId,code);
-        List<String> list = new ArrayList<>();
+        List<String> list = new ArrayList<String>();
         list.add(realCode);
         return list;
     }
