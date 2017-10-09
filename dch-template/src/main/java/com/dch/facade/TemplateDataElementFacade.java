@@ -19,11 +19,30 @@ public class TemplateDataElementFacade extends BaseFacade {
      * @param templateDataElement
      * @return
      */
-    public Response mergeTemplateDataElement(TemplateDataElement templateDataElement) {
+    public Response mergeTemplateDataElement(TemplateDataElement templateDataElement) throws Exception{
+        if(!"-1".equals(templateDataElement.getStatus())){
+            if(ifExistDataCode(templateDataElement)){
+                throw new Exception("表单元数据编码已存在,请重新填写");
+            }
+        }
         TemplateDataElement merge = merge(templateDataElement);
         return Response.status(Response.Status.OK).entity(merge).build();
     }
 
+    /**
+     * 判断表单元数据编码是否存在重复记录
+     * @param templateDataElement
+     * @return
+     */
+    public boolean ifExistDataCode(TemplateDataElement templateDataElement){
+        boolean isExist = false;
+        String hql = "select dataElementCode from TemplateDataElement where status<>'-1' and id<>'"+templateDataElement.getId()+"' and dataElementCode = '"+templateDataElement.getDataElementCode()+"'";
+        List<String> codeList = createQuery(String.class,hql,new ArrayList<Object>()).getResultList();
+        if(codeList!=null && !codeList.isEmpty()){
+            isExist = true;
+        }
+        return isExist;
+    }
     /**
      * 获取元数据
      * @param groupId

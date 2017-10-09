@@ -4,12 +4,15 @@ import com.dch.entity.TemplateDataElement;
 import com.dch.entity.TemplateDataValue;
 import com.dch.facade.TemplateDataElementFacade;
 import com.dch.facade.common.VO.Page;
+import com.dch.util.PinYin2Abbreviation;
+import com.dch.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
 import javax.transaction.Transactional;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
+import java.util.ArrayList;
 import java.util.List;
 
 @Produces("application/json")
@@ -27,7 +30,7 @@ public class TemplateDataElementService {
     @Path("merge-template-data-element")
     @POST
     @Transactional
-    public Response mergeTemplateDataElement(TemplateDataElement templateDataElement){
+    public Response mergeTemplateDataElement(TemplateDataElement templateDataElement) throws Exception{
         return templateDataElementFacade.mergeTemplateDataElement(templateDataElement);
     }
 
@@ -71,4 +74,77 @@ public class TemplateDataElementService {
         return templateDataElementFacade.getTemplateDataValues(elementId);
     }
 
+    /**
+     * 根据传入的元数据值域集合进行保存
+     * @param templateDataValues
+     * @return
+     */
+    @POST
+    @Transactional
+    @Path("merge-data-values")
+    public Response mergeTemplateDataValues(List<TemplateDataValue> templateDataValues){
+        List<TemplateDataValue> templateDataValueList = new ArrayList<>();
+        for(TemplateDataValue templateDataValue:templateDataValues){
+            templateDataValueList.add(templateDataElementFacade.merge(templateDataValue));
+        }
+        return Response.status(Response.Status.OK).entity(templateDataValueList).build();
+    }
+
+    /**
+     * 根据表单元数据id,元数据组名和元数据名称生成元数据编码
+     * @param dataElementId
+     * @param dataGroupName
+     * @param dataName
+     * @return
+     * @throws Exception
+     */
+    @GET
+    @Path("get-data-code-by-dataName")
+    public List<String> getDataCodeByDataName(@QueryParam("dataElementId")String dataElementId,@QueryParam("dataGroupName")String dataGroupName,@QueryParam("dataName")String dataName) throws Exception{
+        if(StringUtils.isEmptyParam(dataGroupName)){
+            throw new Exception("表单元数据组名不能为空");
+        }
+        if(StringUtils.isEmptyParam(dataName)){
+            throw new Exception("表单元数据名称不能为空");
+        }
+        if(StringUtils.isEmptyParam(dataElementId)){
+            dataElementId = "";
+        }
+        String code = PinYin2Abbreviation.cn2py(dataGroupName)+"_"+PinYin2Abbreviation.cn2py(dataName)+"_";
+        String realCode = getRealCode(dataElementId,code);
+        List<String> list = new ArrayList<>();
+        list.add(realCode);
+        return list;
+    }
+
+    /**
+     * 根据元数据id和编码 生成真正的元数据编码
+     * @param dataElementId 元数据id
+     * @param code 元数据目录和元数据名称生成的编码
+     * @return
+     */
+    public String getRealCode(String dataElementId,String code){
+        String realCode = "";
+        String hql = "select max(dataElementCode) from TemplateDataElement where status<>'-1' and dataElementCode like '"+code+"%' and id <>'"+dataElementId+"'";
+        List<String> dataCodeList = templateDataElementFacade.createQuery(String.class,hql,new ArrayList<Object>()).getResultList();
+        if(dataCodeList!=null && !dataCodeList.isEmpty() && dataCodeList.get(0) != null){
+            String dataBaseCode = dataCodeList.get(0);
+            String[] codeArray = dataBaseCode.split("_");
+            String codeNum = "";
+            if(codeArray.length>2){
+                codeNum = codeArray[2];
+            }
+            if(!StringUtils.isEmptyParam(codeNum)){
+                Integer codeNumber = Integer.valueOf(codeNum)+1;
+                codeNum = codeNumber+"";
+            }
+            if(codeNum.length()<2){
+                codeNum = "0"+codeNum;
+            }
+            realCode= code+codeNum;
+        }else{
+            realCode = code+"01";
+        }
+        return realCode;
+    }
 }
