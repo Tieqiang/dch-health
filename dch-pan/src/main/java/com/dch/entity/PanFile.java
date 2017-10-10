@@ -25,6 +25,13 @@ public class PanFile extends BaseEntity{
     private String keyWords;
     private String folderFlag;
     private String storeFileId ;
+    private String projectId;
+
+    @Basic
+    @Column(name = "project_id", nullable = true, length = 64)
+    public String getProjectId() { return projectId; }
+
+    public void setProjectId(String projectId) { this.projectId = projectId; }
 
     @Basic
     @Column(name = "file_name")

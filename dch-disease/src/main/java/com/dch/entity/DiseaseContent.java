@@ -17,9 +17,13 @@ public class DiseaseContent extends BaseEntity {
     private String icd;
     private Date year;
     private String content;
+    private String projectId;
 
+    @Basic
+    @Column(name = "project_id", nullable = true, length = 64)
+    public String getProjectId() { return projectId; }
 
-
+    public void setProjectId(String projectId) { this.projectId = projectId; }
 
     @Basic
     @Column(name = "category_id", nullable = true, length = 64)

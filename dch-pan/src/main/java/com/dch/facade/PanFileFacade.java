@@ -4,6 +4,7 @@ import com.dch.entity.PanFile;
 import com.dch.entity.PanFileCategory;
 import com.dch.entity.PanFileStore;
 import com.dch.facade.common.BaseFacade;
+import com.dch.facade.common.VO.Page;
 import com.dch.util.StringUtils;
 import com.dch.util.UserUtils;
 import com.dch.vo.UserVo;
@@ -266,5 +267,18 @@ public class PanFileFacade extends BaseFacade {
 
 
         return null;
+    }
+
+    /**
+     * 根据项目id获取项目数据文件
+     * @param projectId
+     * @param perPage
+     * @param currentPage
+     * @return
+     */
+    public Page<PanFile> getPanFilesByProjectId(String projectId, int perPage, int currentPage) {
+        String hql=" from PanFile where status <> '-1' and projectId='"+projectId+"' ";
+        Page<PanFile> panFilePage = getPageResult(PanFile.class, hql, perPage, currentPage);
+        return panFilePage;
     }
 }

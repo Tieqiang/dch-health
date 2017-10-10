@@ -107,4 +107,19 @@ public class DiseaseContentService {
         return Response.status(Response.Status.OK).entity(merge).build();
     }
 
+    /**
+     * 根据项目获取疾病知识
+     * @param projectId
+     * @param perPage
+     * @param currentPage
+     * @return
+     */
+    @GET
+    @Path("get-disease-content-by-projectId")
+    public Page<DiseaseContent> getDiseaseContentsByProjectId(@QueryParam("projectId") String projectId,
+                                                              @QueryParam("perPage") int perPage,
+                                                              @QueryParam("currentPage") int currentPage){
+        return diseaseContentFacade.getDiseaseContentsByProjectId(projectId,perPage,currentPage);
+    }
+
 }

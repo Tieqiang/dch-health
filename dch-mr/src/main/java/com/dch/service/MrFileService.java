@@ -59,4 +59,19 @@ public class MrFileService {
                                    @QueryParam("currentPage") int currentPage){
         return mrFileFacade.getMrFiles(subjectCode,title,perPage,currentPage);
     }
+
+    /**
+     * 根据项目获取病例数据
+     * @param projectId
+     * @param perPage
+     * @param currentPage
+     * @return
+     */
+    @GET
+    @Path("get-mr-files-by-project-id")
+    public Page<MrFile> getMrFilesByProjectId(@QueryParam("projectId") String projectId,
+                                              @QueryParam("perPage") int perPage,
+                                              @QueryParam("currentPage") int currentPage){
+        return mrFileFacade.getMrFilesByProjectId(projectId,perPage,currentPage);
+    }
 }

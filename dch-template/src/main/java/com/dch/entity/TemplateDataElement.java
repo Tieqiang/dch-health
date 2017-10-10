@@ -76,7 +76,7 @@ public class TemplateDataElement extends BaseEntity{
         return dataElementType;
     }
 
-    public void setDataElementType(String dataElmentType) {
+    public void setDataElementType(String dataElementType) {
         this.dataElementType = dataElementType;
     }
 

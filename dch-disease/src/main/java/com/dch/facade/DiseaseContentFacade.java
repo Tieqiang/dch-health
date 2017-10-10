@@ -70,4 +70,17 @@ public class DiseaseContentFacade extends BaseFacade {
         List<DiseaseNameDict> diseaseNameDicts = createQuery(DiseaseNameDict.class, hql, new ArrayList<Object>()).getResultList();
         return diseaseNameDicts;
     }
+
+    /**
+     * 根据项目获取疾病知识
+     * @param projectId
+     * @param perPage
+     * @param currentPage
+     * @return
+     */
+    public Page<DiseaseContent> getDiseaseContentsByProjectId(String projectId, int perPage, int currentPage) {
+        String hql=" from DiseaseContent where status <> '-1' and projectId='"+projectId+"' ";
+        Page<DiseaseContent> diseaseContentPage = getPageResult(DiseaseContent.class, hql, perPage, currentPage);
+        return diseaseContentPage;
+    }
 }

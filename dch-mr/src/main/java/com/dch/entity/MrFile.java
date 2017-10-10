@@ -17,8 +17,13 @@ public class MrFile extends BaseEntity {
     private String fileContent;
     private String attachmentFileId;
     private String keyWords;
+    private String projectId;
 
+    @Basic
+    @Column(name = "project_id", nullable = true, length = 64)
+    public String getProjectId() { return projectId; }
 
+    public void setProjectId(String projectId) { this.projectId = projectId; }
 
     @Basic
     @Column(name = "file_title", nullable = true, length = 200)

@@ -95,4 +95,17 @@ public class MrFileFacade extends BaseFacade {
         page.setData(mrFileList);
         return page;
     }
+
+    /**
+     * 根据项目获取病例数据
+     * @param projectId
+     * @param perPage
+     * @param currentPage
+     * @return
+     */
+    public Page<MrFile> getMrFilesByProjectId(String projectId, int perPage, int currentPage) {
+        String hql=" from MrFile where status <> '-1' and projectId='"+projectId+"'";
+        Page<MrFile> mrFilePage = getPageResult(MrFile.class, hql, perPage, currentPage);
+        return mrFilePage;
+    }
 }

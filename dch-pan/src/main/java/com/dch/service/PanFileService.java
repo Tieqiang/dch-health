@@ -3,6 +3,7 @@ package com.dch.service;
 import com.dch.entity.PanFile;
 import com.dch.entity.PanFileStore;
 import com.dch.facade.PanFileFacade;
+import com.dch.facade.common.VO.Page;
 import com.dch.facade.common.VO.ReturnInfo;
 import com.dch.util.UserUtils;
 import com.dch.util.StringUtils;
@@ -201,6 +202,20 @@ public class PanFileService {
         };
         return Response.status(Response.Status.OK).entity(streamingOutput).header("Content-disposition","attachment;filename="+name)
                 .header("Cache-Control","no-cache").build();
+    }
+    /**
+     * 根据项目id获取项目数据文件
+     * @param projectId
+     * @param perPage
+     * @param currentPage
+     * @return
+     */
+    @Path("get-pan-files-by-project-id")
+    @GET
+    public Page<PanFile> getPanFilesByProjectId(@QueryParam("projectId") String projectId,
+                                                @QueryParam("perPage") int perPage,
+                                                @QueryParam("currentPage") int currentPage){
+        return panFileFacade.getPanFilesByProjectId(projectId,perPage,currentPage);
     }
 
 }
