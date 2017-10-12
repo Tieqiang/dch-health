@@ -6,6 +6,7 @@ import com.dch.facade.TemplateDataElementFacade;
 import com.dch.facade.common.VO.Page;
 import com.dch.util.PinYin2Abbreviation;
 import com.dch.util.StringUtils;
+import com.dch.vo.TemplateDataElementVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
@@ -44,10 +45,10 @@ public class TemplateDataElementService {
      */
     @GET
     @Path("get-template-data-elements")
-    public Page<TemplateDataElement> getTemplateDataElements(@QueryParam("groupId") String groupId,@QueryParam("dataElementName")String dataElementName,
-                                                             @QueryParam("templateId") String templateId,
-                                                             @QueryParam("perPage") int perPage,
-                                                             @QueryParam("currentPage") int currentPage){
+    public Page<TemplateDataElementVo> getTemplateDataElements(@QueryParam("groupId") String groupId, @QueryParam("dataElementName")String dataElementName,
+                                                               @QueryParam("templateId") String templateId,
+                                                               @QueryParam("perPage") int perPage,
+                                                               @QueryParam("currentPage") int currentPage){
         return templateDataElementFacade.getTemplateDataElements(groupId,dataElementName,templateId,perPage,currentPage);
     }
 

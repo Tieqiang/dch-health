@@ -4,6 +4,7 @@ import com.dch.entity.TemplateDataElement;
 import com.dch.entity.TemplateDataValue;
 import com.dch.facade.common.BaseFacade;
 import com.dch.facade.common.VO.Page;
+import com.dch.vo.TemplateDataElementVo;
 import org.springframework.stereotype.Component;
 
 import javax.persistence.TypedQuery;
@@ -54,25 +55,28 @@ public class TemplateDataElementFacade extends BaseFacade {
      * @param currentPage
      * @return
      */
-    public Page<TemplateDataElement> getTemplateDataElements(String groupId,String dataElementName, String templateId, int perPage, int currentPage) {
-        String hql=" from TemplateDataElement where status <> '-1' ";
-        String hqlCount="select count(*) from TemplateDataElement where status <> '-1' ";
+    public Page<TemplateDataElementVo> getTemplateDataElements(String groupId,String dataElementName, String templateId, int perPage, int currentPage) {
+        String hql="select new com.dch.vo.TemplateDataElementVo(t.id,t.dataElementName," +
+                "t.dataElementCode,t.parentDataId,t.dataStandRefId,(select dataElementName from DataElement where id = t.dataStandRefId) as dataStandRefName" +
+                ",t.dataElementType,t.dataUnion,t.childrenFlag,t.dataGroupId,t.hasGroupId,t.templateId," +
+                "t.createDate,t.modifyDate,t.createBy,t.modifyBy,t.status) from TemplateDataElement as t where t.status <> '-1' ";
+        String hqlCount="select count(*) from TemplateDataElement t where t.status <> '-1' ";
 
         if(groupId!=null&&!"".equals(groupId)){
-            hql+="and dataGroupId = '"+groupId+"' ";
-            hqlCount+="and dataGroupId = '"+groupId+"' ";
+            hql+="and t.dataGroupId = '"+groupId+"' ";
+            hqlCount+="and t.dataGroupId = '"+groupId+"' ";
         }else{
             if(templateId!=null&&!"".equals(templateId)){
-                hql+="and templateId = '"+templateId+"' and dataGroupId is null";
-                hqlCount+="and templateId = '"+templateId+"' and dataGroupId is null";
+                hql+="and t.templateId = '"+templateId+"' and t.dataGroupId is null";
+                hqlCount+="and t.templateId = '"+templateId+"' and t.dataGroupId is null";
             }
         }
 
         if(dataElementName!=null && !"".equals(dataElementName)){
-            hql+=" and dataElementName like '%"+dataElementName+"%' ";
-            hqlCount+=" and dataElementName like '%"+dataElementName+"%' ";
+            hql+=" and t.dataElementName like '%"+dataElementName+"%' ";
+            hqlCount+=" and t.dataElementName like '%"+dataElementName+"%' ";
         }
-        TypedQuery<TemplateDataElement> query = createQuery(TemplateDataElement.class, hql, new ArrayList<Object>());
+        TypedQuery<TemplateDataElementVo> query = createQuery(TemplateDataElementVo.class, hql, new ArrayList<Object>());
         Long counts = createQuery(Long.class,hqlCount,new ArrayList<Object>()).getSingleResult();
         Page page =new Page();
         if(perPage<=0){
@@ -86,9 +90,9 @@ public class TemplateDataElementFacade extends BaseFacade {
             query.setMaxResults(perPage);
             page.setPerPage((long) perPage);
         }
-        List<TemplateDataElement> templateDataElementList = query.getResultList();
+        List<TemplateDataElementVo> templateDataElementVoList = query.getResultList();
         page.setCounts(counts);
-        page.setData(templateDataElementList);
+        page.setData(templateDataElementVoList);
         return page;
     }
 
