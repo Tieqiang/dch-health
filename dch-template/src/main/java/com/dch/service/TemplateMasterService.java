@@ -70,4 +70,19 @@ public class TemplateMasterService {
     public List<TemplateMaster> getTemplateMastersByCreater(@QueryParam("userId")String userId){
         return templateMasterFacade.getTemplateMastersByCreater(userId);
     }
+
+    /**
+     * 根据项目获取表单数据
+     * @param projectId
+     * @param perPage
+     * @param currentPage
+     * @return
+     */
+    @GET
+    @Path("get-template-by-projectId")
+    public Page<TemplateMaster> getTemplateMasterByProjectId(@QueryParam("projectId") String projectId,
+                                                             @QueryParam("perPage") int perPage,
+                                                             @QueryParam("currentPage") int currentPage){
+        return templateMasterFacade.getTemplateMasterByProjectId(projectId,perPage,currentPage);
+    }
 }

@@ -28,7 +28,12 @@ public class MrFileFacade extends BaseFacade {
      * @return
      */
     @Transactional
-    public MrFile mergeMrFileContent(MrFile mrFile) {
+    public MrFile mergeMrFileContent(MrFile mrFile) throws Exception {
+        if(!"-1".equals(mrFile.getStatus())){
+            if(StringUtils.isEmptyParam(mrFile.getFileTitle())){
+                throw new Exception("病例标题内容不能为空！");
+            }
+        }
         MrFile merge = merge(mrFile);
         SolrVo solrVo=new SolrVo();
         solrVo.setTitle(merge.getFileTitle());

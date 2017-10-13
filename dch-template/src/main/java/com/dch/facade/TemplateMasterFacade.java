@@ -121,4 +121,17 @@ public class TemplateMasterFacade extends BaseFacade{
         List<TemplateMaster> templateMasterList = createQuery(TemplateMaster.class,hql,new ArrayList<Object>()).getResultList();
         return templateMasterList;
     }
+
+    /**
+     * 根据项目获取表单数据
+     * @param projectId
+     * @param perPage
+     * @param currentPage
+     * @return
+     */
+    public Page<TemplateMaster> getTemplateMasterByProjectId(String projectId, int perPage, int currentPage) {
+        String hql=" from TemplateMaster where status <> '-1' and projectId='"+projectId+"'";
+        Page<TemplateMaster> templateMasterPage = getPageResult(TemplateMaster.class, hql, perPage, currentPage);
+        return templateMasterPage;
+    }
 }

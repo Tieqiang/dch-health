@@ -27,7 +27,7 @@ public class MrFileService {
     @Path("merge-mr-file")
     @POST
     @Transactional
-    public Response mergeMrFileContent(MrFile mrFile){
+    public Response mergeMrFileContent(MrFile mrFile) throws Exception {
         return Response.status(OK).entity(mrFileFacade.mergeMrFileContent(mrFile)).build();
     }
 

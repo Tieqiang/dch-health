@@ -51,8 +51,9 @@ public class MrSubjectService {
      */
     @Path("get-mr-subject")
     @GET
-    public MrSubject getMrSubject(@QueryParam("subjectId") String subjectId) throws Exception {
-        return mrSubjectFacade.getMrSubject(subjectId);
+    public MrSubject getMrSubject(@QueryParam("subjectId") String subjectId,
+                                  @QueryParam("subjectCode") String subjectCode) throws Exception {
+        return mrSubjectFacade.getMrSubject(subjectId,subjectCode);
     }
 
     /**

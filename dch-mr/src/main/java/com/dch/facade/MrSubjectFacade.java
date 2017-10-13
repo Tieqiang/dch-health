@@ -50,11 +50,18 @@ public class MrSubjectFacade extends BaseFacade {
     /**
      *获取具体的学科信息
      * @param subjectId
+     * @param subjectCode
      * @return
      * @throws Exception
      */
-    public MrSubject getMrSubject(String subjectId) throws Exception {
-        String hql=" from MrSubject where status <> '-1' and id = '"+subjectId+"'";
+    public MrSubject getMrSubject(String subjectId, String subjectCode) throws Exception {
+        String hql=" from MrSubject where status <> '-1' ";
+        if(null!=subjectId&&!"".equals(subjectId)){
+            hql+="and id = '"+subjectId+"'";
+        }
+        if(null!=subjectCode&&!"".equals(subjectCode)){
+            hql+=" and subjectCode='"+subjectCode+"' ";
+        }
         List<MrSubject> subjectList = createQuery(MrSubject.class, hql, new ArrayList<>()).getResultList();
         if(subjectList!=null&& !subjectList.isEmpty()){
             return subjectList.get(0);
