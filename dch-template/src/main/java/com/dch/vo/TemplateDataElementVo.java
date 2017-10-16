@@ -1,6 +1,10 @@
 package com.dch.vo;
 
+import com.dch.entity.TemplateDataValue;
+
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Created by Administrator on 2017/10/11.
@@ -23,6 +27,7 @@ public class TemplateDataElementVo {
     private String createBy;
     private String modifyBy;
     private String status;
+    private List<TemplateDataValue> templateDataValueList = new ArrayList<TemplateDataValue>();
 
     public TemplateDataElementVo(String id, String dataElementName, String dataElementCode, String parentDataId, String dataStandRefId, String dataStandRefName, String dataElementType, String dataUnion, String childrenFlag, String dataGroupId, String hasGroupId, String templateId, Date createDate, Date modifyDate, String createBy, String modifyBy, String status) {
         this.id = id;
@@ -178,5 +183,13 @@ public class TemplateDataElementVo {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public List<TemplateDataValue> getTemplateDataValueList() {
+        return templateDataValueList;
+    }
+
+    public void setTemplateDataValueList(List<TemplateDataValue> templateDataValueList) {
+        this.templateDataValueList = templateDataValueList;
     }
 }

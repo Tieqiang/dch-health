@@ -4,6 +4,7 @@ import com.dch.entity.TemplateDataElement;
 import com.dch.entity.TemplateDataValue;
 import com.dch.facade.common.BaseFacade;
 import com.dch.facade.common.VO.Page;
+import com.dch.util.StringUtils;
 import com.dch.vo.TemplateDataElementVo;
 import org.springframework.stereotype.Component;
 
@@ -93,9 +94,43 @@ public class TemplateDataElementFacade extends BaseFacade {
         List<TemplateDataElementVo> templateDataElementVoList = query.getResultList();
         page.setCounts(counts);
         page.setData(templateDataElementVoList);
+        StringBuffer templateIds = new StringBuffer("");
+        if(templateDataElementVoList!=null && !templateDataElementVoList.isEmpty()){
+            for(TemplateDataElementVo templateDataElementVo:templateDataElementVoList){
+                templateIds.append("'").append(templateDataElementVo.getId()).append("',");
+            }
+        }
+        String ids = templateIds.toString();
+        if(!StringUtils.isEmptyParam(ids)){
+            ids = ids.substring(0,ids.length()-1);
+            Map<String,List<TemplateDataValue>> templateDataValueMap = getTemplateDataValuesByIds(ids);
+            for(TemplateDataElementVo templateDataElementVo:templateDataElementVoList){
+                if(templateDataValueMap.get(templateDataElementVo.getId())!=null){
+                    templateDataElementVo.setTemplateDataValueList(templateDataValueMap.get(templateDataElementVo.getId()));
+                }
+            }
+        }
         return page;
     }
 
+    public Map<String,List<TemplateDataValue>> getTemplateDataValuesByIds(String ids){
+        Map<String,List<TemplateDataValue>> dataValueMap = new HashMap<String, List<TemplateDataValue>>();
+        String hql = " from TemplateDataValue where status<>'-1' and dataElementId in ("+ids+")";
+        List<TemplateDataValue> templateDataValueList = createQuery(TemplateDataValue.class,hql,new ArrayList<Object>()).getResultList();
+        if(templateDataValueList!=null && !templateDataValueList.isEmpty()){
+            for(TemplateDataValue templateDataValue:templateDataValueList){
+                if(dataValueMap.containsKey(templateDataValue.getDataElementId())){
+                    List<TemplateDataValue> innerList = dataValueMap.get(templateDataValue.getDataElementId());
+                    innerList.add(templateDataValue);
+                }else{
+                    List<TemplateDataValue> innerList = new ArrayList<TemplateDataValue>();
+                    innerList.add(templateDataValue);
+                    dataValueMap.put(templateDataValue.getDataElementId(),innerList);
+                }
+            }
+        }
+        return dataValueMap;
+    }
     /**
      * 添加、修改、删除元数据值域
      * @param templateDataValue

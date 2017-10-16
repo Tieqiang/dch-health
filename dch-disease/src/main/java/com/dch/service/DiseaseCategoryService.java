@@ -2,7 +2,6 @@ package com.dch.service;
 
 import com.dch.entity.DiseaseCategoryDict;
 import com.dch.facade.DiseaseCategoryFacade;
-import com.dch.facade.common.VO.Page;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
@@ -60,5 +59,16 @@ public class DiseaseCategoryService {
         }else{
             return null ;
         }
+    }
+
+    /**
+     * 根据项目id查询知识分类
+     * @param projectId
+     * @return
+     */
+    @GET
+    @Path("get-categorys-by-project-id")
+    public List<DiseaseCategoryDict> getCategoryListByProjectId(@QueryParam("projectId")String projectId){
+        return diseaseCategoryFacade.getCategoryListByProjectId(projectId);
     }
 }
