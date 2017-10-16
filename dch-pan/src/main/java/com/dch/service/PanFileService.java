@@ -182,10 +182,10 @@ public class PanFileService {
     @GET
     @Path("down-load")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
-    public Response downLoadFile(@QueryParam("fileId") String fileId) throws IOException {
+    public Response downLoadFile(@QueryParam("fileId") String fileId,@QueryParam("fileTitle")String fileTitle) throws IOException {
         final PanFileStore panFileStore = panFileFacade.get(PanFileStore.class,fileId);
         File file = new File(panFileStore.getStorePath());
-        String name = file.getName();
+        //String name = file.getName();
 
         StreamingOutput streamingOutput = new StreamingOutput() {
             public void write(OutputStream outputStream) throws IOException, WebApplicationException {
@@ -200,7 +200,7 @@ public class PanFileService {
                 fileInputStream.close();
             }
         };
-        return Response.status(Response.Status.OK).entity(streamingOutput).header("Content-disposition","attachment;filename="+name)
+        return Response.status(Response.Status.OK).entity(streamingOutput).header("Content-disposition","attachment;filename="+fileTitle)
                 .header("Cache-Control","no-cache").build();
     }
     /**
