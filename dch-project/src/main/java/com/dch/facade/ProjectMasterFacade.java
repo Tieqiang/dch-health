@@ -35,17 +35,34 @@ public class ProjectMasterFacade extends BaseFacade {
      * @param currentPage
      * @return
      */
-    public Page<ProjectMaster> getProjectMasters(String projectName, String projectPerson, int perPage, int currentPage) {
-        String hql=" from ProjectMaster where status <> '-1' ";
-        String hqlCount="select count(*) from ProjectMaster where status <> '-1' ";
+    public Page<ProjectMaster> getProjectMasters(String projectName, String projectPerson,String type, int perPage, int currentPage) {
+        String hql=" from ProjectMaster as m where m.status <> '-1' ";
+        String hqlCount="select count(*) from ProjectMaster as m where m.status <> '-1' ";
 
         if(projectName!=null&&!"".equals(projectName)){
-            hql+="and projectName like '%"+projectName+"%' ";
-            hqlCount+="and projectName like '%"+projectName+"%' ";
+            hql+="and m.projectName like '%"+projectName+"%' ";
+            hqlCount+="and m.projectName like '%"+projectName+"%' ";
         }
         if(projectPerson!=null&&!"".equals(projectPerson)){
-            hql+="and projectPerson ='"+ projectPerson +"'";
-            hqlCount+="and projectPerson ='"+ projectPerson +"'";
+            hql+="and m.projectPerson ='"+ projectPerson +"'";
+            hqlCount+="and m.projectPerson ='"+ projectPerson +"'";
+        }
+        String userId = UserUtils.getCurrentUser().getId();
+        if(!StringUtils.isEmptyParam(userId)){
+            if("all".equals(type)){
+                hql += " and (m.createBy = '"+userId+"' or exists(select 1 from ProjectMember where projectId = m.id and personId = '"+userId+"' " +
+                        "and status<>'-1'))";
+                hqlCount += " and (m.createBy = '"+userId+"' or exists(select 1 from ProjectMember where projectId = m.id and personId = '"+userId+"' " +
+                        "and status<>'-1'))";
+            }else if("act".equals(type)){
+                hql += " and exists(select 1 from ProjectMember where projectId = m.id and personId = '"+userId+"' " +
+                        "and status<>'-1') ";
+                hqlCount += " and exists(select 1 from ProjectMember where projectId = m.id and personId = '"+userId+"' " +
+                        "and status<>'-1') ";
+            }else{
+                hql += " and m.createBy = '"+userId+"' ";
+                hqlCount += " and m.createBy = '"+userId+"' ";
+            }
         }
         TypedQuery<ProjectMaster> query = createQuery(ProjectMaster.class, hql, new ArrayList<Object>());
         Long counts = createQuery(Long.class,hqlCount,new ArrayList<Object>()).getSingleResult();
