@@ -42,10 +42,11 @@ public class ProjectMasterService {
     @GET
     public Page<ProjectMaster> getProjectMasters(@QueryParam("projectName") String projectName,
                                                  @QueryParam("projectPerson") String projectPerson,
+                                                 @QueryParam("createrId") String createrId,
                                                  @QueryParam("type") String type,
                                                  @QueryParam("perPage") int perPage,
                                                  @QueryParam("currentPage") int currentPage){
-        return projectMasterFacade.getProjectMasters(projectName,projectPerson,type,perPage,currentPage);
+        return projectMasterFacade.getProjectMasters(projectName,projectPerson,createrId,type,perPage,currentPage);
 
     }
 

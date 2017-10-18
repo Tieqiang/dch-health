@@ -35,7 +35,7 @@ public class ProjectMasterFacade extends BaseFacade {
      * @param currentPage
      * @return
      */
-    public Page<ProjectMaster> getProjectMasters(String projectName, String projectPerson,String type, int perPage, int currentPage) {
+    public Page<ProjectMaster> getProjectMasters(String projectName, String projectPerson,String createrId,String type, int perPage, int currentPage) {
         String hql=" from ProjectMaster as m where m.status <> '-1' ";
         String hqlCount="select count(*) from ProjectMaster as m where m.status <> '-1' ";
 
@@ -47,7 +47,10 @@ public class ProjectMasterFacade extends BaseFacade {
             hql+="and m.projectPerson ='"+ projectPerson +"'";
             hqlCount+="and m.projectPerson ='"+ projectPerson +"'";
         }
-        String userId = UserUtils.getCurrentUser().getId();
+        String userId = createrId;
+        if(StringUtils.isEmptyParam(userId)){
+            userId = UserUtils.getCurrentUser().getId();
+        }
         if(!StringUtils.isEmptyParam(userId)){
             if("all".equals(type)){
                 hql += " and (m.createBy = '"+userId+"' or exists(select 1 from ProjectMember where projectId = m.id and personId = '"+userId+"' " +
