@@ -2,8 +2,10 @@ package com.dch.entity;
 
 import com.dch.entity.base.BaseEntity;
 
-import javax.persistence.*;
-import java.sql.Timestamp;
+import javax.persistence.Basic;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Table;
 
 /**
  * Created by Administrator on 2017/9/27.
@@ -15,6 +17,7 @@ public class TemplatePage extends BaseEntity {
     private String templatePageOrder;
     private String templatePageContent;
     private String templateId;
+    private String templatePageDataModel;
 
     @Basic
     @Column(name = "template_page_name", nullable = true, length = 200)
@@ -56,4 +59,13 @@ public class TemplatePage extends BaseEntity {
         this.templateId = templateId;
     }
 
+    @Basic
+    @Column(name = "template_page_data_model", nullable = true, length = -1)
+    public String getTemplatePageDataModel() {
+        return templatePageDataModel;
+    }
+
+    public void setTemplatePageDataModel(String templatePageDataModel) {
+        this.templatePageDataModel = templatePageDataModel;
+    }
 }
