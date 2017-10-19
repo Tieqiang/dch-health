@@ -106,7 +106,7 @@ public class TemplateDataElementService {
         if(StringUtils.isEmptyParam(dataElementId)){
             dataElementId = "";
         }
-        String code = PinYin2Abbreviation.cn2py(dataGroupName)+"_"+PinYin2Abbreviation.cn2py(dataName)+"_";
+        String code = PinYin2Abbreviation.cn2py(dataGroupName)+"."+PinYin2Abbreviation.cn2py(dataName)+".";
         String realCode = getRealCode(dataElementId,code);
         List<String> list = new ArrayList<String>();
         list.add(realCode);
@@ -125,7 +125,7 @@ public class TemplateDataElementService {
         List<String> dataCodeList = templateDataElementFacade.createQuery(String.class,hql,new ArrayList<Object>()).getResultList();
         if(dataCodeList!=null && !dataCodeList.isEmpty() && dataCodeList.get(0) != null){
             String dataBaseCode = dataCodeList.get(0);
-            String[] codeArray = dataBaseCode.split("_");
+            String[] codeArray = dataBaseCode.split(".");
             String codeNum = "";
             if(codeArray.length>2){
                 codeNum = codeArray[2];

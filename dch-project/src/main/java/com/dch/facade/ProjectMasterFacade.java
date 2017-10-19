@@ -115,4 +115,50 @@ public class ProjectMasterFacade extends BaseFacade {
         List<ProjectMaster> projectMasterList = createQuery(ProjectMaster.class, hql, new ArrayList<Object>()).getResultList();
         return projectMasterList;
     }
+
+    /**
+     * 根据项目名称模糊匹配创建者未参与的项目
+     * @param projectName
+     * @param createrId
+     * @param perPage
+     * @param currentPage
+     * @return
+     */
+    public Page<ProjectMaster> getNotJoinProjectMasters(String projectName, String createrId, int perPage, int currentPage) {
+        String hql=" from ProjectMaster as m where m.status <> '-1' ";
+        String hqlCount="select count(*) from ProjectMaster as m where m.status <> '-1' ";
+
+        if(projectName!=null&&!"".equals(projectName)){
+            hql+="and m.projectName like '%"+projectName+"%' ";
+            hqlCount+="and m.projectName like '%"+projectName+"%' ";
+        }
+        String userId = createrId;
+        if(StringUtils.isEmptyParam(userId)){
+            userId = UserUtils.getCurrentUser().getId();
+        }
+        if(!StringUtils.isEmptyParam(userId)){
+                hql += " and (m.createBy not in ('"+userId+"') and not exists(select 1 from ProjectMember where projectId = m.id and personId = '"+userId+"' " +
+                        "and status<>'-1'))";
+                hqlCount += " and (m.createBy not in ('"+userId+"') and not exists(select 1 from ProjectMember where projectId = m.id and personId = '"+userId+"' " +
+                        "and status<>'-1'))";
+        }
+        TypedQuery<ProjectMaster> query = createQuery(ProjectMaster.class, hql, new ArrayList<Object>());
+        Long counts = createQuery(Long.class,hqlCount,new ArrayList<Object>()).getSingleResult();
+        Page page =new Page();
+        if(perPage<=0){
+            perPage=20;
+        }
+        if (perPage > 0) {
+            if(currentPage<=0){
+                currentPage =1;
+            }
+            query.setFirstResult((currentPage-1) * perPage);
+            query.setMaxResults(perPage);
+            page.setPerPage((long) perPage);
+        }
+        List<ProjectMaster> projectMasterList = query.getResultList();
+        page.setCounts(counts);
+        page.setData(projectMasterList);
+        return page;
+    }
 }
