@@ -1,8 +1,10 @@
 package com.dch.service;
 
 import com.dch.entity.ProjectMember;
+import com.dch.entity.User;
 import com.dch.facade.ProjectMemberFacade;
 import com.dch.facade.common.VO.Page;
+import com.dch.vo.projectMemberVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
@@ -26,7 +28,7 @@ public class ProjectMemberService {
     @Path("merge-project-member")
     @POST
     @Transactional
-    public Response mergeProjectMember(ProjectMember projectMember){
+    public Response mergeProjectMember(ProjectMember projectMember) throws Exception {
         return projectMemberFacade.mergeProjectMember(projectMember);
     }
 
@@ -37,7 +39,7 @@ public class ProjectMemberService {
      */
     @GET
     @Path("get-project-members")
-    public List<ProjectMember> getProjectMembers(@QueryParam("projectId") String projectId){
-        return projectMemberFacade.getProjectMembers(projectId);
+    public List<projectMemberVo> getProjectMembers(@QueryParam("projectId") String projectId,@QueryParam("personStatus") String personStatus ){
+        return projectMemberFacade.getProjectMembers(projectId,personStatus);
     }
 }

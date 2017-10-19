@@ -13,7 +13,18 @@ import java.sql.Timestamp;
 public class ProjectMember extends BaseEntity {
     private String projectId;
     private String personId;
-    private String personName;
+    private String personStatus;
+
+
+    @Basic
+    @Column(name = "person_status")
+    public String getPersonStatus() {
+        return personStatus;
+    }
+
+    public void setPersonStatus(String personStatus) {
+        this.personStatus = personStatus;
+    }
 
     @Basic
     @Column(name = "project_id", nullable = true, length = 64)
@@ -35,14 +46,5 @@ public class ProjectMember extends BaseEntity {
         this.personId = personId;
     }
 
-    @Basic
-    @Column(name = "person_name", nullable = true, length = 200)
-    public String getPersonName() {
-        return personName;
-    }
-
-    public void setPersonName(String personName) {
-        this.personName = personName;
-    }
 
 }

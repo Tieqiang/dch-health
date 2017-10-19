@@ -79,4 +79,37 @@ public class MrSubjectFacade extends BaseFacade {
         String hql=" from MrSubject where status <> '-1' and parentSubjectId = '"+subjectId+"'";
         return createQuery(MrSubject.class,hql,new ArrayList<>()).getResultList();
     }
+
+    /**
+     *根据项目id获取学科分类信息
+     * @param projectId
+     * @return
+     */
+    public List<MrSubject> getMrSubjectsByprojectId(String projectId) {
+        String hql = " from MrSubject as m where m.status<> '-1' and m.subjectCode in (select subjectCode from " +
+                " MrFile where status<>'-1' and projectId = '"+projectId+"')";
+        List<MrSubject> mrSubjects = createQuery(MrSubject.class, hql, new ArrayList<Object>()).getResultList();
+        List<MrSubject> mrSubjectList = mrSubjects;
+        String parentIds = "";
+        do{
+            parentIds = "";
+            for(MrSubject m:mrSubjectList){
+                if(!StringUtils.isEmptyParam(m.getParentSubjectId()) && !parentIds.contains(m.getParentSubjectId())){
+                    parentIds = ",'"+m.getParentSubjectId()+"'";
+                }
+            }
+            if(!StringUtils.isEmptyParam(parentIds)){
+                parentIds = parentIds.substring(1);
+                mrSubjectList = getMrSubjectByParentIds(parentIds);
+                mrSubjects.addAll(mrSubjectList);
+            }
+        }while (!StringUtils.isEmptyParam(parentIds));
+        return mrSubjects;
+    }
+
+    private List<MrSubject> getMrSubjectByParentIds(String parentIds) {
+        String hql = "from MrSubject where status<> '-1' and id in ("+parentIds+")";
+        return createQuery(MrSubject.class, hql, new ArrayList<Object>()).getResultList();
+    }
 }
+

@@ -66,4 +66,16 @@ public class MrSubjectService {
     public List<MrSubject> getSubMrSubjects(@QueryParam("subjectId") String subjectId){
         return mrSubjectFacade.getSubMrSubjects(subjectId);
     }
+
+
+    /**
+     *根据项目id获取学科分类信息
+     * @param projectId
+     * @return
+     */
+    @Path("get-mr-subjects-by-projectId")
+    @GET
+    public List<MrSubject> getMrSubjectsByprojectId(@QueryParam("projectId") String projectId){
+        return mrSubjectFacade.getMrSubjectsByprojectId(projectId);
+    }
 }
