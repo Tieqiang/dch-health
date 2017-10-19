@@ -71,4 +71,21 @@ public class ProjectMasterService {
     public List<ProjectMaster> getProjectMastersByCreater(@QueryParam("userId")String userId){
         return projectMasterFacade.getProjectMastersByCreater(userId);
     }
+
+    /**
+     * 根据项目名称模糊匹配创建者未参与的项目
+     * @param projectName 项目名称
+     * @param createrId 创建者id
+     * @param perPage 每页条数
+     * @param currentPage 当前页
+     * @return
+     */
+    @Path("get-not-join-project-masters")
+    @GET
+    public Page<ProjectMaster> getNotJoinProjectMasters(@QueryParam("projectName") String projectName,
+                                                 @QueryParam("createrId") String createrId,
+                                                 @QueryParam("perPage") int perPage,
+                                                 @QueryParam("currentPage") int currentPage){
+        return projectMasterFacade.getNotJoinProjectMasters(projectName,createrId,perPage,currentPage);
+    }
 }
