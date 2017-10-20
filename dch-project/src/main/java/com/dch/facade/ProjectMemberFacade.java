@@ -1,7 +1,6 @@
 package com.dch.facade;
 
 import com.dch.entity.ProjectMember;
-import com.dch.entity.User;
 import com.dch.facade.common.BaseFacade;
 import com.dch.util.StringUtils;
 import com.dch.vo.projectMemberVo;
@@ -26,7 +25,7 @@ public class ProjectMemberFacade extends BaseFacade {
             String hql=" from ProjectMember where status <> '-1' " +
                     "and projectId='"+projectMember.getProjectId()+"' " +
                     "and personId='"+projectMember.getPersonId()+"' and personStatus='"+projectMember.getPersonStatus()+"'";
-            List<ProjectMember> memberList = createQuery(ProjectMember.class, hql, new ArrayList<>()).getResultList();
+            List<ProjectMember> memberList = createQuery(ProjectMember.class, hql, new ArrayList<Object>()).getResultList();
             if(memberList!=null && memberList.size()>0){
                 throw new Exception("该用户已是此项目的成员！");
             }

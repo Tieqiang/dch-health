@@ -4,6 +4,7 @@ import com.dch.entity.TemplateDataElement;
 import com.dch.entity.TemplateDataValue;
 import com.dch.facade.common.BaseFacade;
 import com.dch.facade.common.VO.Page;
+import com.dch.util.PinYin2Abbreviation;
 import com.dch.util.StringUtils;
 import com.dch.vo.TemplateDataElementVo;
 import org.springframework.stereotype.Component;
@@ -29,6 +30,9 @@ public class TemplateDataElementFacade extends BaseFacade {
             if(ifExistDataCode(templateDataElement)){
                 throw new Exception("表单元数据编码已存在,请重新填写");
             }
+        }
+        if(StringUtils.isEmptyParam(templateDataElement.getId())){
+            templateDataElement.setDataElementCode(getRealCode(templateDataElement.getParentDataId(),"",templateDataElement.getId(),templateDataElement.getDataElementName()));
         }
         TemplateDataElement merge = merge(templateDataElement);
         return Response.status(Response.Status.OK).entity(merge).build();
@@ -175,5 +179,58 @@ public class TemplateDataElementFacade extends BaseFacade {
             templateDataValueList.add(merge(templateDataValue));
         }
         return Response.status(Response.Status.OK).entity(templateDataValueList).build();
+    }
+
+    /**
+     * 根据元数据名称和元数据id生成元数据编码
+     * @param dataElementId
+     * @param dataName
+     * @return
+     */
+    public String getRealCode(String parentDataId,String parentCode,String dataElementId, String dataName) {
+        String realCode = "";
+        String endCode = "";
+        String codeNum = "";
+        String hql = "select max(dataElementCode) from TemplateDataElement where status<>'-1' and dataElementName = '"+dataName+"' and id<>'"+dataElementId+"'";
+        if(!StringUtils.isEmptyParam(parentDataId)){
+            hql += " and parentDataId = '"+parentDataId+"'";
+        }
+        List<String> list = createQuery(String.class,hql,new ArrayList<Object>()).getResultList();
+        if(list!=null && !list.isEmpty() && list.get(0) != null){
+            endCode = list.get(0);
+            if(endCode.contains(".")){
+                String[] dataCodeArray = endCode.split("\\.");
+                endCode = dataCodeArray[dataCodeArray.length-1];
+            }
+            if(endCode.contains("_")){
+                String[] codeArray = endCode.split("_");
+                if(codeArray.length>1){
+                    codeNum = codeArray[codeArray.length-1];
+                }
+            }
+            if(!StringUtils.isEmptyParam(codeNum)){
+                Integer codeNumber = Integer.valueOf(codeNum)+1;
+                codeNum = codeNumber+"";
+            }else{
+                codeNum = "01";
+            }
+            if(codeNum.length()<2){
+                codeNum = "0"+codeNum;
+            }
+            realCode= PinYin2Abbreviation.cn2py(dataName)+"_"+codeNum;
+        }else{
+            realCode = PinYin2Abbreviation.cn2py(dataName);
+        }
+        if(!StringUtils.isEmptyParam(parentCode)){
+            realCode = parentCode+"."+realCode;
+        }else{
+            String parHql = "select dataElementCode from TemplateDataElement where status<>'-1' and id = '"+parentDataId+"'";
+            List<String> parList = createQuery(String.class,parHql,new ArrayList<Object>()).getResultList();
+            if(parList!=null && !parList.isEmpty()){
+                String parCode = parList.get(0);
+                realCode = parCode+"."+realCode;
+            }
+        }
+        return realCode;
     }
 }

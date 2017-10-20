@@ -96,51 +96,17 @@ public class TemplateDataElementService {
      */
     @GET
     @Path("get-data-code-by-dataName")
-    public List<String> getDataCodeByDataName(@QueryParam("dataElementId")String dataElementId,@QueryParam("dataGroupName")String dataGroupName,@QueryParam("dataName")String dataName) throws Exception{
-        if(StringUtils.isEmptyParam(dataGroupName)){
-            throw new Exception("表单元数据组名不能为空");
-        }
+    public List<String> getDataCodeByDataName(@QueryParam("parentDataId")String parentDataId,@QueryParam("parentCode")String parentCode,
+                                              @QueryParam("dataElementId")String dataElementId,@QueryParam("dataName")String dataName) throws Exception{
         if(StringUtils.isEmptyParam(dataName)){
             throw new Exception("表单元数据名称不能为空");
         }
         if(StringUtils.isEmptyParam(dataElementId)){
             dataElementId = "";
         }
-        String code = PinYin2Abbreviation.cn2py(dataGroupName)+"."+PinYin2Abbreviation.cn2py(dataName)+".";
-        String realCode = getRealCode(dataElementId,code);
+        String realCode = templateDataElementFacade.getRealCode(parentDataId,parentCode,dataElementId,dataName);
         List<String> list = new ArrayList<String>();
         list.add(realCode);
         return list;
-    }
-
-    /**
-     * 根据元数据id和编码 生成真正的元数据编码
-     * @param dataElementId 元数据id
-     * @param code 元数据目录和元数据名称生成的编码
-     * @return
-     */
-    public String getRealCode(String dataElementId,String code){
-        String realCode = "";
-        String hql = "select max(dataElementCode) from TemplateDataElement where status<>'-1' and dataElementCode like '"+code+"%' and id <>'"+dataElementId+"'";
-        List<String> dataCodeList = templateDataElementFacade.createQuery(String.class,hql,new ArrayList<Object>()).getResultList();
-        if(dataCodeList!=null && !dataCodeList.isEmpty() && dataCodeList.get(0) != null){
-            String dataBaseCode = dataCodeList.get(0);
-            String[] codeArray = dataBaseCode.split(".");
-            String codeNum = "";
-            if(codeArray.length>2){
-                codeNum = codeArray[2];
-            }
-            if(!StringUtils.isEmptyParam(codeNum)){
-                Integer codeNumber = Integer.valueOf(codeNum)+1;
-                codeNum = codeNumber+"";
-            }
-            if(codeNum.length()<2){
-                codeNum = "0"+codeNum;
-            }
-            realCode= code+codeNum;
-        }else{
-            realCode = code+"01";
-        }
-        return realCode;
     }
 }

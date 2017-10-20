@@ -41,6 +41,14 @@ public class PanFileFacade extends BaseFacade {
                 return new PanFile();
             }
         }else{
+            String proHql = " from PanFile where status <> '-1' and fileTitle = '"+panFile.getFileTitle()+"' and id <> '"+panFile.getId()+"'" +
+                    " and projectId = '"+panFile.getProjectId()+"'";
+            proHql += " and createBy = '"+UserUtils.getCurrentUser().getId()+"'";
+            List<PanFile> proPanFiles = createQuery(PanFile.class,proHql,new ArrayList<Object>()).getResultList();
+            if(proPanFiles!=null && !proPanFiles.isEmpty()){
+                throw new Exception("项目下文件名已存在，请修改");
+            }
+
             String hql = " from PanFile where status<>'-1' and fileTitle = '"+panFile.getFileTitle()+"' and id <> '"+panFile.getId()+"'";
             if(panFile.getParentId()==null||panFile.getParentId().equals("")){
                 hql +=" and parentId is null";
