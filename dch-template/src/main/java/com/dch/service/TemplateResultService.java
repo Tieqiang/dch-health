@@ -30,7 +30,7 @@ public class TemplateResultService {
     @Path("merge-template-result")
     @Transactional
     public Response mergeTemplateResult(TemplateResult templateResult){
-        if(!StringUtils.isEmptyParam(templateResult.getId())){
+        if(StringUtils.isEmptyParam(templateResult.getId())){
             templateResult.setDocId(IDUtils.getDocId());
         }
         return Response.status(Response.Status.OK).entity(templateResultFacade.merge(templateResult)).build();
