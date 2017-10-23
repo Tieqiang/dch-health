@@ -29,7 +29,7 @@ public class TemplateResult extends BaseEntity {
     }
 
     @Basic
-    @Column(name = "template_result", nullable = true, length = 255)
+    @Column(name = "template_result", nullable = true, length = -1)
     public String getTemplateResult() {
         return templateResult;
     }
