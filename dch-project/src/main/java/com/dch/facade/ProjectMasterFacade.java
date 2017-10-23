@@ -1,6 +1,7 @@
 package com.dch.facade;
 
 import com.dch.entity.ProjectMaster;
+import com.dch.entity.ProjectMember;
 import com.dch.facade.common.BaseFacade;
 import com.dch.facade.common.VO.Page;
 import com.dch.util.StringUtils;
@@ -24,6 +25,13 @@ public class ProjectMasterFacade extends BaseFacade {
     @Transactional
     public Response mergeProjectMaster(ProjectMaster projectMaster) {
         ProjectMaster merge = merge(projectMaster);
+        if(StringUtils.isEmptyParam(projectMaster.getId())){
+            ProjectMember projectMember = new ProjectMember();
+            projectMember.setProjectId(merge.getId());
+            projectMember.setPersonStatus("1");
+            projectMember.setPersonId(UserUtils.getCurrentUser().getId());
+            merge(projectMember);
+        }
         return Response.status(Response.Status.OK).entity(merge).build();
     }
 
