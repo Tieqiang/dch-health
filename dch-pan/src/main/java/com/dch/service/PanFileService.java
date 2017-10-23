@@ -5,8 +5,9 @@ import com.dch.entity.PanFileStore;
 import com.dch.facade.PanFileFacade;
 import com.dch.facade.common.VO.Page;
 import com.dch.facade.common.VO.ReturnInfo;
-import com.dch.util.UserUtils;
+import com.dch.util.LogHome;
 import com.dch.util.StringUtils;
+import com.dch.util.UserUtils;
 import com.dch.vo.UserVo;
 import com.sun.jersey.core.header.FormDataContentDisposition;
 import com.sun.jersey.multipart.FormDataParam;
@@ -22,6 +23,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import java.io.*;
 import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.util.List;
 import java.util.Properties;
 
@@ -186,7 +188,6 @@ public class PanFileService {
         final PanFileStore panFileStore = panFileFacade.get(PanFileStore.class,fileId);
         File file = new File(panFileStore.getStorePath());
         //String name = file.getName();
-
         StreamingOutput streamingOutput = new StreamingOutput() {
             public void write(OutputStream outputStream) throws IOException, WebApplicationException {
                 FileInputStream fileInputStream = new FileInputStream(panFileStore.getStorePath());
@@ -200,7 +201,9 @@ public class PanFileService {
                 fileInputStream.close();
             }
         };
-        return Response.status(Response.Status.OK).entity(streamingOutput).header("Content-disposition","attachment;filename="+fileTitle)
+        String fileName = URLEncoder.encode(fileTitle, "UTF-8");
+        LogHome.getLog().info(fileName);
+        return Response.status(Response.Status.OK).entity(streamingOutput).header("Content-disposition","attachment;filename="+ fileName)
                 .header("Cache-Control","no-cache").build();
     }
     /**

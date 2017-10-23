@@ -31,7 +31,9 @@ public class TemplateResultService {
     @Transactional
     public Response mergeTemplateResult(TemplateResult templateResult){
         if(StringUtils.isEmptyParam(templateResult.getId())){
-            templateResult.setDocId(IDUtils.getDocId());
+            if(StringUtils.isEmptyParam(templateResult.getDocId())){
+                templateResult.setDocId(IDUtils.getDocId());
+            }
         }
         return Response.status(Response.Status.OK).entity(templateResultFacade.merge(templateResult)).build();
     }
@@ -58,8 +60,8 @@ public class TemplateResultService {
      */
     @GET
     @Path("get-template-result")
-    public Page<TemplateResult> getTemplateResult(@QueryParam("templateId") String templateId, @QueryParam("perPage") int perPage, @QueryParam("currentPage") int currentPage){
-        return templateResultFacade.getTemplateResult(templateId,perPage,currentPage);
+    public Page<TemplateResult> getTemplateResult(@QueryParam("templateId") String templateId,@QueryParam("docId")String docId, @QueryParam("perPage") int perPage, @QueryParam("currentPage") int currentPage){
+        return templateResultFacade.getTemplateResult(templateId,docId,perPage,currentPage);
     }
 
 }

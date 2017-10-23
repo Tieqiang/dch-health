@@ -3,7 +3,7 @@ package com.dch.facade;
 import com.dch.entity.TemplateResult;
 import com.dch.facade.common.BaseFacade;
 import com.dch.facade.common.VO.Page;
-import com.dch.vo.TemplateDataElementVo;
+import com.dch.util.StringUtils;
 import com.dch.vo.TemplateMasterVo;
 import org.springframework.stereotype.Component;
 
@@ -54,8 +54,11 @@ public class TemplateResultFacade extends BaseFacade {
      * @param currentPage
      * @return
      */
-    public Page<TemplateResult> getTemplateResult(String templateId, int perPage, int currentPage) {
+    public Page<TemplateResult> getTemplateResult(String templateId,String docId, int perPage, int currentPage) {
         String hql=" from TemplateResult where status <> '-1' and templateId='"+templateId+"'";
+        if("".equals(docId)|| !StringUtils.isEmptyParam(docId)){
+            hql += " and docId = '"+docId+"'";
+        }
         return getPageResult(TemplateResult.class,hql,perPage,currentPage);
     }
 }
