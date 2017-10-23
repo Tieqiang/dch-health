@@ -16,6 +16,7 @@ public class TemplateResult extends BaseEntity {
     private String templateId;
     private String templateResult;
     private String pageId;
+    private String docId;
 
     @Basic
     @Column(name = "template_id", nullable = true, length = 64)
@@ -45,5 +46,15 @@ public class TemplateResult extends BaseEntity {
 
     public void setPageId(String pageId) {
         this.pageId = pageId;
+    }
+
+    @Basic
+    @Column(name = "doc_id", nullable = true, length = 64)
+    public String getDocId() {
+        return docId;
+    }
+
+    public void setDocId(String docId) {
+        this.docId = docId;
     }
 }

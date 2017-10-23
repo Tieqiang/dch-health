@@ -2,6 +2,9 @@ package com.dch.service;
 
 import com.dch.entity.TemplatePage;
 import com.dch.facade.TemplatePageFacade;
+import com.dch.util.StringUtils;
+import com.dch.vo.TemplatePageVo;
+import org.mortbay.util.ajax.JSON;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
@@ -20,13 +23,23 @@ public class TemplatePageService {
 
     /**
      * 添加、删除、删除表单页
-     * @param templatePage
+     * @param templatePageVo
      * @return
      */
     @Path("merge-template-page")
     @POST
     @Transactional
-    public Response mergeTemplatePage(TemplatePage templatePage){
+    public Response mergeTemplatePage(TemplatePageVo templatePageVo){
+        TemplatePage templatePage = new TemplatePage();
+        if(!StringUtils.isEmptyParam(templatePageVo.getId())){
+            templatePage.setId(templatePageVo.getId());
+        }
+        templatePage.setTemplateId(templatePageVo.getTemplateId());
+        templatePage.setTemplatePageContent(templatePageVo.getTemplatePageContent());
+        templatePage.setTemplatePageName(templatePageVo.getTemplatePageName());
+        templatePage.setTemplatePageOrder(templatePageVo.getTemplatePageOrder());
+        templatePage.setTemplatePageDataModel(JSON.toString(templatePageVo.getTemplatePageDataModel()));
+        templatePage.setStatus(templatePageVo.getStatus());
         return templatePageFacade.mergeTemplatePage(templatePage);
     }
     /**

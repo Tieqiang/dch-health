@@ -3,14 +3,15 @@ package com.dch.service;
 import com.dch.entity.TemplateResult;
 import com.dch.facade.TemplateResultFacade;
 import com.dch.facade.common.VO.Page;
+import com.dch.util.IDUtils;
+import com.dch.util.StringUtils;
 import com.dch.vo.TemplateMasterVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.*;
+import javax.ws.rs.core.Response;
 
 @Path("template/template-result")
 @Produces("application/json")
@@ -20,6 +21,20 @@ public class TemplateResultService {
     @Autowired
     private TemplateResultFacade templateResultFacade;
 
+    /**
+     * 保存表单数据
+     * @param templateResult
+     * @return
+     */
+    @POST
+    @Path("merge-template-result")
+    @Transactional
+    public Response mergeTemplateResult(TemplateResult templateResult){
+        if(!StringUtils.isEmptyParam(templateResult.getId())){
+            templateResult.setDocId(IDUtils.getDocId());
+        }
+        return Response.status(Response.Status.OK).entity(templateResultFacade.merge(templateResult)).build();
+    }
     /**
      * 获取表单结果
      * @param projectId

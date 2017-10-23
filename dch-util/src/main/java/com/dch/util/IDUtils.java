@@ -1,6 +1,7 @@
 package com.dch.util;
 
 import java.util.Random;
+import java.util.UUID;
 
 
 /**
@@ -46,5 +47,11 @@ public class IDUtils {
         String str = millis + String.format("%02d", end2);
         long id = new Long(str);
         return id;
+    }
+
+    public static String getDocId(){
+        String uid = UUID.randomUUID()+"";
+        uid = uid.replace("-","");
+        return uid;
     }
 }
