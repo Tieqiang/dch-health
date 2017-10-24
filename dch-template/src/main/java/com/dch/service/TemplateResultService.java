@@ -45,9 +45,9 @@ public class TemplateResultService {
      * @return
      */
     @GET
-    @Path("get-template-results")
-    public Page<TemplateMasterVo> getTemplateResults(@QueryParam("projectId") String projectId, @QueryParam("perPage") int perPage, @QueryParam("currentPage") int currentPage){
-        return templateResultFacade.getTemplateResults(projectId,perPage,currentPage);
+    @Path("get-template-mastervos")
+    public Page<TemplateMasterVo> getTemplateMasterVos(@QueryParam("projectId") String projectId, @QueryParam("perPage") int perPage, @QueryParam("currentPage") int currentPage){
+        return templateResultFacade.getTemplateMasterVos(projectId,perPage,currentPage);
 
     }
 
@@ -59,9 +59,9 @@ public class TemplateResultService {
      * @return
      */
     @GET
-    @Path("get-template-result")
-    public Page<TemplateResult> getTemplateResult(@QueryParam("templateId") String templateId,@QueryParam("docId")String docId, @QueryParam("perPage") int perPage, @QueryParam("currentPage") int currentPage){
-        return templateResultFacade.getTemplateResult(templateId,docId,perPage,currentPage);
+    @Path("get-template-results")
+    public Page<TemplateResult> getTemplateResults(@QueryParam("templateId") String templateId,@QueryParam("docId")String docId, @QueryParam("perPage") int perPage, @QueryParam("currentPage") int currentPage){
+        return templateResultFacade.getTemplateResults(templateId,docId,perPage,currentPage);
     }
 
 }

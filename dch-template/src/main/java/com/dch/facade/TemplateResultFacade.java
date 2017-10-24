@@ -20,7 +20,7 @@ public class TemplateResultFacade extends BaseFacade {
      * @param currentPage
      * @return
      */
-    public Page<TemplateMasterVo> getTemplateResults(String projectId, int perPage, int currentPage) {
+    public Page<TemplateMasterVo> getTemplateMasterVos(String projectId, int perPage, int currentPage) {
         String hql="select new com.dch.vo.TemplateMasterVo(m.id,m.templateName,m.templateLevel,m.templateStatus,m.projectId,m.templateDesc" +
                 ",m.createDate,m.modifyDate,m.createBy,m.modifyBy,m.status,(SELECT COUNT(*) FROM TemplateResult r WHERE r.templateId = m.id) as num) from TemplateMaster as m where m.status <> '-1' and projectId='"+projectId+"'";
 
@@ -54,9 +54,9 @@ public class TemplateResultFacade extends BaseFacade {
      * @param currentPage
      * @return
      */
-    public Page<TemplateResult> getTemplateResult(String templateId,String docId, int perPage, int currentPage) {
+    public Page<TemplateResult> getTemplateResults(String templateId,String docId, int perPage, int currentPage) {
         String hql=" from TemplateResult where status <> '-1' and templateId='"+templateId+"'";
-        if("".equals(docId)|| !StringUtils.isEmptyParam(docId)){
+        if(!StringUtils.isEmptyParam(docId)){
             hql += " and docId = '"+docId+"'";
         }
         return getPageResult(TemplateResult.class,hql,perPage,currentPage);

@@ -3,6 +3,7 @@ package com.dch.service;
 import com.dch.entity.TemplatePage;
 import com.dch.facade.TemplatePageFacade;
 import com.dch.util.StringUtils;
+import com.dch.vo.TemplatePageAndResultVo;
 import com.dch.vo.TemplatePageVo;
 import org.mortbay.util.ajax.JSON;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,5 +64,16 @@ public class TemplatePageService {
     @Path("get-template-page")
     public TemplatePage getTemplatePage(@QueryParam("pageId") String pageId) throws Exception {
         return templatePageFacade.getTemplatePage(pageId);
+    }
+
+    /**
+     * 获取表单页面及表单值
+     * @param templateId
+     * @return
+     */
+    @GET
+    @Path("get-template-pages-and-results")
+    public List<TemplatePageAndResultVo> getTemplatePagesAndResults(@QueryParam("templateId") String templateId, @QueryParam("docId")String docId){
+        return templatePageFacade.getTemplatePagesAndResults(templateId,docId);
     }
 }
