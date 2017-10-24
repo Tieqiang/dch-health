@@ -82,6 +82,12 @@ public class TemplatePageFacade extends BaseFacade {
                 }
                 templatePageAndResultVos.add(templatePageAndResultVo);
             }
+        }else{
+            for(TemplatePage templatePage:templatePageList){
+                TemplatePageAndResultVo templatePageAndResultVo = new TemplatePageAndResultVo();
+                templatePageAndResultVo.setTemplatePage(templatePage);
+                templatePageAndResultVos.add(templatePageAndResultVo);
+            }
         }
         return templatePageAndResultVos;
     }
