@@ -30,6 +30,7 @@ public class ProjectMasterFacade extends BaseFacade {
             projectMember.setProjectId(merge.getId());
             projectMember.setPersonStatus("1");
             projectMember.setPersonId(UserUtils.getCurrentUser().getId());
+            projectMember.setStatus("1");
             merge(projectMember);
         }
         return Response.status(Response.Status.OK).entity(merge).build();
