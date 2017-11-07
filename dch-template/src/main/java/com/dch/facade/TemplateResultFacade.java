@@ -1,6 +1,7 @@
 package com.dch.facade;
 
 import com.dch.entity.TemplateResult;
+import com.dch.entity.User;
 import com.dch.facade.common.BaseFacade;
 import com.dch.facade.common.VO.Page;
 import com.dch.util.StringUtils;
@@ -59,6 +60,19 @@ public class TemplateResultFacade extends BaseFacade {
         if(!StringUtils.isEmptyParam(docId)){
             hql += " and docId = '"+docId+"'";
         }
-        return getPageResult(TemplateResult.class,hql,perPage,currentPage);
+        Page<TemplateResult> pageResult = getPageResult(TemplateResult.class, hql, perPage, currentPage);
+        List<TemplateResult> results = pageResult.getData();
+
+        List<User> users = findAll(User.class);
+        for (TemplateResult result:results){
+            String userid = result.getCreateBy();
+            for(User user:users){
+                if(userid.equals(user.getId())){
+                    result.setCreateBy(user.getUserName());
+                }
+            }
+        }
+
+        return pageResult;
     }
 }
