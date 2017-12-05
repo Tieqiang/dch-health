@@ -62,8 +62,9 @@ public class DiseaseContentService {
     public Page<DiseaseContent> getDiseaseContents(@QueryParam("categoryId") String categoryId,
                                                    @QueryParam("name") String name,
                                                    @QueryParam("perPage") int perPage,
-                                                   @QueryParam("currentPage") int currentPage){
-        return diseaseContentFacade.getDiseaseContents(categoryId,name,perPage,currentPage);
+                                                   @QueryParam("currentPage") int currentPage,
+                                                   @QueryParam("createBy") String createBy){
+        return diseaseContentFacade.getDiseaseContents(categoryId,name,perPage,currentPage,createBy);
     }
 
     /**

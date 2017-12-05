@@ -56,8 +56,9 @@ public class MrFileService {
     public Page<MrFile> getMrFiles(@QueryParam("subjectCode") String subjectCode,
                                    @QueryParam("title") String title,
                                    @QueryParam("perPage") int perPage,
-                                   @QueryParam("currentPage") int currentPage){
-        return mrFileFacade.getMrFiles(subjectCode,title,perPage,currentPage);
+                                   @QueryParam("currentPage") int currentPage,
+                                   @QueryParam("createBy") String createBy){
+        return mrFileFacade.getMrFiles(subjectCode,title,perPage,currentPage,createBy);
     }
 
     /**

@@ -68,11 +68,12 @@ public class MrFileFacade extends BaseFacade {
      * @param title
      * @param perPage
      * @param currentPage
+     * @param createBy
      * @return
      */
-    public Page<MrFile> getMrFiles(String subjectCode, String title, int perPage, int currentPage) {
+    public Page<MrFile> getMrFiles(String subjectCode, String title, int perPage, int currentPage, String createBy) {
         String hql=" from MrFile where status <> '-1' ";
-        String hqlCount="select count(*) from MrFile where status<> '-1' ";
+        String hqlCount="select count(id) from MrFile where status<> '-1' ";
         if(subjectCode!=null&&!"".equals(subjectCode)){
             hql+="and subjectCode='"+ subjectCode +"' ";
             hqlCount+="and subjectCode='"+ subjectCode +"' ";
@@ -80,6 +81,10 @@ public class MrFileFacade extends BaseFacade {
         if(title!=null&&!"".equals(title)){
             hql+="and fileTitle like '%"+title+"%'";
             hqlCount+="and fileTitle like '%"+title+"%'";
+        }
+        if(createBy!=null&&!"".equals(createBy)){
+            hql+="and createBy='"+createBy+"' ";
+            hqlCount+="and createBy='"+createBy+"'";
         }
         TypedQuery<MrFile> query = createQuery(MrFile.class, hql, new ArrayList<>());
         Long counts = createQuery(Long.class,hqlCount,new ArrayList<Object>()).getSingleResult();

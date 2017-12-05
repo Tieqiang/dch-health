@@ -66,10 +66,10 @@ public class ProjectMasterFacade extends BaseFacade {
                 hqlCount += " and (m.createBy = '"+userId+"' or exists(select 1 from ProjectMember where projectId = m.id and personId = '"+userId+"' " +
                         "and status<>'-1'))";
             }else if("act".equals(type)){
-                hql += " and exists(select 1 from ProjectMember where projectId = m.id and personId = '"+userId+"' " +
-                        "and status<>'-1') ";
-                hqlCount += " and exists(select 1 from ProjectMember where projectId = m.id and personId = '"+userId+"' " +
-                        "and status<>'-1') ";
+                hql += " and (m.createBy <> '"+userId+"' and exists(select 1 from ProjectMember where projectId = m.id and personId = '"+userId+"' " +
+                        "and status<>'-1' and personStatus ='1')) ";
+                hqlCount += " and (m.createBy <> '"+userId+"' and exists(select 1 from ProjectMember where projectId = m.id and personId = '"+userId+"' " +
+                        "and status<>'-1' and personStatus ='1')) ";
             }else{
                 hql += " and m.createBy = '"+userId+"' ";
                 hqlCount += " and m.createBy = '"+userId+"' ";
