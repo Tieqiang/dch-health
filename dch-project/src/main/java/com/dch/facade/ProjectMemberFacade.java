@@ -1,5 +1,7 @@
 package com.dch.facade;
 
+import com.dch.entity.ProjectInfomation;
+import com.dch.entity.ProjectMaster;
 import com.dch.entity.ProjectMember;
 import com.dch.facade.common.BaseFacade;
 import com.dch.util.StringUtils;
@@ -27,12 +29,27 @@ public class ProjectMemberFacade extends BaseFacade {
                     "and personId='"+projectMember.getPersonId()+"' and personStatus='"+projectMember.getPersonStatus()+"'";
             List<ProjectMember> memberList = createQuery(ProjectMember.class, hql, new ArrayList<Object>()).getResultList();
             if(memberList!=null && memberList.size()>0){
-                throw new Exception("该用户已是此项目的成员！");
+                if("0".equals(memberList.get(0).getPersonStatus())){
+                    throw new Exception("您已提交申请，请等待审核！");
+                }else{
+                    throw new Exception("该用户已是此项目的成员！");
+                }
             }
         }
         ProjectMember merge = merge(projectMember);
         projectMemberVo memberVo = getProjectMember(merge.getId());
-
+        if(!"-1".equals(merge.getStatus()) && "1".equals(merge.getPersonStatus())){//表示审核通过
+            String modeContent = StringUtils.getStringByKey("joinProjectInfo");
+            ProjectMaster projectMaster = get(ProjectMaster.class,merge.getProjectId());
+            ProjectInfomation projectInfomation = new ProjectInfomation();
+            projectInfomation.setInfoTitle(projectMaster.getProjectName());
+            modeContent = modeContent.replace("user",memberVo.getUserName());
+            modeContent = modeContent.replace("desc",projectMaster.getProjectDesc());
+            modeContent = modeContent.replace("project",projectMaster.getProjectName());
+            projectInfomation.setInfoContent(modeContent);
+            projectInfomation.setProjectId(merge.getId());
+            merge(projectInfomation);
+        }
         return Response.status(Response.Status.OK).entity(memberVo).build();
     }
 

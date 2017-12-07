@@ -181,7 +181,9 @@ public class CmsContentService {
                                 @FormDataParam( "file") FormDataContentDisposition fileDetail,
                                 @Context ServletContext context) throws Exception {
 //
-        String filename =fileDetail.getFileName();
+        String filename = fileDetail.getFileName();
+        filename = new String(filename.getBytes("ISO-8859-1"),"utf-8");
+        filename = URLDecoder.decode(filename,"UTF-8");
         String path = context.getRealPath("/");
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(new Date());
@@ -190,13 +192,17 @@ public class CmsContentService {
         int day = calendar.get(Calendar.DAY_OF_MONTH);
         int hour = calendar.get(Calendar.HOUR_OF_DAY);
         String exName = filename.substring(filename.lastIndexOf('.'));
-        String filePath = "/upload";
+        String filePath = File.separator + "upload";
         if(month>=10){
-            path = path+"/upload"+"/"+year+month+day+"/"+hour+"/"+filename;
-            filePath =filePath+"/"+year+month+day+"/"+hour+"/"+filename;
+//            path = path+"/upload"+"/"+year+month+day+"/"+hour+"/"+filename;
+//            filePath =filePath+"/"+year+month+day+"/"+hour+"/"+filename;
+            path = path+ File.separator +"upload"+ File.separator+year+month+day+File.separator+hour+File.separator+filename;
+            filePath =filePath+File.separator+year+month+day+File.separator+hour+File.separator+filename;
         }else{
-            path = path+"/upload"+"/"+year+"0"+month+day+"/"+hour+"/"+filename;
-            filePath =filePath+"/"+year+"0"+month+day+"/"+hour+"/"+filename;
+            //path = path+"/upload"+"/"+year+"0"+month+day+"/"+hour+"/"+filename;
+            //filePath =filePath+"/"+year+"0"+month+day+"/"+hour+"/"+filename;
+            path = path+File.separator+"upload"+File.separator+year+"0"+month+day+File.separator+hour+File.separator+filename;
+            filePath =filePath+File.separator+year+"0"+month+day+File.separator+hour+File.separator+filename;
         }
 
 

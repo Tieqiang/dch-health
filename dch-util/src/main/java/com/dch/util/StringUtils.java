@@ -4,6 +4,9 @@ package com.dch.util;
 import java.io.*;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -13,7 +16,10 @@ public class StringUtils {
     private static String regEx_html = "<[^>]+>";
     // 定义一些特殊字符的正则表达式 如：&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
     private static String regEx_special = "\\&[a-zA-Z]{1,10};";
-
+    private static ResourceLoader loader = ResourceLoader.getInstance();
+    private static final String DEFAULT_CONFIG_FILE = "dchealth.properties";
+    private static Properties prop = null;
+    private static ConcurrentMap<String, String> paramMap = new ConcurrentHashMap<String, String>();
     /**
      * 将驼峰式命名的字符串转换为下划线大写方式。如果转换前的驼峰式命名的字符串为空，则返回空字符串。</br>
      * 例如：HelloWorld->HELLO_WORLD
@@ -179,4 +185,22 @@ public class StringUtils {
         return textStr;
     }
 
+    public static String getStringByKey(String key, String propName) {
+        try {
+            prop = loader.getPropFromProperties(propName);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        key = key.trim();
+        if (!paramMap.containsKey(key)) {
+            if (prop.getProperty(key) != null) {
+                paramMap.put(key, prop.getProperty(key));
+            }
+        }
+        return paramMap.get(key);
+    }
+
+    public static String getStringByKey(String key) {
+        return getStringByKey(key, DEFAULT_CONFIG_FILE);
+    }
 }

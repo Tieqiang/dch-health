@@ -62,13 +62,15 @@ public class FrontCategorySearchFacade extends BaseFacade {
             }
             keyWords = StringUtils.remeveHtmlLabel(keyWords);
             String hl = "title,desc,label";
-            if("1".equals(exact)){//精确查询
+            if(StringUtils.isEmptyParam(exact)){//精确查询  如果为空位精确查询 暂定 之前是定义为exact=1
+                LogHome.getLog().info("精确查询"+exact);
                 String filterStr = "";
                 if (categoryCode != null && !"".equals(categoryCode)) {
                     filterStr = "categoryCode:" + categoryCode ;
                 }
                 solrVoPage = baseSolrFacade.getExactSolrVoByParamAndPageParm(keyWords,filterStr,hl,perPage, currentPage, SolrVo.class);
             }else{//ik分词 智能查询
+                LogHome.getLog().info("智能查询"+exact);
                 if (keyWords != null && !"".equals(keyWords)) {
                     if(keyWords.indexOf(" ")!=-1){
                         keyWords = "("+keyWords+")";

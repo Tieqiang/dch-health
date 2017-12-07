@@ -1,11 +1,14 @@
 package com.dch.facade;
 
+import com.dch.entity.ProjectInfomation;
 import com.dch.entity.ProjectMaster;
 import com.dch.entity.ProjectMember;
+import com.dch.entity.User;
 import com.dch.facade.common.BaseFacade;
 import com.dch.facade.common.VO.Page;
 import com.dch.util.StringUtils;
 import com.dch.util.UserUtils;
+import com.dch.vo.UserVo;
 import org.springframework.stereotype.Component;
 
 import javax.persistence.TypedQuery;
@@ -32,6 +35,15 @@ public class ProjectMasterFacade extends BaseFacade {
             projectMember.setPersonId(UserUtils.getCurrentUser().getId());
             projectMember.setStatus("1");
             merge(projectMember);
+            //创建科研项目时添加项目动态
+            String modeContent = StringUtils.getStringByKey("projectContent");
+            ProjectInfomation projectInfomation = new ProjectInfomation();
+            projectInfomation.setInfoTitle(merge.getProjectName());
+            modeContent = modeContent.replace("user",merge.getProjectPerson());
+            modeContent = modeContent.replace("desc",merge.getProjectDesc());
+            projectInfomation.setInfoContent(modeContent);
+            projectInfomation.setProjectId(merge.getId());
+            merge(projectInfomation);
         }
         return Response.status(Response.Status.OK).entity(merge).build();
     }

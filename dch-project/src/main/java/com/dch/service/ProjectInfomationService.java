@@ -8,6 +8,7 @@ import org.springframework.stereotype.Controller;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
+import java.util.List;
 
 /**
  * Created by Administrator on 2017/9/27.
@@ -54,5 +55,15 @@ public class ProjectInfomationService {
     @Path("get-project-infomation")
     public ProjectInfomation getProjectInfoMation(@QueryParam("infoId")String infoId) throws Exception{
         return projectInfomationFacade.getProjectInfoMation(infoId);
+    }
+
+    /**
+     * 获取最新的N条项目动态信息
+     * @return
+     */
+    @GET
+    @Path("get-recent-informations")
+    public List<ProjectInfomation> getRecentProjectInformations(@QueryParam("playNum")int playNum){
+        return projectInfomationFacade.getRecentProjectInformations(playNum);
     }
 }

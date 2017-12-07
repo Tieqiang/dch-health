@@ -49,4 +49,18 @@ public class ProjectInfomationFacade extends BaseFacade{
             throw new Exception("该项目动态信息不存在！");
         }
     }
+
+    /**
+     * 获取最新的N条项目动态信息
+     * @param playNum
+     * @return
+     */
+    public List<ProjectInfomation> getRecentProjectInformations(int playNum) {
+        if(playNum<=0){//默认展示10条
+            playNum = 10;
+        }
+        String hql=" from ProjectInfomation where status <> '-1' order by createDate desc ";
+        Page<ProjectInfomation> projectInfomationPage = getPageResult(ProjectInfomation.class,hql,playNum,0);
+        return projectInfomationPage.getData();
+    }
 }

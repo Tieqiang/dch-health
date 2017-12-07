@@ -733,6 +733,32 @@ public class BaseFacade {
         return 0;
     }
 
+    /**
+     * 批量保存
+     * @param list
+     * @param <T>
+     * @return
+     */
+    public <T> boolean batchInsert(List<T> list) {
+        boolean flag = false;
+        int batchSize = 30;
+        int i = 0;
+        try {
+            for (Object entity : list) {
+                entityManager.persist(entity);
+                i++;
+                if (i % batchSize == 0) {
+                    entityManager.flush();
+                    entityManager.clear();
+                }
+            }
+            flag = true;
+        } catch (Exception e) {
+
+        }
+        return flag;
+    }
+
     @PersistenceContext
     public void setEntityManager(EntityManager entityManager){
         this.entityManager = entityManager;
