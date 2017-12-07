@@ -27,7 +27,7 @@ public class DiseaseContentFacade extends BaseFacade {
      * @param currentPage
      * @return
      */
-    public Page<DiseaseContent> getDiseaseContents(String categoryId, String name, int perPage, int currentPage) {
+    public Page<DiseaseContent> getDiseaseContents(String categoryId, String name, int perPage, int currentPage, String createBy) {
         String hql = "from DiseaseContent as d where d.status<>'-1'" ;
         String hqlCount = "select count(d) "+hql ;
         if(!StringUtils.isEmptyParam(categoryId)){
@@ -37,6 +37,10 @@ public class DiseaseContentFacade extends BaseFacade {
         if(!StringUtils.isEmptyParam(name)){
             hql+=" and d.name like '%"+name+"%'";
             hqlCount+= " and d.name like '%"+name+"%'";
+        }
+        if(createBy!=null&&!"".equals(createBy)){
+            hql+="and createBy='"+createBy+"' ";
+            hqlCount+="and createBy='"+createBy+"'";
         }
 
         hql+=" order by d.name";
