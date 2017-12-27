@@ -36,13 +36,16 @@ public class ProjectMasterFacade extends BaseFacade {
             projectMember.setStatus("1");
             merge(projectMember);
             //创建科研项目时添加项目动态
+            UserVo userVo = UserUtils.getCurrentUser();
+            User user = get(User.class,userVo.getId());
             String modeContent = StringUtils.getStringByKey("projectContent");
             ProjectInfomation projectInfomation = new ProjectInfomation();
             projectInfomation.setInfoTitle(merge.getProjectName());
-            modeContent = modeContent.replace("user",merge.getProjectPerson());
+            modeContent = modeContent.replace("user",user.getUserName());
             modeContent = modeContent.replace("desc",merge.getProjectDesc());
             projectInfomation.setInfoContent(modeContent);
             projectInfomation.setProjectId(merge.getId());
+            projectInfomation.setStatus("0");
             merge(projectInfomation);
         }
         return Response.status(Response.Status.OK).entity(merge).build();
