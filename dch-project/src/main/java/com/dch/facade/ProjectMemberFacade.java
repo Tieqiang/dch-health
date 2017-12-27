@@ -48,6 +48,7 @@ public class ProjectMemberFacade extends BaseFacade {
             modeContent = modeContent.replace("project",projectMaster.getProjectName());
             projectInfomation.setInfoContent(modeContent);
             projectInfomation.setProjectId(merge.getId());
+            projectInfomation.setStatus("0");
             merge(projectInfomation);
         }
         return Response.status(Response.Status.OK).entity(memberVo).build();
