@@ -200,7 +200,13 @@ public class StringUtils {
         return paramMap.get(key);
     }
 
-    public static String getStringByKey(String key) {
-        return getStringByKey(key, DEFAULT_CONFIG_FILE);
+    public static String getStringByKey(String key){
+        String value = getStringByKey(key, DEFAULT_CONFIG_FILE);
+        try {
+            value = new String(value.getBytes("iso-8859-1"),"utf-8");
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return value;
     }
 }

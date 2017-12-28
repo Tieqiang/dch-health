@@ -269,7 +269,11 @@ public class BaseSolrFacade {
         for(Field field:fileds){
             String value = doc.getFieldValue(field.getName())==null?"":doc.getFieldValue(field.getName()).toString();
             field.setAccessible(true); // 设置些属性是可以访问的
-            field.set(ret,getHilightValue(value,strArray));
+            if(keyWords!=null && !"".equals(keyWords)){
+                field.set(ret,getHilightValue(value,strArray));
+            }else{
+                field.set(ret,value);
+            }
         }
         return ret;
     }

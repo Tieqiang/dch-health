@@ -237,7 +237,7 @@ public class PanFileFacade extends BaseFacade {
                 throw new Exception("获取当前用户信息为空");
             }
             String loginName = currentUser.getLoginName();
-            String path = basePath+"\\"+loginName+"\\" ;
+            String path = basePath+File.separator+loginName+File.separator;
             Calendar c = Calendar.getInstance(TimeZone.getTimeZone("GMT+08:00"));
             int year = c.get(Calendar.YEAR);
             int month = c.get(Calendar.MONTH);
@@ -249,7 +249,7 @@ public class PanFileFacade extends BaseFacade {
             path += year;
             path += (month<10?("0"+month):month)+""+(day<10?("0"+day):day);
             path += (hour<10?("0"+hour):hour)+""+(minute<10?("0"+minute):minute)+""+(secode<10?("0"+secode):secode);
-            path+="\\"+filename;
+            path+=File.separator+filename;
             File file = new File(path) ;
             //创建文件夹目录
             if(!file.exists()){
