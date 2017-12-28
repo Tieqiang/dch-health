@@ -87,7 +87,7 @@ public class UserFacade extends BaseFacade {
             hql += " and userName like '%"+userName+"%'";
         }
         if(!StringUtils.isEmptyParam(loginName)){
-            hql += " and loginName = '"+loginName+"'";
+            hql += " and loginName = '"+loginName+"' or userName like '%"+loginName+"%'";
         }
         return createQuery(User.class, hql, new ArrayList<Object>()).getResultList();
     }

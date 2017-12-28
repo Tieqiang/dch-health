@@ -26,7 +26,7 @@ public class ProjectMasterService {
     @Path("merge-project-master")
     @POST
     @Transactional
-    public Response mergeProjectMaster(ProjectMaster projectMaster){
+    public Response mergeProjectMaster(ProjectMaster projectMaster) throws Exception {
         return projectMasterFacade.mergeProjectMaster(projectMaster);
     }
 
@@ -87,5 +87,17 @@ public class ProjectMasterService {
                                                  @QueryParam("perPage") int perPage,
                                                  @QueryParam("currentPage") int currentPage){
         return projectMasterFacade.getNotJoinProjectMasters(projectName,createrId,perPage,currentPage);
+    }
+
+    /**
+     * 退出参与的项目
+     * @param projectMaster
+     * @return
+     */
+    @Path("quit-project-masters")
+    @POST
+    @Transactional
+    public Response QuitProjectMaster(ProjectMaster projectMaster){
+        return projectMasterFacade.quitProjectMaster(projectMaster);
     }
 }
