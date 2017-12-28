@@ -7,8 +7,10 @@ import com.dch.facade.common.BaseFacade;
 import com.dch.facade.common.VO.Page;
 import com.dch.util.StringUtils;
 import com.dch.util.UserUtils;
+import com.dch.vo.SolrVo;
 import com.dch.vo.UserVo;
 import com.sun.jersey.core.header.FormDataContentDisposition;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +25,8 @@ import java.util.*;
  */
 @Component
 public class PanFileFacade extends BaseFacade {
+    @Autowired
+    private BaseSolrFacade baseSolrFacade;
 
     /**
      * 创建、删除、修改、移动所有文件夹
@@ -60,7 +64,18 @@ public class PanFileFacade extends BaseFacade {
             if(panFiles!=null && !panFiles.isEmpty()){
                 throw new Exception("文件名已存在，请修改");
             }
-           return merge(panFile);
+            PanFile merge = merge(panFile);
+            if("1".equals(merge.getFileShare())){
+                SolrVo solrVo=new SolrVo();
+                solrVo.setId(merge.getId());
+                solrVo.setTitle(merge.getFileTitle());
+                solrVo.setDesc(merge.getFileDesc());
+                solrVo.setCategoryCode("wjsj001");
+                solrVo.setLabel(merge.getKeyWords());
+                solrVo.setCategory(merge.getCategoryId());
+                baseSolrFacade.addObjectMessageToMq(solrVo);
+            }
+            return merge;
         }
     }
 

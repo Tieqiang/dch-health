@@ -16,6 +16,17 @@ public class TemplateMaster extends BaseEntity {
     private String templateStatus;
     private String projectId;
     private String templateDesc;
+    private String publishStatus;// 0为未发布 1为站内发布  2为全站发布
+
+    @Basic
+    @Column(name = "publish_status", nullable = true, length = 10)
+    public String getPublishStatus() {
+        return publishStatus;
+    }
+
+    public void setPublishStatus(String publishStatus) {
+        this.publishStatus = publishStatus;
+    }
 
     @Basic
     @Column(name = "template_name", nullable = true, length = 200)

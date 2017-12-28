@@ -50,6 +50,7 @@ public class PanFileService {
      */
     @POST
     @Path("merge-pan-file")
+    @Transactional
     public Response mergePanFile(PanFile panFile) throws Exception{
        return Response.status(OK).entity(panFileFacade.mergePanFile(panFile)).build();
     }
