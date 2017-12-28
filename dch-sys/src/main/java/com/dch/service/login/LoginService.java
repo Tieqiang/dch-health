@@ -104,7 +104,11 @@ public class LoginService {
         UsernamePasswordToken usernamePasswordToken = new UsernamePasswordToken();
         usernamePasswordToken.setUsername(username);
         usernamePasswordToken.setPassword(password.toCharArray());
-        subject.login(usernamePasswordToken);
+        try{
+            subject.login(usernamePasswordToken);
+        }catch (Exception e){
+            throw new Exception("输入密码错误！");
+        }
         UserVo currentUser = UserUtils.getCurrentUser();
         return Response.status(Response.Status.OK).entity(currentUser).build();
     }
