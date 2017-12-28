@@ -26,7 +26,12 @@ public class ProjectMasterFacade extends BaseFacade {
      * @return
      */
     @Transactional
-    public Response mergeProjectMaster(ProjectMaster projectMaster) {
+    public Response mergeProjectMaster(ProjectMaster projectMaster) throws Exception {
+        String hql=" from ProjectMaster where projectName='"+projectMaster.getProjectName()+"'";
+        List<ProjectMaster> projectMasters = createQuery(ProjectMaster.class, hql, new ArrayList<>()).getResultList();
+        if(projectMasters!=null && projectMasters.size()>0){
+            throw new Exception("该项目名称已经存在！");
+        }
         ProjectMaster merge = merge(projectMaster);
         if(StringUtils.isEmptyParam(projectMaster.getId())){
             ProjectMember projectMember = new ProjectMember();
@@ -78,9 +83,9 @@ public class ProjectMasterFacade extends BaseFacade {
         if(!StringUtils.isEmptyParam(userId)){
             if("all".equals(type)){
                 hql += " and (m.createBy = '"+userId+"' or exists(select 1 from ProjectMember where projectId = m.id and personId = '"+userId+"' " +
-                        "and status<>'-1'))";
+                        "and status<>'-1' and personStatus ='1'))";
                 hqlCount += " and (m.createBy = '"+userId+"' or exists(select 1 from ProjectMember where projectId = m.id and personId = '"+userId+"' " +
-                        "and status<>'-1'))";
+                        "and status<>'-1' and personStatus ='1'))";
             }else if("act".equals(type)){
                 hql += " and (m.createBy <> '"+userId+"' and exists(select 1 from ProjectMember where projectId = m.id and personId = '"+userId+"' " +
                         "and status<>'-1' and personStatus ='1')) ";
@@ -185,4 +190,22 @@ public class ProjectMasterFacade extends BaseFacade {
         page.setData(projectMasterList);
         return page;
     }
+    /**
+     * 申请退出项目
+     */
+    public Response quitProjectMaster(ProjectMaster projectMaster) {
+        projectMaster.setStatus("-1");
+        ProjectMaster merge = merge(projectMaster);
+        String hql=" from ProjectMember where projectId='"+projectMaster.getId()+"' and personId='"+UserUtils.getCurrentUser().getId()+"'";
+        List<ProjectMember> projectMembers = createQuery(ProjectMember.class, hql, new ArrayList<>()).getResultList();
+        if(projectMembers!=null && projectMembers.size()>0){
+            ProjectMember projectMember = projectMembers.get(0);
+            projectMember.setStatus("-1");
+            merge(projectMember);
+        }
+        return Response.status(Response.Status.OK).entity(merge).build();
+    }
+
+
+
 }
