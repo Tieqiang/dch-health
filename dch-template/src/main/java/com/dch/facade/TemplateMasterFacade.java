@@ -7,6 +7,8 @@ import com.dch.entity.TemplateResult;
 import com.dch.facade.common.BaseFacade;
 import com.dch.facade.common.VO.Page;
 import com.dch.util.StringUtils;
+import com.dch.vo.SolrVo;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +21,9 @@ import java.util.List;
  */
 @Component
 public class TemplateMasterFacade extends BaseFacade{
+
+    @Autowired
+    private BaseSolrFacade baseSolrFacade;
     /**
      * 添加、删除、修改表单名称
      * @param templateMaster
@@ -41,7 +46,18 @@ public class TemplateMasterFacade extends BaseFacade{
                 throw new Exception("该表单模板下有关联的表单数据结果信息，请先删除表单数据结果信息");
             }
         }
-        return Response.status(Response.Status.OK).entity(merge(templateMaster)).build();
+        TemplateMaster merge = merge(templateMaster);
+        if("2".equals(templateMaster.getPublishStatus())){//2全站发布
+            SolrVo solrVo=new SolrVo();
+            solrVo.setId(merge.getId());
+            solrVo.setTitle(merge.getTemplateName());
+            solrVo.setDesc(merge.getTemplateDesc());
+            solrVo.setCategoryCode("bdsj001");
+            solrVo.setLabel(merge.getTemplateLevel());
+            solrVo.setCategory(merge.getTemplateName());
+            baseSolrFacade.addObjectMessageToMq(solrVo);
+        }
+        return Response.status(Response.Status.OK).entity(merge).build();
     }
 
     /**
