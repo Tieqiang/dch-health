@@ -87,11 +87,29 @@ public class FrontCategorySearchFacade extends BaseFacade {
         return solrVoPage;
     }
 
-
+    /**
+     * 根据索引id索引数据信息
+     * @param id
+     * @return
+     * @throws Exception
+     */
+    public SolrVo getSolrVoById(String id) throws Exception{
+        if (StringUtils.isEmptyParam(id)) {
+            throw new Exception("索引主键不能为空！");
+        }
+        SolrVo solrVo = baseSolrFacade.getSolrObjectById(id,SolrVo.class);
+        return solrVo;
+    }
     public List<FrontSearchCategory> getFrontCategorys() {
 
         String hql = "from FrontSearchCategory a where a.status<> '-1'" ;
         List<FrontSearchCategory> list = createQuery(FrontSearchCategory.class, hql, new ArrayList<Object>()).getResultList();
         return list;
+    }
+
+    public Page<SolrVo> getFrontCategorysByKeyWord(String code) throws Exception{
+        String filterStr = "categoryCode:" + code ;
+        String hl = "";
+        return baseSolrFacade.getExactSolrVoByParamAndPageParm("",filterStr,hl,10, 1, SolrVo.class);
     }
 }

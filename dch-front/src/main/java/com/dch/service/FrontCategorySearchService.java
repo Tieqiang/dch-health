@@ -68,6 +68,11 @@ public class FrontCategorySearchService {
         return frontCategorySearchFacade.getFrontCategorysByKeyWords(pageParam.getCategoryCode(),pageParam.getKeyWords(),pageParam.getExact(),pageParam.getPerPage(),pageParam.getCurrentPage());
     }
 
+    @GET
+    @Path("get-categorys-by-keyword")
+    public  Page<SolrVo> getFrontCategorysByKeyWord(@QueryParam("code")String code) throws Exception {
+        return frontCategorySearchFacade.getFrontCategorysByKeyWord(code);
+    }
 
     /**
      * 初始化solr索引库
@@ -146,4 +151,15 @@ public class FrontCategorySearchService {
         return merge;
     }
 
+    /**
+     * 根据id查询索引的数据信息
+     * @param id
+     * @return
+     * @throws Exception
+     */
+    @GET
+    @Path("get-solrvo-by-id")
+    public  SolrVo getSolrVoById(@QueryParam("id")String id) throws Exception {
+        return frontCategorySearchFacade.getSolrVoById(id);
+    }
 }
