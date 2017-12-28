@@ -28,7 +28,7 @@ public class ProjectMasterFacade extends BaseFacade {
     @Transactional
     public Response mergeProjectMaster(ProjectMaster projectMaster) throws Exception {
         String hql=" from ProjectMaster where projectName='"+projectMaster.getProjectName()+"'";
-        List<ProjectMaster> projectMasters = createQuery(ProjectMaster.class, hql, new ArrayList<>()).getResultList();
+        List<ProjectMaster> projectMasters = createQuery(ProjectMaster.class, hql, new ArrayList<Object>()).getResultList();
         if(projectMasters!=null && projectMasters.size()>0){
             throw new Exception("该项目名称已经存在！");
         }
@@ -197,7 +197,7 @@ public class ProjectMasterFacade extends BaseFacade {
         projectMaster.setStatus("-1");
         ProjectMaster merge = merge(projectMaster);
         String hql=" from ProjectMember where projectId='"+projectMaster.getId()+"' and personId='"+UserUtils.getCurrentUser().getId()+"'";
-        List<ProjectMember> projectMembers = createQuery(ProjectMember.class, hql, new ArrayList<>()).getResultList();
+        List<ProjectMember> projectMembers = createQuery(ProjectMember.class, hql, new ArrayList<Object>()).getResultList();
         if(projectMembers!=null && projectMembers.size()>0){
             ProjectMember projectMember = projectMembers.get(0);
             projectMember.setStatus("-1");
