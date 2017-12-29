@@ -21,18 +21,48 @@
     </bean>
 
     <!--真正可以产生Connection的ConnectionFactory，由对应的 JMS服务厂商提供 -->
+    <!--
     <bean id="targetConnectionFactory" class="org.apache.activemq.ActiveMQConnectionFactory">
         <property name="brokerURL" value="${mq.url}" />
         <property name="trustAllPackages" value="true" />
     </bean>
+    -->
     <!--用于管理真正的ConnectionFactory的ConnectionFactory;-->
+    <!--
     <bean id="connectionFactory"
           class="org.springframework.jms.connection.SingleConnectionFactory">
         <property name="targetConnectionFactory" ref="targetConnectionFactory" />
     </bean>
+    -->
     <!-- 配置生产者-->
+    <!--
     <bean id="jmsTemplate" class="org.springframework.jms.core.JmsTemplate">
         <property name="connectionFactory" ref="connectionFactory" />
+    </bean>
+    -->
+    <bean id="jmsFactory" class="org.apache.activemq.pool.PooledConnectionFactory"
+          destroy-method="stop">
+        <property name="connectionFactory">
+            <bean class="org.apache.activemq.ActiveMQConnectionFactory">
+                <property name="brokerURL">
+                    <value>${mq.url}</value>
+                </property>
+            </bean>
+        </property>
+        <property name="maxConnections" value="100"></property>
+    </bean>
+
+    <!--使用缓存可以提升效率-->
+    <bean id="cachingConnectionFactory" class="org.springframework.jms.connection.CachingConnectionFactory">
+        <property name="targetConnectionFactory" ref="jmsFactory"/>
+        <property name="sessionCacheSize" value="1"/>
+    </bean>
+
+    <bean id="jmsTemplate" class="org.springframework.jms.core.JmsTemplate">
+        <property name="connectionFactory" ref="cachingConnectionFactory"/>
+        <property name="messageConverter">
+            <bean class="org.springframework.jms.support.converter.SimpleMessageConverter"/>
+        </property>
     </bean>
     <!--这个是队列目的地，点对点的 -->
     <bean id="queueDestination" class="org.apache.activemq.command.ActiveMQQueue">
@@ -49,7 +79,7 @@
     <bean id="solrMessageListener" class="com.dch.listener.SolrMessageListener" />
     <!-- 消息监听容器 -->
     <bean class="org.springframework.jms.listener.DefaultMessageListenerContainer">
-        <property name="connectionFactory" ref="connectionFactory" />
+        <property name="connectionFactory" ref="cachingConnectionFactory" />
         <property name="destination" ref="queueDestination" />
         <property name="messageListener" ref="solrMessageListener" />
     </bean>
