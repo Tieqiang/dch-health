@@ -102,7 +102,7 @@ public class FrontCategorySearchFacade extends BaseFacade {
     }
     public List<FrontSearchCategory> getFrontCategorys() {
 
-        String hql = "from FrontSearchCategory a where a.status<> '-1'" ;
+        String hql = "from FrontSearchCategory a where a.status<> '-1' order by createDate asc" ;
         List<FrontSearchCategory> list = createQuery(FrontSearchCategory.class, hql, new ArrayList<Object>()).getResultList();
         return list;
     }
@@ -110,6 +110,6 @@ public class FrontCategorySearchFacade extends BaseFacade {
     public Page<SolrVo> getFrontCategorysByKeyWord(String code) throws Exception{
         String filterStr = "categoryCode:" + code ;
         String hl = "";
-        return baseSolrFacade.getExactSolrVoByParamAndPageParm("",filterStr,hl,10, 1, SolrVo.class);
+        return baseSolrFacade.getExactSolrVoByParamAndPageParm("1",filterStr,hl,10, 1, SolrVo.class);
     }
 }
