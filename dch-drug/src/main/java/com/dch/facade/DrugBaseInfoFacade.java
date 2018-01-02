@@ -49,6 +49,7 @@ public class DrugBaseInfoFacade extends BaseFacade{
             DrugBaseInfo dbDrugBaseInfo = get(DrugBaseInfo.class,drugBaseInfo.getId());
             DrugNameDict drugNameDict = getDrugNameDictByIdAndName(dbDrugBaseInfo.getId(),dbDrugBaseInfo.getDrugName());
             DrugPackageInfo drugPackageInfo = getDrugPackageInfoByDrugIdAndSpec(drugBaseInfo.getId(),drugBaseInfo.getSpec());
+
             if(drugBaseInfo.getClassId()!=null && !drugBaseInfo.getClassId().equals(dbDrugBaseInfo.getClassId())){
                 String code = getDrugCodeBySequenc(drugBaseInfo.getClassId());
                 drugBaseInfo.setDrugCode(code);
@@ -82,7 +83,10 @@ public class DrugBaseInfoFacade extends BaseFacade{
     }
 
     public DrugPackageInfo getDrugPackageInfoByDrugIdAndSpec(String drugId,String spec) throws Exception{
-        String hql = "from DrugPackageInfo where status<>'-1' and drugId = '"+drugId+"' and packageSpec = '"+spec+"'";
+        String hql = "from DrugPackageInfo where status<>'-1' and drugId = '"+drugId+"'";
+        if(!StringUtils.isEmptyParam(spec)){
+            hql += " and packageSpec = '"+spec+"'";
+        }
         List<DrugPackageInfo> drugPackageInfoList = createQuery(DrugPackageInfo.class,hql,new ArrayList<Object>()).getResultList();
         if(drugPackageInfoList!=null && !drugPackageInfoList.isEmpty()){
             return drugPackageInfoList.get(0);
