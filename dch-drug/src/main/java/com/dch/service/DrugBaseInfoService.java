@@ -31,7 +31,7 @@ public class DrugBaseInfoService {
     @POST
     @Path("merge-drug-base-info")
     public Response mergeDrugBaseInfo(DrugBaseInfo drugBaseInfo) throws Exception{
-        return Response.status(Response.Status.OK).entity(drugBaseInfoFacade.mergeDrugBaseInfo(drugBaseInfo)).build();
+        return drugBaseInfoFacade.mergeDrugBaseInfo(drugBaseInfo);
     }
 
     /**

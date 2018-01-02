@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.TypedQuery;
+import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,7 +24,7 @@ import java.util.List;
 public class DrugBaseInfoFacade extends BaseFacade{
 
     @Transactional
-    public DrugBaseInfo mergeDrugBaseInfo(DrugBaseInfo drugBaseInfo) throws Exception{
+    public Response mergeDrugBaseInfo(DrugBaseInfo drugBaseInfo) throws Exception{
         if(StringUtils.isEmptyParam(drugBaseInfo.getId())){//添加
             String code = getDrugCodeBySequenc(drugBaseInfo.getClassId());//药品类别码+5位序列数
             drugBaseInfo.setDrugCode(code);
@@ -43,34 +44,38 @@ public class DrugBaseInfoFacade extends BaseFacade{
             drugPackageInfo.setDrugId(merge.getId());
             drugPackageInfo.setStatus("1");
             merge(drugPackageInfo);
-            return merge;
+            return Response.status(Response.Status.OK).entity(merge).build();
         }
         if(!StringUtils.isEmptyParam(drugBaseInfo.getId()) && !"-1".equals(drugBaseInfo.getStatus())){//修改
-            DrugBaseInfo dbDrugBaseInfo = get(DrugBaseInfo.class,drugBaseInfo.getId());
-            DrugNameDict drugNameDict = getDrugNameDictByIdAndName(dbDrugBaseInfo.getId(),dbDrugBaseInfo.getDrugName());
-            DrugPackageInfo drugPackageInfo = getDrugPackageInfoByDrugIdAndSpec(drugBaseInfo.getId(),drugBaseInfo.getSpec());
+            try {
+                DrugBaseInfo dbDrugBaseInfo = get(DrugBaseInfo.class,drugBaseInfo.getId());
+                DrugNameDict drugNameDict = getDrugNameDictByIdAndName(dbDrugBaseInfo.getId(),dbDrugBaseInfo.getDrugName());
+                DrugPackageInfo drugPackageInfo = getDrugPackageInfoByDrugIdAndSpec(drugBaseInfo.getId(),drugBaseInfo.getSpec());
 
-            if(drugBaseInfo.getClassId()!=null && !drugBaseInfo.getClassId().equals(dbDrugBaseInfo.getClassId())){
-                String code = getDrugCodeBySequenc(drugBaseInfo.getClassId());
-                drugBaseInfo.setDrugCode(code);
-                //更新字典
-                drugNameDict.setDrugCode(code);
-                //更新包装信息
-                drugPackageInfo.setDrugCode(code);
+                if(drugBaseInfo.getClassId()!=null && !drugBaseInfo.getClassId().equals(dbDrugBaseInfo.getClassId())){
+                    String code = getDrugCodeBySequenc(drugBaseInfo.getClassId());
+                    drugBaseInfo.setDrugCode(code);
+                    //更新字典
+                    drugNameDict.setDrugCode(code);
+                    //更新包装信息
+                    drugPackageInfo.setDrugCode(code);
+                }
+                if(drugBaseInfo.getDrugName()!=null && !drugBaseInfo.getDrugName().equals(dbDrugBaseInfo.getDrugName())){
+                    drugNameDict.setDrugName(drugBaseInfo.getDrugName());
+                    drugNameDict.setInputCode(PinYin2Abbreviation.cn2py(drugBaseInfo.getDrugName()));
+                }
+                DrugBaseInfo merge = merge(drugBaseInfo);
+                merge(drugNameDict);
+                merge(drugPackageInfo);
+                return Response.status(Response.Status.OK).entity(merge).build();
+            }catch (Exception e){
+                e.printStackTrace();
             }
-            if(drugBaseInfo.getDrugName()!=null && !drugBaseInfo.getDrugName().equals(dbDrugBaseInfo.getDrugName())){
-                drugNameDict.setDrugName(drugBaseInfo.getDrugName());
-                drugNameDict.setInputCode(PinYin2Abbreviation.cn2py(drugBaseInfo.getDrugName()));
-            }
-            DrugBaseInfo merge = merge(drugBaseInfo);
-            merge(drugNameDict);
-            merge(drugPackageInfo);
-            return merge;
         }
         if("-1".equals(drugBaseInfo.getStatus())){//删除则删除药品基本信息的别名
             deleteDrugNameDicts(drugBaseInfo.getId());
         }
-        return merge(drugBaseInfo);
+        return Response.status(Response.Status.OK).entity(merge(drugBaseInfo)).build();
     }
 
     /**
