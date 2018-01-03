@@ -38,7 +38,7 @@ public class DrugNewResearchPolicyFacade extends BaseFacade {
 
         String hql=" from DrugNewResearchPolicy where status <> '-1' ";
         String hqlCount="select count(*) from DrugNewResearchPolicy where status <> '-1' ";
-        if(policyTypeFlag!=null && !"".equals(policyTypeFlag)){
+        if(policyTypeFlag!=null && !"0".equals(policyTypeFlag)){
             hql+="and policyTypeFlag = '" +policyTypeFlag+ "'";
             hqlCount+="and policyTypeFlag = '" +policyTypeFlag+ "'";
         }
