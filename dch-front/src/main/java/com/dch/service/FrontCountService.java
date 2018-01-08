@@ -104,8 +104,8 @@ public class FrontCountService {
      */
     @GET
     @Path("get-all-drug-firms")
-    public List<DrugCountryVo> getAllDrugFirms(){
-        return frontCountFacade.getAllDrugFirms();
+    public List<DrugCountryVo> getAllDrugFirms(@QueryParam("flag") String flag){
+        return frontCountFacade.getAllDrugFirms(flag);
     }
 
     /**

@@ -9,6 +9,7 @@ import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrInputDocument;
+import org.apache.solr.common.params.CommonParams;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.jms.core.MessageCreator;
@@ -127,6 +128,7 @@ public class BaseSolrFacade {
             param = param+" AND tableName:"+type.getSimpleName();
         }
         query.setQuery(param);
+        query.setSort("category", SolrQuery.ORDER.asc);
         SolrDocumentList docs = httpSolrServer.query(query).getResults();
         if(docs!=null && !docs.isEmpty()){
             for(SolrDocument doc : docs){
@@ -159,7 +161,7 @@ public class BaseSolrFacade {
             query.addFilterQuery("tableName:"+type.getSimpleName());
         }
         query.setQuery(param);
-
+        query.setSort("category", SolrQuery.ORDER.asc);
         if(hlFields!=null && !"".equals(hlFields)){
             //开启高亮
             query.setHighlight(true);
@@ -222,7 +224,7 @@ public class BaseSolrFacade {
             }
         }
         query.setQuery(keyWords);
-
+        query.setSort("category", SolrQuery.ORDER.asc);
         if(hlFields!=null && !"".equals(hlFields)){
             //开启高亮
             query.setHighlight(true);

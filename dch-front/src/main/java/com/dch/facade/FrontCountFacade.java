@@ -2,6 +2,7 @@ package com.dch.facade;
 
 import com.dch.entity.*;
 import com.dch.facade.common.BaseFacade;
+import com.dch.util.StringUtils;
 import com.dch.vo.DrugCountryVo;
 import com.dch.vo.DrugPackageVo;
 import org.springframework.stereotype.Component;
@@ -102,9 +103,13 @@ public class FrontCountFacade extends BaseFacade {
      * 获取所有厂商信息
      * @return
      */
-    public List<DrugCountryVo> getAllDrugFirms(){
+    public List<DrugCountryVo> getAllDrugFirms(String flag){
         List<DrugCountryVo> drugCountryVoList = new ArrayList<>();
-        String sql = "select count(*),address_province from drug_firm where status <>'-1' group by address_province";
+        String sql = "select count(*),address_province from drug_firm where status <>'-1' ";
+        if(!StringUtils.isEmptyParam(flag)){
+            sql += " and foreign_flag = '"+flag+"' ";
+        }
+        sql += " group by address_province";
         List list = createNativeQuery(sql).getResultList();
         if(list!=null && !list.isEmpty()){
             int size = list.size();

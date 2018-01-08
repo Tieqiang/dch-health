@@ -6,6 +6,7 @@ import com.dch.entity.TemplatePage;
 import com.dch.entity.TemplateResult;
 import com.dch.facade.common.BaseFacade;
 import com.dch.facade.common.VO.Page;
+import com.dch.util.PinYin2Abbreviation;
 import com.dch.util.StringUtils;
 import com.dch.vo.SolrVo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,7 +55,7 @@ public class TemplateMasterFacade extends BaseFacade{
             solrVo.setDesc(merge.getTemplateDesc());
             solrVo.setCategoryCode("bdsj001");
             solrVo.setLabel(merge.getTemplateLevel());
-            solrVo.setCategory(merge.getTemplateName());
+            solrVo.setCategory(PinYin2Abbreviation.cn2py(merge.getTemplateName()));
             baseSolrFacade.addObjectMessageToMq(solrVo);
         }
         return Response.status(Response.Status.OK).entity(merge).build();

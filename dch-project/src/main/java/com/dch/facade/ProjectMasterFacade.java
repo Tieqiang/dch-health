@@ -142,7 +142,7 @@ public class ProjectMasterFacade extends BaseFacade {
         if(StringUtils.isEmptyParam(userId)){
             userId = UserUtils.getCurrentUser().getId();
         }
-        String hql = "from ProjectMaster where status <> '-1' and createBy = '"+userId+"'";
+        String hql = "select p from ProjectMaster as p where p.status <> '-1' and  exists(select 1 from ProjectMember where status<>'-1' and personStatus = '1' and personId = '"+userId+"' and projectId = p.id)";
         List<ProjectMaster> projectMasterList = createQuery(ProjectMaster.class, hql, new ArrayList<Object>()).getResultList();
         return projectMasterList;
     }
@@ -200,10 +200,11 @@ public class ProjectMasterFacade extends BaseFacade {
         //ProjectMaster merge = merge(projectMaster);
         String hql=" from ProjectMember where projectId='"+projectMaster.getId()+"' and personId='"+UserUtils.getCurrentUser().getId()+"'";
         List<ProjectMember> projectMembers = createQuery(ProjectMember.class, hql, new ArrayList<Object>()).getResultList();
-        if(projectMembers!=null && projectMembers.size()>0){
-            ProjectMember projectMember = projectMembers.get(0);
-            projectMember.setStatus("-1");
-            merge(projectMember);
+        if(projectMembers!=null && !projectMembers.isEmpty()){
+            for(ProjectMember projectMember:projectMembers){
+                projectMember.setStatus("-1");
+                merge(projectMember);
+            }
         }
         return Response.status(Response.Status.OK).entity(projectMaster).build();
     }

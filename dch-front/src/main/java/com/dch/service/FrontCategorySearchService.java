@@ -7,6 +7,7 @@ import com.dch.entity.FrontSearchCategoryField;
 import com.dch.facade.BaseSolrFacade;
 import com.dch.facade.FrontCategorySearchFacade;
 import com.dch.facade.common.VO.Page;
+import com.dch.util.PinYin2Abbreviation;
 import com.dch.vo.PageParam;
 import com.dch.vo.SolrVo;
 
@@ -90,7 +91,7 @@ public class FrontCategorySearchService {
             SolrVo solrVo = new SolrVo();
             solrVo.setTitle(drugAds.getDrugName());
             solrVo.setDesc(drugAds.getDrugName()+","+drugAds.getAdType()+","+drugAds.getAdNo());
-            solrVo.setCategory(drugAds.getAdType());
+            solrVo.setCategory(PinYin2Abbreviation.cn2py(drugAds.getDrugName()));
             solrVo.setCategoryCode("ypgg003");
             solrVo.setLabel(drugAds.getAdType());
             solrVo.setId(drugAds.getId());
@@ -114,7 +115,7 @@ public class FrontCategorySearchService {
             SolrVo solrVo = new SolrVo();
             solrVo.setTitle(baseInfo.getDrugName());
             solrVo.setDesc(baseInfo.getDrugName()+","+baseInfo.getClassName()+","+baseInfo.getToxi());
-            solrVo.setCategory(baseInfo.getDrugCategory());
+            solrVo.setCategory(PinYin2Abbreviation.cn2py(baseInfo.getDrugName()));
             solrVo.setId(baseInfo.getId());
             solrVo.setLabel(baseInfo.getClassName());
             solrVo.setCategoryCode("ywjbxx001");

@@ -31,7 +31,7 @@ public class MrSubjectFacade extends BaseFacade {
         SolrVo solrVo=new SolrVo();
         solrVo.setTitle(merge.getSubjectName());
         solrVo.setDesc(merge.getSubjectName()+","+merge.getSubjectCode());
-        solrVo.setCategory(merge.getSubjectName());
+        solrVo.setCategory(PinYin2Abbreviation.cn2py(merge.getSubjectName()));
         solrVo.setId(merge.getId());
         solrVo.setLabel(merge.getSubjectName());
         solrVo.setCategoryCode(merge.getSubjectCode());

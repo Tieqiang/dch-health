@@ -5,6 +5,7 @@ import com.dch.entity.PanFileCategory;
 import com.dch.entity.PanFileStore;
 import com.dch.facade.common.BaseFacade;
 import com.dch.facade.common.VO.Page;
+import com.dch.util.PinYin2Abbreviation;
 import com.dch.util.StringUtils;
 import com.dch.util.UserUtils;
 import com.dch.vo.SolrVo;
@@ -64,6 +65,15 @@ public class PanFileFacade extends BaseFacade {
             if(panFiles!=null && !panFiles.isEmpty()){
                 throw new Exception("文件名已存在，请修改");
             }
+            String ptHql = "select id from PanFile where fileOwner = '"+UserUtils.getCurrentUser().getId()+"' and status <>'-1' and fileTitle = '项目文件'";
+            List<String> ptList = createQuery(String.class,ptHql,new ArrayList<Object>()).getResultList();
+            if(ptList!=null && !ptList.isEmpty()){
+                PanFile parentPanfile = get(PanFile.class,panFile.getParentId());
+                if(parentPanfile!=null && !StringUtils.isEmptyParam(parentPanfile.getParentId())){
+                    parentPanfile.setParentId(ptList.get(0));
+                    merge(parentPanfile);
+                }
+            }
             PanFile merge = merge(panFile);
             if("1".equals(merge.getFileShare())){
                 SolrVo solrVo=new SolrVo();
@@ -72,7 +82,7 @@ public class PanFileFacade extends BaseFacade {
                 solrVo.setDesc(merge.getFileDesc());
                 solrVo.setCategoryCode("wjsj001");
                 solrVo.setLabel(merge.getKeyWords());
-                solrVo.setCategory(merge.getCategoryId());
+                solrVo.setCategory(PinYin2Abbreviation.cn2py(merge.getFileTitle()));
                 baseSolrFacade.addObjectMessageToMq(solrVo);
             }
             return merge;

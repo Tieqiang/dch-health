@@ -16,6 +16,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Component
 public class TemplateDataElementFacade extends BaseFacade {
@@ -231,6 +233,18 @@ public class TemplateDataElementFacade extends BaseFacade {
                 realCode = parCode+"."+realCode;
             }
         }
+        realCode = getSwitchStr(realCode);
         return realCode;
+    }
+
+    public String getSwitchStr(String str){
+        if (!StringUtils.isEmptyParam(str)) {
+            String regEx="[`~!@#$%^&*()+=|{}':;',\\[\\]<>/?~！@#￥%……&*（）——+|{}【】‘；：”“’。，、？]";
+            Pattern p = Pattern.compile(regEx);
+            Matcher m = p.matcher(str);
+            return m.replaceAll("").trim();
+        }else{
+            return str;
+        }
     }
 }

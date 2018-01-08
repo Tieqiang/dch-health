@@ -5,6 +5,7 @@ import com.dch.entity.DiseaseNameDict;
 import com.dch.facade.BaseSolrFacade;
 import com.dch.facade.DiseaseContentFacade;
 import com.dch.facade.common.VO.Page;
+import com.dch.util.PinYin2Abbreviation;
 import com.dch.vo.SolrVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -43,7 +44,7 @@ public class DiseaseContentService {
         solrVo.setDesc(content.getName()+"\b\r"+content.getContent());
         solrVo.setCategoryCode("jbzs");
         solrVo.setTitle(content.getName());
-        solrVo.setCategory("疾病知识");
+        solrVo.setCategory(PinYin2Abbreviation.cn2py(content.getName()));
         baseSolrFacade.addObjectMessageToMq(solrVo);
 
         return Response.status(Response.Status.OK).entity(content).build();
