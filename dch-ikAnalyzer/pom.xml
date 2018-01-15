@@ -10,11 +10,11 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.wltea.analyzer</groupId>
-    <artifactId>ikanalyzer</artifactId>
+    <artifactId>dch-ikAnalyzer</artifactId>
     <version>4.10.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
-    <name>IKAnalyzer</name>
+    <name>dch-ikAnalyzer</name>
     <url>http://maven.apache.org</url>
 
     <properties>

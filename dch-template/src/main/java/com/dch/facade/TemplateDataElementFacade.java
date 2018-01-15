@@ -6,7 +6,9 @@ import com.dch.facade.common.BaseFacade;
 import com.dch.facade.common.VO.Page;
 import com.dch.util.PinYin2Abbreviation;
 import com.dch.util.StringUtils;
+import com.dch.vo.ElementVO;
 import com.dch.vo.TemplateDataElementVo;
+import com.dch.vo.TemplatePageConfigVo;
 import org.springframework.stereotype.Component;
 
 import javax.persistence.TypedQuery;
@@ -247,4 +249,33 @@ public class TemplateDataElementFacade extends BaseFacade {
             return str;
         }
     }
+
+    @Transactional
+    public void addElement(TemplatePageConfigVo vo){
+        //1,删除所有与该表页相关的元数据、数据值域
+//        2，更新当前页config 和content字段
+        mergeElementVOs(vo.getElements());
+    }
+
+
+    public List<TemplateDataElement> mergeElementVOs(List<ElementVO> elementsVOs){
+        List<TemplateDataElement> elementList = new ArrayList<>();
+        for (ElementVO vo:elementsVOs){
+            TemplateDataElement templateDataElement = new TemplateDataElement();
+            //set
+            List<ElementVO> otherElement = vo.getOtherElement();
+            List<TemplateDataElement> templateDataElements = mergeElementVOs(otherElement) ;
+            for(TemplateDataElement dataElement:templateDataElements){
+                //将所有的dataElement的ID拼接起来，用逗号分开，并设置给templateDataElement新曾的字段other_element_ids
+            }
+            TemplateDataElement merge = merge(templateDataElement);
+            for (ElementVO child:vo.getChildren()){
+                child.setParentDataId(merge.getId());
+            }
+            mergeElementVOs(vo.getChildren());
+            elementList.add(merge) ;
+        }
+        return elementList;
+    }
+
 }
