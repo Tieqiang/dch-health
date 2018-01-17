@@ -15,8 +15,9 @@ public class TemplateMaster extends BaseEntity {
     private String templateLevel;
     private String templateStatus;
     private String projectId;
+    private int fillLimit ;
     private String templateDesc;
-    private String publishStatus;// 0为未发布 1为站内发布  2为全站发布
+    private String publishStatus;// 0为未发布 1表示已发布
 
     @Basic
     @Column(name = "publish_status", nullable = true, length = 10)
@@ -78,4 +79,13 @@ public class TemplateMaster extends BaseEntity {
         this.templateDesc = templateDesc;
     }
 
+    @Basic
+    @Column(name="fill_limit")
+    public int getFillLimit() {
+        return fillLimit;
+    }
+
+    public void setFillLimit(int fillLimit) {
+        this.fillLimit = fillLimit;
+    }
 }
