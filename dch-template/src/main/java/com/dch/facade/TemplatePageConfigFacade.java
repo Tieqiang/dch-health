@@ -2,10 +2,13 @@ package com.dch.facade;
 
 import com.dch.entity.TemplateDataElement;
 import com.dch.entity.TemplateDataValue;
+import com.dch.entity.TemplateMaster;
 import com.dch.entity.TemplatePage;
 import com.dch.facade.common.BaseFacade;
 import com.dch.util.StringUtils;
+import com.dch.vo.DataElementVO;
 import com.dch.vo.ElementVO;
+import com.dch.vo.PageVO;
 import com.dch.vo.TemplatePageConfigVo;
 import org.springframework.stereotype.Component;
 
@@ -85,6 +88,7 @@ public class TemplatePageConfigFacade extends BaseFacade {
             templateDataElement.setDataElementName(vo.getDataElementName());
             templateDataElement.setDataElementCode(vo.getDataElementCode());
             templateDataElement.setDataElementType(vo.getDataElementType());
+            templateDataElement.setParentDataId(vo.getParentDataId());
             templateDataElement.setStatus("1");
             templateDataElement.setPageId(pageId);
             //set
@@ -135,7 +139,7 @@ public class TemplatePageConfigFacade extends BaseFacade {
 
     public List<ElementVO> getElementVoList(String pageId){
         List<ElementVO> elementVOS = new ArrayList<>();
-        String hql = " from TemplateDataElement where status<>'-1' and pageId = '"+pageId+"' and parentDataId is null";
+        String hql = " from TemplateDataElement where status<>'-1' and pageId = '"+pageId+"' and parentDataId is null and dataElementCode not like '%other%'";
         List<TemplateDataElement> templateDataElements = createQuery(TemplateDataElement.class,hql,new ArrayList<Object>()).getResultList();
         if(templateDataElements!=null && !templateDataElements.isEmpty()){
             for(TemplateDataElement templateDataElement:templateDataElements){
@@ -158,12 +162,13 @@ public class TemplatePageConfigFacade extends BaseFacade {
         List<ElementVO> elementVOS = new ArrayList<>();
         String hql = "from TemplateDataElement where status<>'-1' and parentDataId = '"+parentDataId+"'";
         List<TemplateDataElement> templateDataElements = createQuery(TemplateDataElement.class,hql,new ArrayList<Object>()).getResultList();
-        if(templateDataElements!=null && templateDataElements.isEmpty()){
+        if(templateDataElements!=null && !templateDataElements.isEmpty()){
             for(TemplateDataElement templateDataElement:templateDataElements){
                 ElementVO vo = new ElementVO();
                 vo.setDataElementType(templateDataElement.getDataElementType());
                 vo.setDataElementCode(templateDataElement.getDataElementCode());
                 vo.setDataElementName(templateDataElement.getDataElementName());
+                vo.setParentDataId(parentDataId);
                 vo.setDataValues(getTemplateDataValueByElementId(templateDataElement.getId()));
                 vo.setChildren(getChildRenElementVos(templateDataElement.getId()));
                 if(!StringUtils.isEmptyParam(templateDataElement.getOtherElementIds())){
@@ -193,7 +198,7 @@ public class TemplatePageConfigFacade extends BaseFacade {
             String ids = sb.toString();
             String hql = " from TemplateDataElement where status<>'-1' and id in (" + ids + ")";
             List<TemplateDataElement> templateDataElements = createQuery(TemplateDataElement.class, hql, new ArrayList<Object>()).getResultList();
-            if (templateDataElements != null && templateDataElements.isEmpty()) {
+            if (templateDataElements != null && !templateDataElements.isEmpty()) {
                 for (TemplateDataElement templateDataElement : templateDataElements) {
                     ElementVO vo = new ElementVO();
                     vo.setDataElementType(templateDataElement.getDataElementType());
@@ -220,5 +225,34 @@ public class TemplatePageConfigFacade extends BaseFacade {
         String hql = " from TemplateDataValue where dataElementId = '"+elementId+"'";
         List<TemplateDataValue> templateDataValueList = createQuery(TemplateDataValue.class,hql,new ArrayList<Object>()).getResultList();
         return templateDataValueList;
+    }
+
+    /**
+     *根据表单id获取表单下的表单页元数据信息
+     * @param templateId
+     * @return
+     */
+    public DataElementVO getDataElementVOByTemplateId(String templateId) {
+        DataElementVO dataElementVO = new DataElementVO();
+        if(!StringUtils.isEmptyParam(templateId)){
+            String hql = "from TemplateMaster where id = '"+templateId+"'";
+            List<TemplateMaster> templateMasterList = createQuery(TemplateMaster.class,hql,new ArrayList<Object>()).getResultList();
+            if(templateMasterList!=null && !templateMasterList.isEmpty()){
+                dataElementVO.setTemplateMaster(templateMasterList.get(0));
+            }
+            String pageHql = "from TemplatePage where status<>'-1' and templateId = '"+templateId+"'";
+            List<TemplatePage> templatePageList = createQuery(TemplatePage.class,pageHql,new ArrayList<Object>()).getResultList();
+            List<PageVO> pageVOS = new ArrayList<>();
+            if(templatePageList!=null && !templatePageList.isEmpty()){
+                for(TemplatePage templatePage:templatePageList){
+                    PageVO pageVO = new PageVO();
+                    pageVO.setTemplatePage(templatePage);
+                    pageVO.setElementVOS(getElementVoList(templatePage.getId()));
+                    pageVOS.add(pageVO);
+                }
+            }
+            dataElementVO.setPageVOS(pageVOS);
+        }
+        return dataElementVO;
     }
 }
