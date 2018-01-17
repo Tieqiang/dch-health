@@ -23,6 +23,8 @@ public class TemplateDataElement extends BaseEntity{
     private String dataGroupId;
     private String hasGroupId;
     private String templateId;
+    private String otherElementIds;
+    private String pageId;
 
     @Basic
     @Column(name = "template_id", nullable = true, length = 64)
@@ -120,4 +122,23 @@ public class TemplateDataElement extends BaseEntity{
         this.hasGroupId = hasGroupId;
     }
 
+    @Basic
+    @Column(name = "other_element_ids", nullable = true, length = 500)
+    public String getOtherElementIds() {
+        return otherElementIds;
+    }
+
+    public void setOtherElementIds(String otherElementIds) {
+        this.otherElementIds = otherElementIds;
+    }
+
+    @Basic
+    @Column(name = "page_id", nullable = true, length = 64)
+    public String getPageId() {
+        return pageId;
+    }
+
+    public void setPageId(String pageId) {
+        this.pageId = pageId;
+    }
 }

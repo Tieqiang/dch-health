@@ -18,6 +18,8 @@ public class TemplatePage extends BaseEntity {
     private String templatePageContent;
     private String templateId;
     private String templatePageDataModel;
+    private String parentId;
+    private String config;
 
     @Basic
     @Column(name = "template_page_name", nullable = true, length = 200)
@@ -67,5 +69,25 @@ public class TemplatePage extends BaseEntity {
 
     public void setTemplatePageDataModel(String templatePageDataModel) {
         this.templatePageDataModel = templatePageDataModel;
+    }
+
+    @Basic
+    @Column(name = "parent_id", nullable = true, length = 64)
+    public String getParentId() {
+        return parentId;
+    }
+
+    public void setParentId(String parentId) {
+        this.parentId = parentId;
+    }
+
+    @Basic
+    @Column(name = "config", nullable = true, length = -1)
+    public String getConfig() {
+        return config;
+    }
+
+    public void setConfig(String config) {
+        this.config = config;
     }
 }

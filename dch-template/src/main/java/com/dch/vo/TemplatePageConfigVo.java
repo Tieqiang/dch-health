@@ -9,6 +9,7 @@ public class TemplatePageConfigVo implements Serializable{
     private String config ;
     private String pageId ;
     private String templateId ;
+    private String templatePageDataModel;
     private List<ElementVO> elements = new ArrayList<>();
 
 
@@ -42,6 +43,14 @@ public class TemplatePageConfigVo implements Serializable{
 
     public void setTemplateId(String templateId) {
         this.templateId = templateId;
+    }
+
+    public String getTemplatePageDataModel() {
+        return templatePageDataModel;
+    }
+
+    public void setTemplatePageDataModel(String templatePageDataModel) {
+        this.templatePageDataModel = templatePageDataModel;
     }
 
     public List<ElementVO> getElements() {
