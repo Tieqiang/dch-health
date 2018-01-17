@@ -64,6 +64,7 @@ public class TemplateDataElementFacade extends BaseFacade {
      * @param currentPage
      * @return
      */
+    @Deprecated
     public Page<TemplateDataElementVo> getTemplateDataElements(String groupId,String dataElementName, String templateId, int perPage, int currentPage) {
         String hql="select new com.dch.vo.TemplateDataElementVo(t.id,t.dataElementName," +
                 "t.dataElementCode,t.parentDataId,t.dataStandRefId,(select dataElementName from DataElement where id = t.dataStandRefId) as dataStandRefName" +
