@@ -72,7 +72,7 @@ public class TemplatePageFacade extends BaseFacade {
             String resultSql = " from TemplateResult where status<>'-1' and pageId in ("+templatePageIds+")";
             List<TemplateResult> templateResultList = createQuery(TemplateResult.class, resultSql, new ArrayList<Object>()).getResultList();
             for(TemplateResult templateResult:templateResultList){
-                map.put(templateResult.getPageId()+templateResult.getDocId(),templateResult);
+                map.put(templateResult.getPageId()+templateResult.getMasterId(),templateResult);
             }
             for(TemplatePage templatePage:templatePageList){
                 TemplatePageAndResultVo templatePageAndResultVo = new TemplatePageAndResultVo();

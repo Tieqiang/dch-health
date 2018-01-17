@@ -1,6 +1,7 @@
 package com.dch.facade;
 
 import com.dch.entity.TemplateResult;
+import com.dch.entity.TemplateResultMaster;
 import com.dch.entity.User;
 import com.dch.facade.common.BaseFacade;
 import com.dch.facade.common.VO.Page;
@@ -74,5 +75,13 @@ public class TemplateResultFacade extends BaseFacade {
         }
 
         return pageResult;
+    }
+
+    public Page<TemplateResultMaster> getTemplateResultMasters(String templateId, int perPage, int currentPage, String userId) {
+        String hql=" from TemplateResultMaster where status <> '-1' and templateId='"+templateId+"'";
+        if(!StringUtils.isEmptyParam(userId)){
+            hql += " and createBy = '"+userId+"'";
+        }
+        return getPageResult(TemplateResultMaster.class,hql,perPage,currentPage);
     }
 }
