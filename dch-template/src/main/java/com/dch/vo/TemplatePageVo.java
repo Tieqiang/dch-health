@@ -18,6 +18,7 @@ public class TemplatePageVo {
     private String modifyBy;
     private String status;
     private String parentId;
+    private String config;
 
     public String getId() {
         return id;
@@ -113,5 +114,13 @@ public class TemplatePageVo {
 
     public void setParentId(String parentId) {
         this.parentId = parentId;
+    }
+
+    public String getConfig() {
+        return config;
+    }
+
+    public void setConfig(String config) {
+        this.config = config;
     }
 }

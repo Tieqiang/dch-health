@@ -22,7 +22,7 @@ public class TemplatePageConfigFacade extends BaseFacade {
     @Transactional
     public Response mergeTemplatePageConfig(TemplatePageConfigVo vo){
         //1,删除所有与该表页相关的元数据、数据值域
-        deleteAllRelatedTemplateDataElement(vo.getTemplateId(),vo.getElements());
+        deleteAllRelatedTemplateDataElement(vo.getPageId(),vo.getElements());
         //2，更新当前页config 和content字段
         if(!StringUtils.isEmptyParam(vo.getPageId())){
             String upHql = "update TemplatePage set config = '"+vo.getConfig()+"',templatePageContent = '"+vo.getDocument()+"',templatePageDataModel=" +
@@ -31,10 +31,10 @@ public class TemplatePageConfigFacade extends BaseFacade {
             excHql(upHql);
         }
         List<TemplateDataElement> templateDataElementList = mergeElementVOs(vo.getPageId(),vo.getElements());
-        return Response.status(Response.Status.OK).entity(templateDataElementList).build();
+        return Response.status(Response.Status.OK).entity(vo).build();
     }
 
-    public void deleteAllRelatedTemplateDataElement(String templateId,List<ElementVO> elementsVOs){
+    public void deleteAllRelatedTemplateDataElement(String pageId,List<ElementVO> elementsVOs){
         if(elementsVOs!=null && !elementsVOs.isEmpty()){
             StringBuffer dataElementNameBuffer = new StringBuffer("");
             StringBuffer dataElementCodeBuffer = new StringBuffer("");
@@ -52,7 +52,7 @@ public class TemplatePageConfigFacade extends BaseFacade {
                 dataElementCodes = dataElementCodes.substring(0,dataElementCodes.length()-1);
                 dataElementTypes = dataElementTypes.substring(0,dataElementTypes.length()-1);
             }
-            String hql = "select id from TemplateDataElement where templateId = '"+templateId+"' and dataElementName in (" +
+            String hql = "select id from TemplateDataElement where pageId = '"+pageId+"' and dataElementName in (" +
                      dataElementNames+") and dataElementCode in ("+dataElementCodes+") and dataElementType in(" +
                      dataElementTypes+")";
             List<String> templateDataEleIds = createQuery(String.class,hql,new ArrayList<Object>()).getResultList();
@@ -69,10 +69,10 @@ public class TemplatePageConfigFacade extends BaseFacade {
             }
             for(ElementVO elementVO:elementsVOs){
                 if(elementVO.getChildren()!=null && !elementVO.getChildren().isEmpty()){
-                    deleteAllRelatedTemplateDataElement(templateId,elementVO.getChildren());
+                    deleteAllRelatedTemplateDataElement(pageId,elementVO.getChildren());
                 }
                 if(elementVO.getOtherElement()!=null && !elementVO.getOtherElement().isEmpty()){
-                    deleteAllRelatedTemplateDataElement(templateId,elementVO.getOtherElement());
+                    deleteAllRelatedTemplateDataElement(pageId,elementVO.getOtherElement());
                 }
             }
         }
@@ -85,6 +85,7 @@ public class TemplatePageConfigFacade extends BaseFacade {
             templateDataElement.setDataElementName(vo.getDataElementName());
             templateDataElement.setDataElementCode(vo.getDataElementCode());
             templateDataElement.setDataElementType(vo.getDataElementType());
+            templateDataElement.setStatus("1");
             templateDataElement.setPageId(pageId);
             //set
             List<ElementVO> otherElement = vo.getOtherElement();
@@ -177,33 +178,35 @@ public class TemplatePageConfigFacade extends BaseFacade {
 
     public List<ElementVO> getOtherElementVos(String elementIds) {
         List<ElementVO> elementVOS = new ArrayList<>();
-        String[] idsArray = elementIds.split(",");
-        StringBuffer sb = new StringBuffer("");
-        if (idsArray != null && idsArray.length > 0) {
-            for (int i = 0; i < idsArray.length; i++) {
-                if (i != idsArray.length - 1) {
-                    sb.append("'").append(idsArray[i]).append("',");
-                } else {
-                    sb.append("'").append(idsArray[i]).append("'");
+        if(!StringUtils.isEmptyParam(elementIds)){
+            String[] idsArray = elementIds.split(",");
+            StringBuffer sb = new StringBuffer("");
+            if (idsArray != null && idsArray.length > 0) {
+                for (int i = 0; i < idsArray.length; i++) {
+                    if (i != idsArray.length - 1) {
+                        sb.append("'").append(idsArray[i]).append("',");
+                    } else {
+                        sb.append("'").append(idsArray[i]).append("'");
+                    }
                 }
             }
-        }
-        String ids = sb.toString();
-        String hql = " from TemplateDataElement where status<>'-1' and id in (" + ids + ")";
-        List<TemplateDataElement> templateDataElements = createQuery(TemplateDataElement.class, hql, new ArrayList<Object>()).getResultList();
-        if (templateDataElements != null && templateDataElements.isEmpty()) {
-            for (TemplateDataElement templateDataElement : templateDataElements) {
-                ElementVO vo = new ElementVO();
-                vo.setDataElementType(templateDataElement.getDataElementType());
-                vo.setDataElementCode(templateDataElement.getDataElementCode());
-                vo.setDataElementName(templateDataElement.getDataElementName());
-                vo.setDataValues(getTemplateDataValueByElementId(templateDataElement.getId()));
-                if (!StringUtils.isEmptyParam(templateDataElement.getOtherElementIds())) {
-                    List<ElementVO> otherElementVos = getOtherElementVos(templateDataElement.getOtherElementIds());
-                    vo.setOtherElement(otherElementVos);
+            String ids = sb.toString();
+            String hql = " from TemplateDataElement where status<>'-1' and id in (" + ids + ")";
+            List<TemplateDataElement> templateDataElements = createQuery(TemplateDataElement.class, hql, new ArrayList<Object>()).getResultList();
+            if (templateDataElements != null && templateDataElements.isEmpty()) {
+                for (TemplateDataElement templateDataElement : templateDataElements) {
+                    ElementVO vo = new ElementVO();
+                    vo.setDataElementType(templateDataElement.getDataElementType());
+                    vo.setDataElementCode(templateDataElement.getDataElementCode());
+                    vo.setDataElementName(templateDataElement.getDataElementName());
+                    vo.setDataValues(getTemplateDataValueByElementId(templateDataElement.getId()));
+                    if (!StringUtils.isEmptyParam(templateDataElement.getOtherElementIds())) {
+                        List<ElementVO> otherElementVos = getOtherElementVos(templateDataElement.getOtherElementIds());
+                        vo.setOtherElement(otherElementVos);
+                    }
+                    vo.setChildren(getChildRenElementVos(templateDataElement.getId()));
+                    elementVOS.add(vo);
                 }
-                vo.setChildren(getChildRenElementVos(templateDataElement.getId()));
-                elementVOS.add(vo);
             }
         }
         return elementVOS;

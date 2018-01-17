@@ -2,8 +2,10 @@ package com.dch.entity;
 
 import com.dch.entity.base.BaseEntity;
 
-import javax.persistence.*;
-import java.sql.Timestamp;
+import javax.persistence.Basic;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Table;
 
 /**
  * Created by Administrator on 2017/9/27.
@@ -15,7 +17,7 @@ public class TemplateMaster extends BaseEntity {
     private String templateLevel;
     private String templateStatus;
     private String projectId;
-    private int fillLimit ;
+    private Integer fillLimit;
     private String templateDesc;
     private String publishStatus;// 0为未发布 1表示已发布
 
@@ -81,11 +83,14 @@ public class TemplateMaster extends BaseEntity {
 
     @Basic
     @Column(name="fill_limit")
-    public int getFillLimit() {
+    public Integer getFillLimit() {
         return fillLimit;
     }
 
-    public void setFillLimit(int fillLimit) {
+    public void setFillLimit(Integer fillLimit) {
+        if(fillLimit==null){
+            fillLimit =0;
+        }
         this.fillLimit = fillLimit;
     }
 }
