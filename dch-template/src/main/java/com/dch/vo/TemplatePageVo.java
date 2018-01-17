@@ -17,6 +17,7 @@ public class TemplatePageVo {
     private String createBy;
     private String modifyBy;
     private String status;
+    private String parentId;
 
     public String getId() {
         return id;
@@ -104,5 +105,13 @@ public class TemplatePageVo {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getParentId() {
+        return parentId;
+    }
+
+    public void setParentId(String parentId) {
+        this.parentId = parentId;
     }
 }

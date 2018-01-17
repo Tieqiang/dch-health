@@ -12,6 +12,7 @@ import org.springframework.stereotype.Controller;
 import javax.transaction.Transactional;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
+import java.util.ArrayList;
 import java.util.List;
 
 @Produces("application/json")
@@ -30,10 +31,18 @@ public class TemplatePageService {
     @Path("merge-template-page")
     @POST
     @Transactional
-    public Response mergeTemplatePage(TemplatePageVo templatePageVo){
+    public Response mergeTemplatePage(TemplatePageVo templatePageVo) throws Exception{
         TemplatePage templatePage = new TemplatePage();
         if(!StringUtils.isEmptyParam(templatePageVo.getId())){
             templatePage.setId(templatePageVo.getId());
+        }
+        if(!"-1".equals(templatePageVo.getStatus())){
+            String onlySql = "select templatePageName from TemplatePage where status<>'-1' and templatePageName='"+templatePageVo.getTemplatePageName()+"'" +
+                    " and id <>'"+templatePageVo.getId()+"' and templateId = '"+templatePageVo.getTemplateId()+"'";
+            List<String> nameList = templatePageFacade.createQuery(String.class,onlySql,new ArrayList<Object>()).getResultList();
+            if(nameList!=null && !nameList.isEmpty()){
+                throw new Exception("表单名称已存在，请重新填写");
+            }
         }
         templatePage.setTemplateId(templatePageVo.getTemplateId());
         templatePage.setTemplatePageContent(templatePageVo.getTemplatePageContent());
@@ -41,6 +50,7 @@ public class TemplatePageService {
         templatePage.setTemplatePageOrder(templatePageVo.getTemplatePageOrder());
         templatePage.setTemplatePageDataModel(JSON.toString(templatePageVo.getTemplatePageDataModel()));
         templatePage.setStatus(templatePageVo.getStatus());
+        templatePage.setParentId(templatePageVo.getParentId());
         return templatePageFacade.mergeTemplatePage(templatePage);
     }
     /**
