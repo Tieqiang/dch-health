@@ -83,7 +83,7 @@ public class TemplatePageService {
      */
     @GET
     @Path("get-template-pages-and-results")
-    public List<TemplatePageAndResultVo> getTemplatePagesAndResults(@QueryParam("templateId") String templateId, @QueryParam("docId")String docId){
-        return templatePageFacade.getTemplatePagesAndResults(templateId,docId);
+    public List<TemplatePageAndResultVo> getTemplatePagesAndResults(@QueryParam("templateId") String templateId, @QueryParam("masterId")String masterId){
+        return templatePageFacade.getTemplatePagesAndResults(templateId,masterId);
     }
 }

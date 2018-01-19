@@ -11,10 +11,11 @@ import javax.persistence.Table;
  * Created by Administrator on 2017/9/27.
  */
 @Entity
-@Table(name = "template_result", schema = "dch", catalog = "")
+@Table(name = "template_result_master", schema = "dch", catalog = "")
 public class TemplateResultMaster extends BaseEntity {
     private String templateId;
     private String templateName ;
+    private Double completeRate;
 
     @Basic
     @Column(name = "template_id", nullable = true, length = 64)
@@ -34,5 +35,18 @@ public class TemplateResultMaster extends BaseEntity {
 
     public void setTemplateName(String templateName) {
         this.templateName = templateName;
+    }
+
+    @Basic
+    @Column(name="complete_rate")
+    public Double getCompleteRate() {
+        return completeRate;
+    }
+
+    public void setCompleteRate(Double completeRate) {
+        if(completeRate==null){
+            completeRate = 0D;
+        }
+        this.completeRate = completeRate;
     }
 }

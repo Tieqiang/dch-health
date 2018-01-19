@@ -5,7 +5,6 @@ import com.dch.entity.TemplateResult;
 import com.dch.entity.TemplateResultMaster;
 import com.dch.facade.TemplateResultFacade;
 import com.dch.facade.common.VO.Page;
-import com.dch.util.IDUtils;
 import com.dch.util.StringUtils;
 import com.dch.vo.TemplateMasterVo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
 
 @Path("template/template-result")
 @Produces("application/json")
@@ -41,6 +42,7 @@ public class TemplateResultService {
                 TemplateResultMaster master = new TemplateResultMaster();
                 master.setTemplateId(templateId);
                 master.setTemplateName(templateMaster.getTemplateName());
+                master.setStatus("1");
                 TemplateResultMaster merge = templateResultFacade.merge(master);
                 templateResult.setMasterId(merge.getId());
             }
@@ -49,9 +51,20 @@ public class TemplateResultService {
                 throw new Exception("masterId不能为空");
             }
         }
-
-
-        return Response.status(Response.Status.OK).entity(templateResultFacade.merge(templateResult)).build();
+        TemplateResult templateResultMerge = templateResultFacade.merge(templateResult);
+        String totalHql = "select count(*) from TemplatePage where status<>'-1' and templatePageContent is not null and templateId = '"+templateResultMerge.getTemplateId()+"'";
+        Long total = templateResultFacade.createQuery(Long.class,totalHql,new ArrayList<Object>()).getSingleResult();
+        String doneHql = "select count(*) from TemplateResult where status<>'-1' and templateResult is not null and templateId = '"+templateResultMerge.getTemplateId()+"'";
+        Long doneNum = templateResultFacade.createQuery(Long.class,doneHql,new ArrayList<Object>()).getSingleResult();
+        doneNum = doneNum+1;
+        String completeRate = "0.0";
+        if(total>0){
+            DecimalFormat df = new DecimalFormat("#.00");
+            completeRate =df.format(Double.valueOf(doneNum/total));
+            String tmHql = "update TemplateResultMaster set completeRate = "+completeRate+" where templateId = '"+templateResultMerge.getTemplateId()+"'";
+            templateResultFacade.excHql(tmHql);
+        }
+        return Response.status(Response.Status.OK).entity(templateResultMerge).build();
     }
     /**
      * 获取表单结果
@@ -76,8 +89,8 @@ public class TemplateResultService {
      */
     @GET
     @Path("get-template-results")
-    public Page<TemplateResult> getTemplateResults(@QueryParam("templateId") String templateId,@QueryParam("docId")String docId, @QueryParam("perPage") int perPage, @QueryParam("currentPage") int currentPage){
-        return templateResultFacade.getTemplateResults(templateId,docId,perPage,currentPage);
+    public Page<TemplateResultMaster> getTemplateResults(@QueryParam("templateId") String templateId,@QueryParam("masterId")String masterId, @QueryParam("perPage") int perPage, @QueryParam("currentPage") int currentPage){
+        return templateResultFacade.getTemplateResults(templateId,masterId,perPage,currentPage);
     }
 
 

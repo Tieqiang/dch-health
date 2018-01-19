@@ -45,8 +45,8 @@ public class TemplateMasterService {
     @Path("get-template-masters")
     public Page<TemplateMaster> getTemplateMasters(@QueryParam("projectId")String projectId,@QueryParam("templateLevel")String templateLevel,
                                                    @QueryParam("templateStauts")String templateStauts,@QueryParam("whereHql")String whereHql,
-                                                   @QueryParam("perPage") int perPage,@QueryParam("currentPage")int currentPage){
-        return templateMasterFacade.getTemplateMasters(projectId,templateLevel,templateStauts,whereHql,perPage,currentPage);
+                                                   @QueryParam("perPage") int perPage,@QueryParam("currentPage")int currentPage,@QueryParam("publishStatus")String publishStatus){
+        return templateMasterFacade.getTemplateMasters(projectId,templateLevel,templateStauts,whereHql,perPage,currentPage,publishStatus);
     }
 
     /**

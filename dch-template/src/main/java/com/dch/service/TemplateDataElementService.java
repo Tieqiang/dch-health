@@ -4,7 +4,6 @@ import com.dch.entity.TemplateDataElement;
 import com.dch.entity.TemplateDataValue;
 import com.dch.facade.TemplateDataElementFacade;
 import com.dch.facade.common.VO.Page;
-import com.dch.util.PinYin2Abbreviation;
 import com.dch.util.StringUtils;
 import com.dch.vo.TemplateDataElementVo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -89,7 +88,7 @@ public class TemplateDataElementService {
     /**
      * 根据表单元数据id,元数据组名和元数据名称生成元数据编码
      * @param dataElementId
-     * @param dataGroupName
+     * @param
      * @param dataName
      * @return
      * @throws Exception

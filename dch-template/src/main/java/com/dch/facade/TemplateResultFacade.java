@@ -1,6 +1,5 @@
 package com.dch.facade;
 
-import com.dch.entity.TemplateResult;
 import com.dch.entity.TemplateResultMaster;
 import com.dch.entity.User;
 import com.dch.facade.common.BaseFacade;
@@ -11,7 +10,9 @@ import org.springframework.stereotype.Component;
 
 import javax.persistence.TypedQuery;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Component
 public class TemplateResultFacade extends BaseFacade {
@@ -24,7 +25,7 @@ public class TemplateResultFacade extends BaseFacade {
      */
     public Page<TemplateMasterVo> getTemplateMasterVos(String projectId, int perPage, int currentPage) {
         String hql="select new com.dch.vo.TemplateMasterVo(m.id,m.templateName,m.templateLevel,m.templateStatus,m.projectId,m.templateDesc" +
-                ",m.createDate,m.modifyDate,m.createBy,m.modifyBy,m.status,(SELECT COUNT(distinct docId) FROM TemplateResult r WHERE r.templateId = m.id) as num) from TemplateMaster as m where m.status <> '-1' and projectId='"+projectId+"'";
+                ",m.createDate,m.modifyDate,m.createBy,m.modifyBy,m.status,(SELECT COUNT(distinct masterId) FROM TemplateResult r WHERE r.templateId = m.id) as num) from TemplateMaster as m where m.status <> '-1' and projectId='"+projectId+"'";
 
         String hqlCount="select count(*) from TemplateMaster m where m.status <> '-1' and projectId='"+projectId+"'";
 
@@ -56,16 +57,16 @@ public class TemplateResultFacade extends BaseFacade {
      * @param currentPage
      * @return
      */
-    public Page<TemplateResult> getTemplateResults(String templateId,String docId, int perPage, int currentPage) {
-        String hql=" from TemplateResult where status <> '-1' and templateId='"+templateId+"'";
-        if(!StringUtils.isEmptyParam(docId)){
-            hql += " and docId = '"+docId+"'";
-        }
-        Page<TemplateResult> pageResult = getPageResult(TemplateResult.class, hql, perPage, currentPage);
-        List<TemplateResult> results = pageResult.getData();
+    public Page<TemplateResultMaster> getTemplateResults(String templateId,String masterId, int perPage, int currentPage) {
+        String hql=" from TemplateResultMaster where status <> '-1' and templateId='"+templateId+"'";
+//        if(!StringUtils.isEmptyParam(masterId)){
+//            hql += " and masterId = '"+masterId+"'";
+//        }
+        Page<TemplateResultMaster> pageResult = getPageResult(TemplateResultMaster.class, hql, perPage, currentPage);
+        List<TemplateResultMaster> results = pageResult.getData();
 
         List<User> users = findAll(User.class);
-        for (TemplateResult result:results){
+        for (TemplateResultMaster result:results){
             String userid = result.getCreateBy();
             for(User user:users){
                 if(userid.equals(user.getId())){
@@ -73,7 +74,6 @@ public class TemplateResultFacade extends BaseFacade {
                 }
             }
         }
-
         return pageResult;
     }
 
@@ -82,6 +82,37 @@ public class TemplateResultFacade extends BaseFacade {
         if(!StringUtils.isEmptyParam(userId)){
             hql += " and createBy = '"+userId+"'";
         }
-        return getPageResult(TemplateResultMaster.class,hql,perPage,currentPage);
+        Page<TemplateResultMaster> templateResultMasterPage = getPageResult(TemplateResultMaster.class,hql,perPage,currentPage);
+        List<TemplateResultMaster> templateResultMasterList = templateResultMasterPage.getData();
+        if(templateResultMasterList!=null && !templateResultMasterList.isEmpty()){
+            Map<String,String> map = getUserNameMap(templateResultMasterList);
+            for(TemplateResultMaster templateResultMaster:templateResultMasterList){
+                templateResultMaster.setCreateBy(map.get(templateResultMaster.getCreateBy()));
+            }
+            templateResultMasterPage.setData(templateResultMasterList);
+        }
+        return templateResultMasterPage;
+    }
+
+    public Map<String,String> getUserNameMap(List<TemplateResultMaster> templateResultMasterList){
+        Map<String,String> map = new HashMap<String,String>();
+        StringBuffer stringBuffer = new StringBuffer("");
+        for(TemplateResultMaster templateResultMaster:templateResultMasterList){
+            stringBuffer.append("'").append(templateResultMaster.getCreateBy()).append("',");
+        }
+        String userIds = stringBuffer.toString();
+        if(!StringUtils.isEmptyParam(userIds)){
+            userIds = userIds.substring(0,userIds.length()-1);
+        }
+        String sql = "select id,user_name from user where id in ("+userIds+")";
+        List list = createNativeQuery(sql).getResultList();
+        if(list!=null && !list.isEmpty()){
+            int size = list.size();
+            for(int i=0;i<size;i++){
+                Object[] params = (Object[])list.get(i);
+                map.put(params[0].toString(),params[1].toString());
+            }
+        }
+        return map;
     }
 }

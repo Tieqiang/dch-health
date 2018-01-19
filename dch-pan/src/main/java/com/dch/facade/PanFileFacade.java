@@ -262,6 +262,9 @@ public class PanFileFacade extends BaseFacade {
                 throw new Exception("获取当前用户信息为空");
             }
             String loginName = currentUser.getLoginName();
+            if(loginName==null){
+                loginName = "common";
+            }
             String path = basePath+File.separator+loginName+File.separator;
             Calendar c = Calendar.getInstance(TimeZone.getTimeZone("GMT+08:00"));
             int year = c.get(Calendar.YEAR);

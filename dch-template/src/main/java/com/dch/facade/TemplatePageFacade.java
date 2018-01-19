@@ -55,7 +55,7 @@ public class TemplatePageFacade extends BaseFacade {
         }
     }
 
-    public List<TemplatePageAndResultVo> getTemplatePagesAndResults(String templateId, String docId) {
+    public List<TemplatePageAndResultVo> getTemplatePagesAndResults(String templateId, String masterId) {
         List<TemplatePageAndResultVo> templatePageAndResultVos = new ArrayList<TemplatePageAndResultVo>();
         Map map = new HashMap();
         String hql = " from TemplatePage where status<>'-1' and templateId = '"+templateId+"'";
@@ -67,7 +67,7 @@ public class TemplatePageFacade extends BaseFacade {
             }
         }
         String templatePageIds = pageIds.toString();
-        if(!StringUtils.isEmptyParam(templatePageIds) && !StringUtils.isEmptyParam(docId)){
+        if(!StringUtils.isEmptyParam(templatePageIds) && !StringUtils.isEmptyParam(masterId)){
             templatePageIds = templatePageIds.substring(0,templatePageIds.length()-1);
             String resultSql = " from TemplateResult where status<>'-1' and pageId in ("+templatePageIds+")";
             List<TemplateResult> templateResultList = createQuery(TemplateResult.class, resultSql, new ArrayList<Object>()).getResultList();
@@ -77,8 +77,8 @@ public class TemplatePageFacade extends BaseFacade {
             for(TemplatePage templatePage:templatePageList){
                 TemplatePageAndResultVo templatePageAndResultVo = new TemplatePageAndResultVo();
                 templatePageAndResultVo.setTemplatePage(templatePage);
-                if(map.get(templatePage.getId()+docId)!=null){
-                    templatePageAndResultVo.setTemplateResult((TemplateResult)map.get(templatePage.getId()+docId));
+                if(map.get(templatePage.getId()+masterId)!=null){
+                    templatePageAndResultVo.setTemplateResult((TemplateResult)map.get(templatePage.getId()+masterId));
                 }
                 templatePageAndResultVos.add(templatePageAndResultVo);
             }

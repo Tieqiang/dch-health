@@ -98,7 +98,7 @@ public class TemplateMasterFacade extends BaseFacade{
      * @param currentPage 当前第几页，默认为1
      * @return
      */
-    public Page<TemplateMaster> getTemplateMasters(String projectId, String templateLevel, String templateStauts, String whereHql, int perPage, int currentPage) {
+    public Page<TemplateMaster> getTemplateMasters(String projectId, String templateLevel, String templateStauts, String whereHql, int perPage, int currentPage,String publishStatus) {
         String hql = " from TemplateMaster where status<>'-1'";
         if(!StringUtils.isEmptyParam(projectId)){
             hql += " and projectId = '"+projectId+"'";
@@ -111,6 +111,9 @@ public class TemplateMasterFacade extends BaseFacade{
         }
         if(!StringUtils.isEmptyParam(whereHql)){
             hql += " and "+whereHql;
+        }
+        if(!StringUtils.isEmptyParam(publishStatus)){
+            hql += " and publishStatus = '"+publishStatus+"'";
         }
         if(perPage<=0){
             perPage = 15;
