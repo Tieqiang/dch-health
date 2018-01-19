@@ -1,5 +1,6 @@
 package com.dch.facade;
 
+import com.dch.entity.TemplateResult;
 import com.dch.entity.TemplateResultMaster;
 import com.dch.entity.User;
 import com.dch.facade.common.BaseFacade;
@@ -9,6 +10,7 @@ import com.dch.vo.TemplateMasterVo;
 import org.springframework.stereotype.Component;
 
 import javax.persistence.TypedQuery;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -84,9 +86,11 @@ public class TemplateResultFacade extends BaseFacade {
         }
         Page<TemplateResultMaster> templateResultMasterPage = getPageResult(TemplateResultMaster.class,hql,perPage,currentPage);
         List<TemplateResultMaster> templateResultMasterList = templateResultMasterPage.getData();
+        //设置创建人
         if(templateResultMasterList!=null && !templateResultMasterList.isEmpty()){
             Map<String,String> map = getUserNameMap(templateResultMasterList);
             for(TemplateResultMaster templateResultMaster:templateResultMasterList){
+                templateResultMaster.setTemplateResult(getTemplateResultJSON(templateResultMaster.getId()));
                 templateResultMaster.setCreateBy(map.get(templateResultMaster.getCreateBy()));
             }
             templateResultMasterPage.setData(templateResultMasterList);
@@ -94,6 +98,36 @@ public class TemplateResultFacade extends BaseFacade {
         return templateResultMasterPage;
     }
 
+    /**
+     * 获取表单填写的值
+     * @param id
+     * @return
+     */
+    private String getTemplateResultJSON(String id) {
+        StringBuffer jsonBuffer = new StringBuffer() ;
+        jsonBuffer.append("{");
+
+        String hql = "from TemplateResult a where a.masterId= '"+id+"'" ;
+        List<TemplateResult> templateResults= createQuery(TemplateResult.class,hql,new ArrayList<Object>()).getResultList();
+        for (TemplateResult result:templateResults){
+            String templateResult = result.getTemplateResult();
+            if(templateResult.startsWith("{")&&templateResult.endsWith("}")){
+                jsonBuffer.append(templateResult.substring(1,templateResult.length()-1));
+                jsonBuffer.append(",");
+            }else{
+                continue;
+            }
+        }
+        jsonBuffer.delete(jsonBuffer.lastIndexOf(","),jsonBuffer.lastIndexOf(","));
+        jsonBuffer.append("}");
+        return jsonBuffer.toString();
+    }
+
+    /**
+     * 获取用户列表Map
+     * @param templateResultMasterList
+     * @return
+     */
     public Map<String,String> getUserNameMap(List<TemplateResultMaster> templateResultMasterList){
         Map<String,String> map = new HashMap<String,String>();
         StringBuffer stringBuffer = new StringBuffer("");

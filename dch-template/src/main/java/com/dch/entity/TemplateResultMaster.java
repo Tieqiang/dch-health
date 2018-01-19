@@ -2,10 +2,7 @@ package com.dch.entity;
 
 import com.dch.entity.base.BaseEntity;
 
-import javax.persistence.Basic;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 /**
  * Created by Administrator on 2017/9/27.
@@ -16,6 +13,7 @@ public class TemplateResultMaster extends BaseEntity {
     private String templateId;
     private String templateName ;
     private Double completeRate;
+    private String templateResult ;
 
     @Basic
     @Column(name = "template_id", nullable = true, length = 64)
@@ -48,5 +46,14 @@ public class TemplateResultMaster extends BaseEntity {
             completeRate = 0D;
         }
         this.completeRate = completeRate;
+    }
+
+    @Transient
+    public String getTemplateResult() {
+        return templateResult;
+    }
+
+    public void setTemplateResult(String templateResult) {
+        this.templateResult = templateResult;
     }
 }
