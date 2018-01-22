@@ -118,7 +118,7 @@ public class TemplateResultFacade extends BaseFacade {
                 continue;
             }
         }
-        jsonBuffer.delete(jsonBuffer.lastIndexOf(","),jsonBuffer.lastIndexOf(","));
+        jsonBuffer.delete(jsonBuffer.lastIndexOf(","),jsonBuffer.lastIndexOf(",")+1);
         jsonBuffer.append("}");
         return jsonBuffer.toString();
     }
