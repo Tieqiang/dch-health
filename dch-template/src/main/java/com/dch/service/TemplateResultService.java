@@ -35,6 +35,7 @@ public class TemplateResultService {
     public Response mergeTemplateResult(TemplateResult templateResult) throws Exception {
 
         //如果是保存的第一个页面，则自动生成
+        String masterId = templateResult.getMasterId();
         if(StringUtils.isEmptyParam(templateResult.getId())){
             if(StringUtils.isEmptyParam(templateResult.getMasterId())){
                 String templateId = templateResult.getTemplateId();
@@ -45,6 +46,7 @@ public class TemplateResultService {
                 master.setStatus("1");
                 TemplateResultMaster merge = templateResultFacade.merge(master);
                 templateResult.setMasterId(merge.getId());
+                masterId = merge.getId();
             }
         }else{
             if(StringUtils.isEmptyParam(templateResult.getMasterId())){
@@ -54,15 +56,15 @@ public class TemplateResultService {
         TemplateResult templateResultMerge = templateResultFacade.merge(templateResult);
         String totalHql = "select count(*) from TemplatePage where status<>'-1' and templatePageContent is not null and templateId = '"+templateResultMerge.getTemplateId()+"'";
         Long total = templateResultFacade.createQuery(Long.class,totalHql,new ArrayList<Object>()).getSingleResult();
-        String doneHql = "select count(*) from TemplateResult where status<>'-1' and templateResult is not null and templateId = '"+templateResultMerge.getTemplateId()+"'";
+        String doneHql = "select count(distinct pageId) from TemplateResult where status<>'-1' and templateResult is not null and masterId = '"+masterId+"' group by pageId";
         Long doneNum = templateResultFacade.createQuery(Long.class,doneHql,new ArrayList<Object>()).getSingleResult();
-        doneNum = doneNum+1;
         String completeRate = "0.0";
         if(total>0){
             DecimalFormat df = new DecimalFormat("#.00");
             completeRate =df.format(Double.valueOf(doneNum/total));
-            String tmHql = "update TemplateResultMaster set completeRate = "+completeRate+" where templateId = '"+templateResultMerge.getTemplateId()+"'";
-            templateResultFacade.excHql(tmHql);
+            TemplateResultMaster templateResultMaster = templateResultFacade.get(TemplateResultMaster.class,masterId);
+            templateResultMaster.setCompleteRate(Double.valueOf(completeRate));
+            templateResultFacade.merge(templateResultMaster);
         }
         return Response.status(Response.Status.OK).entity(templateResultMerge).build();
     }

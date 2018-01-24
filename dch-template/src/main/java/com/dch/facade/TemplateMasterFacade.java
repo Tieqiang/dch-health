@@ -47,6 +47,12 @@ public class TemplateMasterFacade extends BaseFacade{
                 throw new Exception("该表单模板下有关联的表单数据结果信息，请先删除表单数据结果信息");
             }
         }
+
+        String sql = "select id from template_master where status<>'-1' and template_name = '"+templateMaster.getTemplateName()+"' and id<>'"+templateMaster.getId()+"' and project_id = '"+templateMaster.getProjectId()+"'";
+        List list = createNativeQuery(sql).getResultList();
+        if(list!=null && !list.isEmpty()){
+            throw new Exception("该表单名称已存在，请重新填写");
+        }
         TemplateMaster merge = merge(templateMaster);
         if("2".equals(templateMaster.getPublishStatus())){//2全站发布
             SolrVo solrVo=new SolrVo();
@@ -118,6 +124,7 @@ public class TemplateMasterFacade extends BaseFacade{
         if(perPage<=0){
             perPage = 15;
         }
+        hql += " order by createDate desc";
         return getPageResult(TemplateMaster.class,hql,perPage,currentPage);
     }
 

@@ -55,12 +55,13 @@ public class TemplatePageConfigFacade extends BaseFacade {
                 dataElementCodes = dataElementCodes.substring(0,dataElementCodes.length()-1);
                 dataElementTypes = dataElementTypes.substring(0,dataElementTypes.length()-1);
             }
-            String hql = "select id from TemplateDataElement where pageId = '"+pageId+"' and dataElementName in (" +
-                     dataElementNames+") and dataElementCode in ("+dataElementCodes+") and dataElementType in(" +
-                     dataElementTypes+")";
+//            String hql = "select id from TemplateDataElement where pageId = '"+pageId+"' and dataElementName in (" +
+//                     dataElementNames+") and dataElementCode in ("+dataElementCodes+") and dataElementType in(" +
+//                     dataElementTypes+")";
+            String hql = "select id from TemplateDataElement where pageId = '"+pageId+"'";
             List<String> templateDataEleIds = createQuery(String.class,hql,new ArrayList<Object>()).getResultList();
             if(templateDataEleIds!=null && !templateDataEleIds.isEmpty()){
-                removeByStringIds(TemplateDataElement.class,templateDataEleIds);//删除相关元数据
+                //removeByStringIds(TemplateDataElement.class,templateDataEleIds);//删除相关元数据
                 StringBuffer idsBuffer = new StringBuffer("");
                 for(String tepmlatedId:templateDataEleIds){
                     idsBuffer.append("'").append(tepmlatedId).append("',");
@@ -69,6 +70,8 @@ public class TemplatePageConfigFacade extends BaseFacade {
                 rellatedTemplateDataEleIds = rellatedTemplateDataEleIds.substring(0,rellatedTemplateDataEleIds.length()-1);
                 String delDataValueSql = " delete from TemplateDataValue where dataElementId in ("+rellatedTemplateDataEleIds+")";
                 excHql(delDataValueSql);
+                String delDataElementSql = " delete from TemplateDataElement where id in ("+rellatedTemplateDataEleIds+")";
+                excHql(delDataElementSql);
             }
             for(ElementVO elementVO:elementsVOs){
                 if(elementVO.getChildren()!=null && !elementVO.getChildren().isEmpty()){
