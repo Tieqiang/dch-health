@@ -49,7 +49,11 @@ public class ProjectMasterFacade extends BaseFacade {
             ProjectInfomation projectInfomation = new ProjectInfomation();
             projectInfomation.setInfoTitle(merge.getProjectName());
             modeContent = modeContent.replace("user",user.getUserName());
-            modeContent = modeContent.replace("desc",merge.getProjectDesc());
+            if(!StringUtils.isEmptyParam(merge.getProjectDesc())){
+                modeContent = modeContent.replace("desc",merge.getProjectDesc());
+            }else{
+                modeContent.replace("desc",projectMaster.getProjectName());
+            }
             projectInfomation.setInfoContent(modeContent);
             projectInfomation.setProjectId(merge.getId());
             projectInfomation.setStatus("0");
@@ -98,6 +102,7 @@ public class ProjectMasterFacade extends BaseFacade {
                 hqlCount += " and m.createBy = '"+userId+"' ";
             }
         }
+        hql += " order by m.createDate desc ";
         TypedQuery<ProjectMaster> query = createQuery(ProjectMaster.class, hql, new ArrayList<Object>());
         Long counts = createQuery(Long.class,hqlCount,new ArrayList<Object>()).getSingleResult();
         Page page =new Page();
