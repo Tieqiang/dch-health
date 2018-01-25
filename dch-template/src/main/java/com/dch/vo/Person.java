@@ -9,6 +9,8 @@ public class Person {
     private String id;
     private String name;
     private int age;
+    private String result  ;
+
 
     public Person(String name, int age) {
         this.name = name;
@@ -25,22 +27,29 @@ public class Person {
         return age;
     }
 
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setAge(int age) {
+        this.age = age;
+    }
+
+    public String getResult() {
+        return result;
+    }
+
+    public void setResult(String result) {
+        this.result = result;
+    }
+
     @Override
     public String toString() {
-        return "Person [id=" + id + ", name=" + name + ", age=" + age + "]";
+        return "Person [id=" + id + ", name=" + name + ", age=" + age + ",aaaaa=dddd]";
     }
 
-    public static void main(String[] args) throws Exception {
-
-//        MongoOperations mongoOps = new MongoTemplate(new MongoClient("10.1.85.21"), "database");
-//        mongoOps.insert(new Person("Joe", 34));
-
-//        StringBuffer stringBuffer = new StringBuffer();
-//        stringBuffer.append("nihao,shijie");
-//        stringBuffer.append(",");
-//        System.out.println(stringBuffer.toString());
-//        stringBuffer.delete(stringBuffer.lastIndexOf(","),stringBuffer.lastIndexOf(",")+1);
-//        System.out.println(stringBuffer.toString());
-//        mongoOps.dropCollection("person");
-    }
 }

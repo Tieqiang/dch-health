@@ -21,7 +21,10 @@ public class MongoService {
     @GET
     public void mongo(){
         Person person = new Person("zhangsan",28);
+        String result="{tt:'ee',mm:'nn'}";
+        person.setResult(result);
         mongoTemplate.insert(person);
+        mongoTemplate.insert(result,"result");
     }
 
 

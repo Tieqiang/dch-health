@@ -25,6 +25,7 @@
         <module>dch-redis</module>
         <module>dch-project</module>
         <module>dch-template</module>
+        <module>dch-ikAnalyzer</module>
     </modules>
 
     <properties>
