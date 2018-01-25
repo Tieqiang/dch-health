@@ -10,7 +10,6 @@ import com.dch.vo.TemplateMasterVo;
 import org.springframework.stereotype.Component;
 
 import javax.persistence.TypedQuery;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -79,8 +78,13 @@ public class TemplateResultFacade extends BaseFacade {
         return pageResult;
     }
 
-    public Page<TemplateResultMaster> getTemplateResultMasters(String templateId, int perPage, int currentPage, String userId) {
-        String hql=" from TemplateResultMaster where status <> '-1' and templateId='"+templateId+"'";
+    public Page<TemplateResultMaster> getTemplateResultMasters(String templateId, int perPage, int currentPage, String userId,String status) {
+        String hql=" from TemplateResultMaster where  templateId='"+templateId+"'";
+        if(!StringUtils.isEmptyParam(status)){
+            hql += " and status='"+status+"'";
+        }else{
+            hql += " and status <> '-1' ";
+        }
         if(!StringUtils.isEmptyParam(userId)){
             hql += " and createBy = '"+userId+"'";
         }

@@ -11,9 +11,9 @@ import javax.persistence.*;
 @Table(name = "template_result_master", schema = "dch", catalog = "")
 public class TemplateResultMaster extends BaseEntity {
     private String templateId;
-    private String templateName ;
+    private String templateName;
     private Double completeRate;
-    private String templateResult ;
+    private String templateResult;
 
     @Basic
     @Column(name = "template_id", nullable = true, length = 64)

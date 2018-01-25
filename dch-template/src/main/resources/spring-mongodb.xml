@@ -3,16 +3,34 @@
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xmlns:mongo="http://www.springframework.org/schema/data/mongo"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/data/mongo http://www.springframework.org/schema/data/mongo/spring-mongo.xsd">
+    <!--<mongo:mongo-client host="10.1.85.21" port="27017" id="mongo">-->
+        <!--<mongo:client-options connections-per-host="8"-->
+                              <!--threads-allowed-to-block-for-connection-multiplier="4"-->
+                              <!--connect-timeout="1000"-->
+                              <!--max-wait-time="1500"-->
+                              <!--socket-keep-alive="true"-->
+                              <!--socket-timeout="1500"/>-->
+    <!--</mongo:mongo-client>-->
+    <!--credentials="${mongo.user}:${mongo.pwd}@${mongo.defaultDbName}-->
+    <mongo:mongo-client id="mongo"  host="${mongo.host}" port="${mongo.port}" >
+        <mongo:client-options
+                connections-per-host="${mongo.connectionsPerHost}"
+                min-connections-per-host="${mongo.minConnectionsPerHost}"
+                threads-allowed-to-block-for-connection-multiplier="${mongo.threadsAllowedToBlockForConnectionMultiplier}"
+                connect-timeout="${mongo.connectTimeout}"
+                max-wait-time="${mongo.maxWaitTime}"
+                socket-keep-alive="${mongo.socketKeepAlive}"
+                socket-timeout="${mongo.socketTimeout}"
+                description="${mongo.description}"
+                max-connection-idle-time="${mongo.maxConnectionIdleTime}"
+                max-connection-life-time="${mongo.maxConnectionLifeTime}"
+                heartbeat-socket-timeout="${mongo.heartbeatSocketTimeout}"
+                heartbeat-connect-timeout="${mongo.heartbeatConnectTimeout}"
+                min-heartbeat-frequency="${mongo.minHeartbeatFrequency}"
+                heartbeat-frequency="${mongo.heartbeatFrequency}"
 
-    <mongo:mongo-client host="10.1.85.21" port="27017" id="mongo">
-        <mongo:client-options connections-per-host="8"
-                              threads-allowed-to-block-for-connection-multiplier="4"
-                              connect-timeout="1000"
-                              max-wait-time="1500"
-                              socket-keep-alive="true"
-                              socket-timeout="1500"/>
+        />
     </mongo:mongo-client>
-
     <!-- 设置使用的数据库 名-->
     <mongo:db-factory dbname="test" mongo-ref="mongo"/>
     <!-- mongodb的模板 -->

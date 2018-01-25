@@ -24,40 +24,25 @@ import java.util.List;
 public class TemplatePageConfigFacade extends BaseFacade {
     @Transactional
     public Response mergeTemplatePageConfig(TemplatePageConfigVo vo){
-        //1,删除所有与该表页相关的元数据、数据值域
-        deleteAllRelatedTemplateDataElement(vo.getPageId(),vo.getElements());
-        //2，更新当前页config 和content字段
-        if(!StringUtils.isEmptyParam(vo.getPageId())){
-            String upHql = "update TemplatePage set config = '"+vo.getConfig()+"',templatePageContent = '"+vo.getDocument()+"',templatePageDataModel=" +
-                    "'"+vo.getTemplatePageDataModel()+"' where " +
-                    " id = '"+vo.getPageId()+"'";
-            excHql(upHql);
+        try{
+            //1,删除所有与该表页相关的元数据、数据值域
+            deleteAllRelatedTemplateDataElement(vo.getPageId(),vo.getElements());
+            //2，更新当前页config 和content字段
+            if(!StringUtils.isEmptyParam(vo.getPageId())){
+                String upHql = "update TemplatePage set config = '"+vo.getConfig()+"',templatePageContent = '"+vo.getDocument()+"',templatePageDataModel=" +
+                        "'"+vo.getTemplatePageDataModel()+"' where " +
+                        " id = '"+vo.getPageId()+"'";
+                excHql(upHql);
+            }
+            List<TemplateDataElement> templateDataElementList = mergeElementVOs(vo.getPageId(),vo.getElements());
+        }catch (Exception e){
+            e.printStackTrace();
         }
-        List<TemplateDataElement> templateDataElementList = mergeElementVOs(vo.getPageId(),vo.getElements());
         return Response.status(Response.Status.OK).entity(vo).build();
     }
 
     public void deleteAllRelatedTemplateDataElement(String pageId,List<ElementVO> elementsVOs){
         if(elementsVOs!=null && !elementsVOs.isEmpty()){
-            StringBuffer dataElementNameBuffer = new StringBuffer("");
-            StringBuffer dataElementCodeBuffer = new StringBuffer("");
-            StringBuffer dataElementTypeBuffer = new StringBuffer("");
-            for(ElementVO elementVO:elementsVOs){
-                dataElementNameBuffer.append("'").append(elementVO.getDataElementName()).append("',");
-                dataElementCodeBuffer.append("'").append(elementVO.getDataElementCode()).append("',");
-                dataElementTypeBuffer.append("'").append(elementVO.getDataElementType()).append("',");
-            }
-            String dataElementNames = dataElementNameBuffer.toString();
-            String dataElementCodes = dataElementCodeBuffer.toString();
-            String dataElementTypes = dataElementTypeBuffer.toString();
-            if(!StringUtils.isEmptyParam(dataElementNames) && !StringUtils.isEmptyParam(dataElementCodes)){
-                dataElementNames = dataElementNames.substring(0,dataElementNames.length()-1);
-                dataElementCodes = dataElementCodes.substring(0,dataElementCodes.length()-1);
-                dataElementTypes = dataElementTypes.substring(0,dataElementTypes.length()-1);
-            }
-//            String hql = "select id from TemplateDataElement where pageId = '"+pageId+"' and dataElementName in (" +
-//                     dataElementNames+") and dataElementCode in ("+dataElementCodes+") and dataElementType in(" +
-//                     dataElementTypes+")";
             String hql = "select id from TemplateDataElement where pageId = '"+pageId+"'";
             List<String> templateDataEleIds = createQuery(String.class,hql,new ArrayList<Object>()).getResultList();
             if(templateDataEleIds!=null && !templateDataEleIds.isEmpty()){
