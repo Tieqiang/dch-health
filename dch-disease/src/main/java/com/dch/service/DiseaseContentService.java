@@ -45,6 +45,7 @@ public class DiseaseContentService {
         solrVo.setCategoryCode("jbzs");
         solrVo.setTitle(content.getName());
         solrVo.setCategory(PinYin2Abbreviation.cn2py(content.getName()));
+        solrVo.setFirstPy(PinYin2Abbreviation.getFirstPy(solrVo.getCategory()));
         baseSolrFacade.addObjectMessageToMq(solrVo);
 
         return Response.status(Response.Status.OK).entity(content).build();

@@ -1,18 +1,23 @@
 package com.dch.service;
 
+import com.dch.entity.TemplateQueryRule;
 import com.dch.entity.TemplateResult;
 import com.dch.facade.common.BaseFacade;
+import com.dch.util.JSONUtil;
 import com.dch.util.StringUtils;
 import com.dch.vo.MongoQueryVo;
 import com.dch.vo.MongoResultVo;
 import com.dch.vo.Person;
 import com.dch.vo.QueryTerm;
+import org.codehaus.jettison.json.JSONArray;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Controller;
 
+import javax.json.JsonArray;
+import javax.json.JsonObject;
 import javax.ws.rs.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -36,6 +41,7 @@ public class MongoService {
     @GET
     @Path("get-result")
     public void mongo(){
+        mongoTemplate.dropCollection("templateResult");
         String hql = "select id,template_id from template_result_master where status<>'-1'";
         List templateIdList = baseFacade.createNativeQuery(hql).getResultList();
         for(int i=0;i<templateIdList.size();i++){
@@ -63,7 +69,7 @@ public class MongoService {
                 stringBuffer.append("}");
                 String toMongoResult = stringBuffer.toString();
                 System.out.println(toMongoResult);
-                //mongoTemplate.insert(toMongoResult,"templateResult");
+                mongoTemplate.insert(toMongoResult,"templateResult");
             }
         }
     }
@@ -95,7 +101,7 @@ public class MongoService {
     @GET
     @Path("test-query")
     public List<MongoResultVo> testQuery(@QueryParam("templateId")String templateId, @QueryParam("target")String target,
-                                         @QueryParam("targetName")String targetName){
+                                         @QueryParam("targetName")String targetName) throws Exception{
         MongoQueryVo mongoQueryVo = new MongoQueryVo();
         mongoQueryVo.setTarget(target);
         mongoQueryVo.setTargetName(targetName);
@@ -118,36 +124,63 @@ public class MongoService {
      */
     @POST
     @Path("query-count-result")
-    public List<MongoResultVo> getMongoResultVoByParam(MongoQueryVo mongoQueryVo){
+    public List<MongoResultVo> getMongoResultVoByParam(MongoQueryVo mongoQueryVo) throws Exception{
         List<MongoResultVo> mongoResultVos = new ArrayList<>();
-        Query query = new Query();
-        Map map = getMapValue(mongoQueryVo.getTarget());
-        if(map!=null && map.size()>1){
-            for(Object key:map.keySet()){
+        try {
+            saveOrUpdateQueryRule(mongoQueryVo);
+            Query query = new Query();
+            Map map = getMapValue(mongoQueryVo.getTarget());
+            if(map!=null && map.size()>1){
+                for(Object key:map.keySet()){
+                    Criteria criteria = where("templateId").is(mongoQueryVo.getTemplateId());
+                    criteria =  analyseQueryVo(criteria,mongoQueryVo);
+                    String value = (String)map.get(key);
+                    criteria.and(mongoQueryVo.getTarget()).is(value);//查询男或女的数量
+                    query.addCriteria(criteria);
+                    List<Object> userList1 = mongoTemplate.find(query, Object.class,"templateResult");
+                    MongoResultVo mongoResultVo = new MongoResultVo();
+                    mongoResultVo.setName(key+"");
+                    mongoResultVo.setValue(userList1!=null?userList1.size():0);
+                    criteria = null;
+                    query = new Query();
+                    mongoResultVos.add(mongoResultVo);
+                }
+            }else{
                 Criteria criteria = where("templateId").is(mongoQueryVo.getTemplateId());
                 criteria =  analyseQueryVo(criteria,mongoQueryVo);
-                String value = (String)map.get(key);
-                criteria.and(mongoQueryVo.getTarget()).is(value);//查询男或女的数量
                 query.addCriteria(criteria);
                 List<Object> userList1 = mongoTemplate.find(query, Object.class,"templateResult");
                 MongoResultVo mongoResultVo = new MongoResultVo();
-                mongoResultVo.setName(key+"");
+                mongoResultVo.setName(mongoQueryVo.getTargetName());
                 mongoResultVo.setValue(userList1!=null?userList1.size():0);
-                criteria = null;
-                query = new Query();
                 mongoResultVos.add(mongoResultVo);
             }
-        }else{
-            Criteria criteria = where("templateId").is(mongoQueryVo.getTemplateId());
-            criteria =  analyseQueryVo(criteria,mongoQueryVo);
-            query.addCriteria(criteria);
-            List<Object> userList1 = mongoTemplate.find(query, Object.class,"templateResult");
-            MongoResultVo mongoResultVo = new MongoResultVo();
-            mongoResultVo.setName(mongoQueryVo.getTargetName());
-            mongoResultVo.setValue(userList1!=null?userList1.size():0);
-            mongoResultVos.add(mongoResultVo);
+        }catch (Exception e){
+            e.printStackTrace();
+            throw new Exception("查询统计异常");
         }
         return mongoResultVos;
+    }
+
+    /**
+     * 保存或者更新查询条件
+     * @param mongoQueryVo
+     * @throws Exception
+     */
+    public void saveOrUpdateQueryRule(MongoQueryVo mongoQueryVo)throws Exception{
+        String hql = " from TemplateQueryRule where status<>'-1' and templateId = '"+mongoQueryVo.getTemplateId()+"' and ruleName = '"+mongoQueryVo.getTargetName()+"'";
+        List<TemplateQueryRule> templateQueryRules = baseFacade.createQuery(TemplateQueryRule.class,hql,new ArrayList<Object>()).getResultList();
+        if(templateQueryRules!=null && !templateQueryRules.isEmpty()){
+            TemplateQueryRule templateQueryRule = templateQueryRules.get(0);
+            templateQueryRule.setContent(JSONUtil.objectToJsonString(mongoQueryVo));
+            baseFacade.merge(templateQueryRule);
+        }else{
+            TemplateQueryRule templateQueryRule = new TemplateQueryRule();
+            templateQueryRule.setTemplateId(mongoQueryVo.getTemplateId());
+            templateQueryRule.setRuleName(mongoQueryVo.getTargetName());
+            templateQueryRule.setContent(JSONUtil.objectToJsonString(mongoQueryVo));
+            baseFacade.merge(templateQueryRule);
+        }
     }
 
     public Criteria analyseQueryVo(Criteria criteria,MongoQueryVo mongoQueryVo){

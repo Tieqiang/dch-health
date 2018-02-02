@@ -1,18 +1,20 @@
 package com.dch.vo;
 
-import java.io.Serializable;
+import com.dch.entity.PolicyResourcesDetail;
+
+import java.util.List;
 
 /**
- * Created by Administrator on 2017/8/24.
+ * Created by Administrator on 2018/1/12.
  */
-public class SolrVo implements Serializable{
+public class SolrPageVo {
     private String id;
     private String categoryCode;
     private String title;
     private String desc;
     private String label;
     private String category;
-    private String firstPy;//首字母拼音码
+    private List<PolicyResourcesDetail> detailList;
 
     public String getId() {
         return id;
@@ -20,6 +22,14 @@ public class SolrVo implements Serializable{
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public String getCategoryCode() {
+        return categoryCode;
+    }
+
+    public void setCategoryCode(String categoryCode) {
+        this.categoryCode = categoryCode;
     }
 
     public String getTitle() {
@@ -54,31 +64,11 @@ public class SolrVo implements Serializable{
         this.category = category;
     }
 
-    public String getCategoryCode() {
-        return categoryCode;
+    public List<PolicyResourcesDetail> getDetailList() {
+        return detailList;
     }
 
-    public void setCategoryCode(String categoryCode) {
-        this.categoryCode = categoryCode;
-    }
-
-    public String getFirstPy() {
-        return firstPy;
-    }
-
-    public void setFirstPy(String firstPy) {
-        this.firstPy = firstPy;
-    }
-
-    @Override
-    public String toString() {
-        return "SolrVo{" +
-                "id='" + id + '\'' +
-                ", categoryCode='" + categoryCode + '\'' +
-                ", title='" + title + '\'' +
-                ", desc='" + desc + '\'' +
-                ", label='" + label + '\'' +
-                ", category='" + category + '\'' +
-                '}';
+    public void setDetailList(List<PolicyResourcesDetail> detailPage) {
+        this.detailList = detailPage;
     }
 }

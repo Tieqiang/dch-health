@@ -128,7 +128,8 @@ public class BaseSolrFacade {
             param = param+" AND tableName:"+type.getSimpleName();
         }
         query.setQuery(param);
-        query.setSort("category", SolrQuery.ORDER.asc);
+        query.addSort("firstPy",SolrQuery.ORDER.asc);
+        query.addSort("category",SolrQuery.ORDER.asc);
         SolrDocumentList docs = httpSolrServer.query(query).getResults();
         if(docs!=null && !docs.isEmpty()){
             for(SolrDocument doc : docs){
@@ -161,7 +162,8 @@ public class BaseSolrFacade {
             query.addFilterQuery("tableName:"+type.getSimpleName());
         }
         query.setQuery(param);
-        query.setSort("category", SolrQuery.ORDER.asc);
+        query.addSort("firstPy",SolrQuery.ORDER.asc);
+        query.addSort("category",SolrQuery.ORDER.asc);
         if(hlFields!=null && !"".equals(hlFields)){
             //开启高亮
             query.setHighlight(true);
@@ -224,7 +226,8 @@ public class BaseSolrFacade {
             }
         }
         query.setQuery(keyWords);
-        query.setSort("category", SolrQuery.ORDER.asc);
+        query.addSort("firstPy",SolrQuery.ORDER.asc);
+        query.addSort("category",SolrQuery.ORDER.asc);
         if(hlFields!=null && !"".equals(hlFields)){
             //开启高亮
             query.setHighlight(true);

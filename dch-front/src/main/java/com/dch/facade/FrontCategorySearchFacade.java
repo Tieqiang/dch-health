@@ -1,10 +1,12 @@
 package com.dch.facade;
 
 import com.dch.entity.FrontSearchCategory;
+import com.dch.entity.PolicyResourcesDetail;
 import com.dch.facade.common.BaseFacade;
 import com.dch.facade.common.VO.Page;
 import com.dch.util.LogHome;
 import com.dch.util.StringUtils;
+import com.dch.vo.SolrPageVo;
 import com.dch.vo.SolrVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -93,12 +95,26 @@ public class FrontCategorySearchFacade extends BaseFacade {
      * @return
      * @throws Exception
      */
-    public SolrVo getSolrVoById(String id) throws Exception{
+    public SolrPageVo getSolrVoById(String id) throws Exception{
         if (StringUtils.isEmptyParam(id)) {
             throw new Exception("索引主键不能为空！");
         }
         SolrVo solrVo = baseSolrFacade.getSolrObjectById(id,SolrVo.class);
-        return solrVo;
+        SolrPageVo solrPageVo = new SolrPageVo();
+        if(solrVo!=null){
+            solrPageVo.setId(solrVo.getId());
+            solrPageVo.setCategory(solrVo.getCategory());
+            solrPageVo.setCategoryCode(solrVo.getCategoryCode());
+            solrPageVo.setDesc(solrVo.getDesc());
+            solrPageVo.setTitle(solrVo.getTitle());
+            solrPageVo.setLabel(solrVo.getLabel());
+            if(StringUtils.isEmptyParam(solrVo.getDesc())){//说明详情有分页
+                String hql = " from PolicyResourcesDetail where status='1' and relatedPolicyId = '"+solrVo.getId()+"'";
+                List<PolicyResourcesDetail> policyResourcesDetails = createQuery(PolicyResourcesDetail.class,hql,new ArrayList<Object>()).getResultList();
+                solrPageVo.setDetailList(policyResourcesDetails);
+            }
+        }
+        return solrPageVo;
     }
     public List<FrontSearchCategory> getFrontCategorys() {
 
@@ -107,9 +123,47 @@ public class FrontCategorySearchFacade extends BaseFacade {
         return list;
     }
 
-    public Page<SolrVo> getFrontCategorysByKeyWord(String code) throws Exception{
-        String filterStr = "categoryCode:" + code ;
-        String hl = "";
-        return baseSolrFacade.getExactSolrVoByParamAndPageParm("1",filterStr,hl,10, 1, SolrVo.class);
+    public Page<SolrVo> geRelatedDrugsByKeyWord(String keyWords,int perPage,int currentPage) throws Exception{
+        Page<SolrVo> solrVoPage = null;
+        try {
+            String param = "";
+            if(!StringUtils.isEmptyParam(keyWords)){
+                keyWords = keyWords.trim();
+                keyWords= escapeQueryChars(keyWords);
+            }else{
+                //return new Page<SolrVo>();
+            }
+            param += "categoryCode:" + "ywjbxx001" ;
+            //keyWords = StringUtils.remeveHtmlLabel(keyWords);
+            String hl = "title,desc,label";
+            //ik分词 智能查询
+            if (keyWords != null && !"".equals(keyWords)) {
+                if(keyWords.indexOf(" ")!=-1){
+                    keyWords = "("+keyWords+")";
+                }
+                param += " AND title:" + keyWords;
+            }
+            solrVoPage = baseSolrFacade.getSolrObjectByParamAndPageParm(param,hl,perPage, currentPage, SolrVo.class);
+        }catch (Exception e){
+            e.printStackTrace();
+            throw e;
+        }
+        LogHome.getLog().info("相关药品搜索关键字:"+keyWords);
+        return solrVoPage;
+    }
+    public static String escapeQueryChars(String s) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            // These characters are part of the query syntax and must be escaped
+            if (c == '\\' || c == '+' || c == '-' || c == '!'  || c == '(' || c == ')' || c == ':'
+                    || c == '^' || c == '[' || c == ']' || c == '\"' || c == '{' || c == '}' || c == '~'
+                    || c == '*' || c == '?' || c == '|' || c == '&'  || c == ';' || c == '/'
+                    || Character.isWhitespace(c)) {
+                sb.append('\\');
+            }
+            sb.append(c);
+        }
+        return sb.toString();
     }
 }

@@ -59,18 +59,18 @@ public class TemplateResultService {
             }
             stringBuffer.append("}");
             String toMongoResult = stringBuffer.toString();
-            TemplateMaster templateMaster = templateResultFacade.get(TemplateMaster.class,templateId);
+            TemplateResultMaster templateResultMaster = templateResultFacade.get(TemplateResultMaster.class,masterId);
             try{
-                removeTemplateResultByTempId(templateId);
+                removeTemplateResultByMasterId(masterId);
                 mongoTemplate.insert(toMongoResult,tempCollectionName);
             }catch (Exception e){
                 throw new Exception("表单数据保存异常");
             }
             try{
-                templateMaster.setStatus("2");//表单状态设置为已保存
-                templateResultFacade.merge(templateMaster);
+                templateResultMaster.setStatus("2");//表单状态设置为已保存
+                templateResultFacade.merge(templateResultMaster);
             }catch (Exception e){
-                removeTemplateResultByTempId(templateId);//保存异常 清除mongo中已保存的数据
+                removeTemplateResultByMasterId(masterId);//保存异常 清除mongo中已保存的数据
                 throw new Exception("表单信息保存异常");
             }
         }else{
@@ -82,12 +82,12 @@ public class TemplateResultService {
 
     /**
      * 根据templaeId删除mongodb数据库中已存在的表单信息
-     * @param templateId
+     * @param masterId
      */
-    public void removeTemplateResultByTempId(String templateId){
+    public void removeTemplateResultByMasterId(String masterId){
         Query query = new Query();
         // query.addCriteria(where("age").gt(22));
-        Criteria criteria = where("templateId").is(templateId);
+        Criteria criteria = where("masterId").is(masterId);
         // 删除年龄大于22岁的用户
         query.addCriteria(criteria);
         mongoTemplate.remove(query,tempCollectionName);

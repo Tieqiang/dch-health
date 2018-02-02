@@ -240,6 +240,7 @@ public class MethodSolrInterceptor implements MethodInterceptor {
                 solrVo.setCategory(PinYin2Abbreviation.cn2py(drugExamOrg.getMedicalOrgName()));
             }
             if(solrVo!=null){
+                solrVo.setFirstPy(PinYin2Abbreviation.getFirstPy(solrVo.getCategory()));
                 baseSolrFacade.addObjectMessageToMq(solrVo);
             }
         }

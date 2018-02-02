@@ -9,8 +9,8 @@ import com.dch.facade.FrontCategorySearchFacade;
 import com.dch.facade.common.VO.Page;
 import com.dch.util.PinYin2Abbreviation;
 import com.dch.vo.PageParam;
+import com.dch.vo.SolrPageVo;
 import com.dch.vo.SolrVo;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
@@ -70,9 +70,25 @@ public class FrontCategorySearchService {
     }
 
     @GET
-    @Path("get-categorys-by-keyword")
-    public  Page<SolrVo> getFrontCategorysByKeyWord(@QueryParam("code")String code) throws Exception {
-        return frontCategorySearchFacade.getFrontCategorysByKeyWord(code);
+    @Path("get-related-drugs-by-keywords")
+    public  Page<SolrVo> geRelatedDrugsByKeyWord(@QueryParam("keywords")String keywords,@QueryParam("perPage")int perPage,@QueryParam("currentPage")int currentPage) throws Exception {
+        return frontCategorySearchFacade.geRelatedDrugsByKeyWord(keywords,perPage,currentPage);
+    }
+
+    @GET
+    @Path("get-all-drug-names")
+    public List<String> getAllDrugNames(){
+        String hql = "select drugName from DrugBaseInfo where status<>'-1'";
+        List<String> list = frontCategorySearchFacade.createQuery(String.class,hql,new ArrayList<Object>()).getResultList();
+        for(String name:list){
+          if(name.contains("；")){
+              String[] nameArray = name.split("；");
+              for(int i=0;i<nameArray.length;i++){
+                  System.out.println(nameArray[i]);
+              }
+          }
+        }
+        return null;
     }
 
     /**
@@ -92,6 +108,7 @@ public class FrontCategorySearchService {
             solrVo.setTitle(drugAds.getDrugName());
             solrVo.setDesc(drugAds.getDrugName()+","+drugAds.getAdType()+","+drugAds.getAdNo());
             solrVo.setCategory(PinYin2Abbreviation.cn2py(drugAds.getDrugName()));
+            solrVo.setFirstPy(PinYin2Abbreviation.getFirstPy(solrVo.getCategory()));
             solrVo.setCategoryCode("ypgg003");
             solrVo.setLabel(drugAds.getAdType());
             solrVo.setId(drugAds.getId());
@@ -116,6 +133,7 @@ public class FrontCategorySearchService {
             solrVo.setTitle(baseInfo.getDrugName());
             solrVo.setDesc(baseInfo.getDrugName()+","+baseInfo.getClassName()+","+baseInfo.getToxi());
             solrVo.setCategory(PinYin2Abbreviation.cn2py(baseInfo.getDrugName()));
+            solrVo.setFirstPy(PinYin2Abbreviation.getFirstPy(solrVo.getCategory()));
             solrVo.setId(baseInfo.getId());
             solrVo.setLabel(baseInfo.getClassName());
             solrVo.setCategoryCode("ywjbxx001");
@@ -160,7 +178,7 @@ public class FrontCategorySearchService {
      */
     @GET
     @Path("get-solrvo-by-id")
-    public  SolrVo getSolrVoById(@QueryParam("id")String id) throws Exception {
+    public SolrPageVo getSolrVoById(@QueryParam("id")String id) throws Exception {
         return frontCategorySearchFacade.getSolrVoById(id);
     }
 }

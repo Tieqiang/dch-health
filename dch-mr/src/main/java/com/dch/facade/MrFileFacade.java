@@ -39,6 +39,7 @@ public class MrFileFacade extends BaseFacade {
         solrVo.setTitle(merge.getFileTitle());
         solrVo.setDesc(merge.getFileContent());
         solrVo.setCategory(PinYin2Abbreviation.cn2py(merge.getFileTitle()));
+        solrVo.setFirstPy(PinYin2Abbreviation.getFirstPy(solrVo.getCategory()));
         solrVo.setId(merge.getId());
         solrVo.setLabel(merge.getKeyWords());
         solrVo.setCategoryCode(merge.getSubjectCode());

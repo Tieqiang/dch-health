@@ -62,6 +62,7 @@ public class TemplateMasterFacade extends BaseFacade{
             solrVo.setCategoryCode("bdsj001");
             solrVo.setLabel(merge.getTemplateLevel());
             solrVo.setCategory(PinYin2Abbreviation.cn2py(merge.getTemplateName()));
+            solrVo.setFirstPy(PinYin2Abbreviation.getFirstPy(solrVo.getCategory()));
             baseSolrFacade.addObjectMessageToMq(solrVo);
         }
         return Response.status(Response.Status.OK).entity(merge).build();

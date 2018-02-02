@@ -92,6 +92,20 @@ public class PinYin2Abbreviation {
 		}
 	}
 
+	/**
+	 * 获取拼音码的首字母
+	 * @param pyCode
+	 * @return
+	 */
+	public static String getFirstPy(String pyCode){
+		String firstPy = "";
+		if(StringUtils.isEmptyParam(pyCode)){
+			firstPy = "Z";
+		}else{
+			firstPy = pyCode.substring(0,1);
+		}
+		return firstPy;
+	}
 	public static void main(String[] args) throws Exception {
 		System.out.println(cn2py("重庆重视发展IT行业，大多数外企，如，IBM等进驻山城"));
 	}

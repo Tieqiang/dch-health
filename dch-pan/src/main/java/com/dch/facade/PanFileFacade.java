@@ -83,6 +83,7 @@ public class PanFileFacade extends BaseFacade {
                 solrVo.setCategoryCode("wjsj001");
                 solrVo.setLabel(merge.getKeyWords());
                 solrVo.setCategory(PinYin2Abbreviation.cn2py(merge.getFileTitle()));
+                solrVo.setFirstPy(PinYin2Abbreviation.getFirstPy(solrVo.getCategory()));
                 baseSolrFacade.addObjectMessageToMq(solrVo);
             }
             return merge;
