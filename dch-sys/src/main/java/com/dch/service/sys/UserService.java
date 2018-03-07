@@ -3,6 +3,7 @@ package com.dch.service.sys;
 import com.dch.entity.*;
 import com.dch.facade.UserFacade;
 import com.dch.facade.common.BaseFacade;
+import com.dch.facade.common.VO.Page;
 import com.dch.facade.common.VO.ReturnInfo;
 import com.dch.security.PasswordAndSalt;
 import com.dch.security.SystemPasswordService;
@@ -296,8 +297,9 @@ public class UserService {
      */
     @GET
     @Path("list")
-    public List<User> getUsers(@QueryParam("userName")String userName,@QueryParam("loginName") String loginName){
-        return userFacade.getUsers(userName,loginName);
+    public Page<User> getUsers(@QueryParam("userName")String userName, @QueryParam("loginName")String loginName,
+                                @QueryParam("perPage")int perPage, @QueryParam("currentPage") int currentPage){
+        return userFacade.getUsers(userName,loginName,perPage,currentPage);
     }
 
     /**

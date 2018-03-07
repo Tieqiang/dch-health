@@ -88,6 +88,7 @@ public class TemplateResultFacade extends BaseFacade {
         if(!StringUtils.isEmptyParam(userId)){
             hql += " and createBy = '"+userId+"'";
         }
+        hql += " order by createDate desc ";
         Page<TemplateResultMaster> templateResultMasterPage = getPageResult(TemplateResultMaster.class,hql,perPage,currentPage);
         List<TemplateResultMaster> templateResultMasterList = templateResultMasterPage.getData();
         //设置创建人

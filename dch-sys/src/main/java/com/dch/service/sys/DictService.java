@@ -4,6 +4,7 @@ import com.dch.entity.DictType;
 import com.dch.entity.DictValue;
 import com.dch.facade.DictFacade;
 import com.dch.facade.common.BaseFacade;
+import com.dch.facade.common.VO.Page;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
@@ -65,8 +66,8 @@ public class DictService {
      */
     @GET
     @Path("get-dict-types")
-    public List<DictType> getDictTypes(@QueryParam("inputCode") String inputCode){
-        return dictFacade.getDictTypes(inputCode);
+    public Page<DictType> getDictTypes(@QueryParam("inputCode") String inputCode, @QueryParam("perPage") int perPage, @QueryParam("currentPage") int currentPage){
+        return dictFacade.getDictTypes(inputCode,perPage,currentPage);
     }
 
     /**

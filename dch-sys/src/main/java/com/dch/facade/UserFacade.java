@@ -2,6 +2,7 @@ package com.dch.facade;
 
 import com.dch.entity.*;
 import com.dch.facade.common.BaseFacade;
+import com.dch.facade.common.VO.Page;
 import com.dch.facade.common.VO.ReturnInfo;
 import com.dch.util.StringUtils;
 import org.springframework.stereotype.Component;
@@ -81,7 +82,7 @@ public class UserFacade extends BaseFacade {
      * @param loginName 登录名
      * @return
      */
-    public List<User> getUsers(String userName, String loginName) {
+    public Page<User> getUsers(String userName, String loginName,int perPage,int currentPage) {
         String hql = " from User where status<> '-1' ";
         if(!StringUtils.isEmptyParam(userName)){
             hql += " and userName like '%"+userName+"%'";
@@ -89,7 +90,8 @@ public class UserFacade extends BaseFacade {
         if(!StringUtils.isEmptyParam(loginName)){
             hql += " and loginName = '"+loginName+"' or userName like '%"+loginName+"%'";
         }
-        return createQuery(User.class, hql, new ArrayList<Object>()).getResultList();
+        hql += " order by createDate desc ";
+        return getPageResult(User.class,hql,perPage,currentPage);
     }
 
     /**

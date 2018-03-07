@@ -19,14 +19,15 @@
         </property>
         <property name="filterChainDefinitions">
             <value>
-                <!--/static/**=anon-->
-                <!--/ueditor/**=anon-->
-                <!--/index.html==anon-->
-                <!--/api/cms/**=anon-->
-                <!--/=anon-->
-                <!--/api/*=authc-->
-                <!--/upload/**=anon-->
-                <!--/**=authc-->
+                <!--/static/**=anon
+                /ueditor/**=anon
+                /index.html==anon
+                /api/cms/**=anon
+                /=anon
+                /api/*=authc
+                /upload/**=anon
+                /**=authc-->
+                /api/sys/login=authc
             </value>
         </property>
     </bean>

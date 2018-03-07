@@ -5,6 +5,7 @@ import com.dch.entity.TemplateResult;
 import com.dch.entity.TemplateResultMaster;
 import com.dch.facade.TemplateResultFacade;
 import com.dch.facade.common.VO.Page;
+import com.dch.util.JSONUtil;
 import com.dch.util.StringUtils;
 import com.dch.vo.TemplateMasterVo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,9 +17,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
+import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.springframework.data.mongodb.core.query.Criteria.where;
 
@@ -48,6 +53,7 @@ public class TemplateResultService {
             int i=0;
             for(String result:resultList){
                 if(!"null".equals(result)){
+                    result = getNewResult(result);
                     if(i==0 && !StringUtils.isEmptyParam(result)){
                         result = result.substring(1,result.length()-1);
                     }else if(i>0 && !StringUtils.isEmptyParam(result)){
@@ -80,6 +86,36 @@ public class TemplateResultService {
         return Response.status(Response.Status.OK).entity(list).build();
     }
 
+    public String getNewResult(String result){
+        try {
+            if(!"null".equals(result)){
+                Map map = (Map) JSONUtil.JSONToObj(result,Map.class);
+                for(Object obj:map.keySet()){
+                    String value =  map.get(obj)==null?"":map.get(obj).toString();
+                    if(!value.startsWith("0")){//不是以0开头的数字
+                        boolean isNum = isNumeric(value);
+                        if(isNum){
+                            map.put(obj,map.put(obj,new BigDecimal(value)));
+                        }
+                    }
+                }
+                result = JSONUtil.objectToJsonString(map);
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return result;
+    }
+    /**
+     * 判断是否为数字
+     * @param input
+     * @return
+     */
+    public boolean isNumeric(String input){
+        Pattern pattern = Pattern.compile("-?[0-9]+\\.?[0-9]*");
+        Matcher isNum = pattern.matcher(input);
+        return isNum.matches();
+    }
     /**
      * 根据templaeId删除mongodb数据库中已存在的表单信息
      * @param masterId
@@ -194,4 +230,21 @@ public class TemplateResultService {
         return  templateResultFacade.getTemplateResultMasters(templateId,perPage,currentPage,userId,status);
     }
 
+    /**
+     * 驳回用户填写表单数据，状态重置改为1
+     * @param masterId
+     * @param status
+     * @return
+     */
+    @POST
+    @Path("reset-template-result-master")
+    @Transactional
+    public Response resetTemplateResultMaster(@QueryParam("masterId")String masterId,@QueryParam("status")String status){
+        TemplateResultMaster templateResultMaster = templateResultFacade.get(TemplateResultMaster.class,masterId);
+        if(!StringUtils.isEmptyParam(status)){
+            templateResultMaster.setStatus(status);
+        }
+        TemplateResultMaster merge = templateResultFacade.merge(templateResultMaster);
+        return Response.status(Response.Status.OK).entity(merge).build();
+    }
 }

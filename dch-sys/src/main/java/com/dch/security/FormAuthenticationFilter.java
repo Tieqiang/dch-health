@@ -5,12 +5,15 @@
  */
 package com.dch.security;
 
+import com.dch.util.StringUtils;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.web.util.WebUtils;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 
 /**
  * 表单验证（包含验证码）过滤类
@@ -53,4 +56,24 @@ public class FormAuthenticationFilter extends org.apache.shiro.web.filter.authc.
 		return new UsernamePasswordToken(username, password.toCharArray(), rememberMe, host, captcha,userId);
 	}
 
+	@Override
+	protected boolean onAccessDenied(ServletRequest request, ServletResponse response) throws Exception {
+		HttpServletRequest httpServletRequest = (HttpServletRequest)request;
+		HttpSession httpSession = httpServletRequest.getSession();
+
+		String validateCode = (String)httpSession.getAttribute(httpSession.getId()+"pictureCode");//获取session中的验证码
+		//获取参数传递的验证码
+		String randomCode = httpServletRequest.getParameter("randomCode");
+		if(StringUtils.isEmptyParam(validateCode)){
+			httpServletRequest.setAttribute("shiroLoginFailure", "randomCodeLoseEffect");//验证码失效
+			return true;
+		}
+		if(StringUtils.isEmptyParam(randomCode)||!randomCode.equals(validateCode)){
+			//如果校验失败，将验证码错误失败信息，通过shiroLoginFailure设置到request中
+			httpServletRequest.setAttribute("shiroLoginFailure", "randomCodeError");
+			//拒绝访问，不再校验账号和密码
+			return true;
+		}
+		return super.onAccessDenied(request, response);
+	}
 }

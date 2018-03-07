@@ -5,25 +5,38 @@ import com.dch.entity.TemplateResult;
 import com.dch.facade.common.BaseFacade;
 import com.dch.util.JSONUtil;
 import com.dch.util.StringUtils;
+import com.dch.util.UserUtils;
 import com.dch.vo.MongoQueryVo;
 import com.dch.vo.MongoResultVo;
 import com.dch.vo.Person;
 import com.dch.vo.QueryTerm;
-import org.codehaus.jettison.json.JSONArray;
+import com.mongodb.BasicDBObject;
+//import org.apache.logging.log4j.LogManager;
+//import org.apache.logging.log4j.Logger;
+import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.aggregation.Aggregation;
+import org.springframework.data.mongodb.core.aggregation.AggregationResults;
+import org.springframework.data.mongodb.core.aggregation.GroupOperation;
+import org.springframework.data.mongodb.core.aggregation.TypedAggregation;
+import org.springframework.data.mongodb.core.mapreduce.GroupBy;
+import org.springframework.data.mongodb.core.mapreduce.GroupByResults;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.ws.rs.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import javax.ws.rs.core.Response;
+import java.math.BigDecimal;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import static org.springframework.data.mongodb.core.aggregation.Aggregation.*;
 import static org.springframework.data.mongodb.core.query.Criteria.where;
 
 
@@ -31,6 +44,8 @@ import static org.springframework.data.mongodb.core.query.Criteria.where;
 @Produces("application/json")
 @Path("mongo")
 public class MongoService {
+   final private static String collectionName = "templateResult";
+    //public static final Logger logger = LogManager.getLogger(MongoService.class);
 
     @Autowired
     private MongoTemplate mongoTemplate ;
@@ -56,6 +71,14 @@ public class MongoService {
                 int k=0;
                 for(TemplateResult templateResult:templateResultList){
                     String result = templateResult.getTemplateResult();
+                    try {
+                        if(!"null".equals(result)){
+                            Map map = (Map)JSONUtil.JSONToObj(result,Map.class);
+                            result = getNewResult(map);//将json串中的数字字符串转化为数值
+                        }
+                    }catch (Exception e){
+                        e.printStackTrace();
+                    }
                     if(!"null".equals(result)){
                         if(k==0 && !StringUtils.isEmptyParam(result)){
                             result = result.substring(1,result.length()-1);
@@ -69,11 +92,30 @@ public class MongoService {
                 stringBuffer.append("}");
                 String toMongoResult = stringBuffer.toString();
                 System.out.println(toMongoResult);
-                mongoTemplate.insert(toMongoResult,"templateResult");
+                mongoTemplate.insert(toMongoResult,collectionName);
             }
         }
     }
 
+    /**
+     * 将json串中的数字字符串转化为数值为了在mongo中查询使用
+     * @param map
+     * @return
+     * @throws Exception
+     */
+    public String getNewResult(Map map) throws Exception{
+        String result = "";
+        for(Object obj:map.keySet()){
+           String value =  map.get(obj)==null?"":map.get(obj).toString();
+           if(!value.startsWith("0")||"0".equals(value)){//不是以0开头的数字
+               boolean isNum = isNumeric(value);
+               if(isNum){
+                   map.put(obj,new BigDecimal(value));
+               }
+           }
+        }
+        return JSONUtil.objectToJsonString(map);
+    }
     @GET
     @Path("get-all")
     public List<Person> getAll(){
@@ -98,8 +140,24 @@ public class MongoService {
         return userList1;
     }
 
+    /**
+     * 查询统计的条件信息
+     * @return
+     */
+    @GET
+    @Path("get-template-query-rules")
+    public List<TemplateQueryRule> getTemplateQueryRules(@QueryParam("templateId")String templateId,@QueryParam("ruleName")String ruleName){
+        String userId = UserUtils.getCurrentUser().getId();
+        String hql = "from TemplateQueryRule where status<>'-1' and templateId = '"+templateId+"' and createBy = '"+userId+"'";
+        if(!StringUtils.isEmptyParam(ruleName)){
+            hql += " and ruleName = '"+ruleName+"'";
+        }
+        List<TemplateQueryRule> templateQueryRuleList = baseFacade.createQuery(TemplateQueryRule.class,hql,new ArrayList<Object>()).getResultList();
+        return templateQueryRuleList;
+    }
     @GET
     @Path("test-query")
+    @Transactional
     public List<MongoResultVo> testQuery(@QueryParam("templateId")String templateId, @QueryParam("target")String target,
                                          @QueryParam("targetName")String targetName) throws Exception{
         MongoQueryVo mongoQueryVo = new MongoQueryVo();
@@ -109,12 +167,15 @@ public class MongoService {
         List<QueryTerm> queryTerms = new ArrayList<>();
         QueryTerm queryTerm = new QueryTerm();
         queryTerm.setLogicOpt("and");
-        queryTerm.setOperator(">");
-        queryTerm.setParamName(target);
-        queryTerm.setValue("12");
+        queryTerm.setOperator("like");
+        queryTerm.setParamName("dch_1517974002710");
+        queryTerm.setValue("2");
         queryTerms.add(queryTerm);
         mongoQueryVo.setQueryParamList(queryTerms);
-        return getMongoResultVoByParam(mongoQueryVo);
+//        logger.debug("测试查询....");
+//        logger.info("测试查询....");
+//        logger.error("测试查询....");
+        return getNewMongoResultVoByParam(mongoQueryVo);
     }
 
     /**
@@ -123,37 +184,54 @@ public class MongoService {
      * @return
      */
     @POST
-    @Path("query-count-result")
-    public List<MongoResultVo> getMongoResultVoByParam(MongoQueryVo mongoQueryVo) throws Exception{
+    @Path("query-new-count-result")
+    @Transactional
+    public List<MongoResultVo> getNewMongoResultVoByParam(MongoQueryVo mongoQueryVo) throws Exception{
         List<MongoResultVo> mongoResultVos = new ArrayList<>();
         try {
-            saveOrUpdateQueryRule(mongoQueryVo);
-            Query query = new Query();
-            Map map = getMapValue(mongoQueryVo.getTarget());
-            if(map!=null && map.size()>1){
-                for(Object key:map.keySet()){
-                    Criteria criteria = where("templateId").is(mongoQueryVo.getTemplateId());
-                    criteria =  analyseQueryVo(criteria,mongoQueryVo);
-                    String value = (String)map.get(key);
-                    criteria.and(mongoQueryVo.getTarget()).is(value);//查询男或女的数量
-                    query.addCriteria(criteria);
-                    List<Object> userList1 = mongoTemplate.find(query, Object.class,"templateResult");
+            //saveOrUpdateQueryRule(mongoQueryVo);
+//            Aggregation aggregation  = Aggregation.newAggregation(Aggregation.group(mongoQueryVo.getTarget()).count().as("value"));
+//            Criteria criteria = where("templateId").is(mongoQueryVo.getTemplateId());
+//            criteria =  analyseQueryVo(criteria,mongoQueryVo);
+//            aggregation.match(criteria);
+//            Query query =new Query(criteria);
+//            List<Map> maps = mongoTemplate.aggregate(aggregation,collectionName,Map.class).getMappedResults();
+//            for(Map map:maps){
+//               String id = (String)map.get("_id");
+//               String value = map.get("value")+"";
+//               if(!StringUtils.isEmptyParam(id)){
+//                   MongoResultVo mongoResultVo = new MongoResultVo();
+//                   mongoResultVo.setName(id);
+//                   mongoResultVo.setValue(Integer.valueOf(value));
+//                   mongoResultVos.add(mongoResultVo);
+//               }
+//            }
+            Criteria criteria = where("templateId").is(mongoQueryVo.getTemplateId());
+            criteria =  analyseQueryVo(criteria,mongoQueryVo);
+            GroupBy groupBy = GroupBy.key(mongoQueryVo.getTarget()).initialDocument("{value:0}")
+                    .reduceFunction("function(doc,prev){prev.value+=1}");
+            GroupByResults<BasicDBObject> groupByResults = mongoTemplate.group(criteria,collectionName,groupBy,BasicDBObject.class);
+            Iterator iterator = groupByResults.iterator();
+            Map codeMap = getMapValue(mongoQueryVo.getTarget());
+            while(iterator.hasNext()){
+                Document document = (Document)iterator.next();
+                String name = document.get(mongoQueryVo.getTarget())+"";
+                if(isNumeric(name)){
+                    name = subZeroAndDot(name);
+                }
+                if(codeMap!=null && !codeMap.isEmpty()){
+                    String value = codeMap.get(name)==null?"":codeMap.get(name).toString();
+                    if(!StringUtils.isEmptyParam(value)){
+                        name = value;
+                    }
+                }
+                String value = document.get("value")+"";
+                if(!"null".equals(name)){
                     MongoResultVo mongoResultVo = new MongoResultVo();
-                    mongoResultVo.setName(key+"");
-                    mongoResultVo.setValue(userList1!=null?userList1.size():0);
-                    criteria = null;
-                    query = new Query();
+                    mongoResultVo.setName(name);
+                    mongoResultVo.setValue(Double.valueOf(value).intValue());
                     mongoResultVos.add(mongoResultVo);
                 }
-            }else{
-                Criteria criteria = where("templateId").is(mongoQueryVo.getTemplateId());
-                criteria =  analyseQueryVo(criteria,mongoQueryVo);
-                query.addCriteria(criteria);
-                List<Object> userList1 = mongoTemplate.find(query, Object.class,"templateResult");
-                MongoResultVo mongoResultVo = new MongoResultVo();
-                mongoResultVo.setName(mongoQueryVo.getTargetName());
-                mongoResultVo.setValue(userList1!=null?userList1.size():0);
-                mongoResultVos.add(mongoResultVo);
             }
         }catch (Exception e){
             e.printStackTrace();
@@ -163,10 +241,78 @@ public class MongoService {
     }
 
     /**
+     * mongo查询统计结果，根据传入统计规则统计数量信息
+     * @param mongoQueryVo
+     * @return
+     */
+    @POST
+    @Path("query-count-result")
+    @Transactional
+    public List<MongoResultVo> getMongoResultVoByParam(MongoQueryVo mongoQueryVo) throws Exception{
+        List<MongoResultVo> mongoResultVos = new ArrayList<>();
+        try {
+            //saveOrUpdateQueryRule(mongoQueryVo);
+            Criteria criteria = where("templateId").is(mongoQueryVo.getTemplateId());
+            criteria =  analyseQueryVo(criteria,mongoQueryVo);
+            GroupBy groupBy = GroupBy.key(mongoQueryVo.getTarget()).initialDocument("{value:0}")
+                    .reduceFunction("function(doc,prev){prev.value+=1}");
+            GroupByResults<BasicDBObject> groupByResults = mongoTemplate.group(criteria,collectionName,groupBy,BasicDBObject.class);
+            Iterator iterator = groupByResults.iterator();
+            Map codeMap = getMapValue(mongoQueryVo.getTarget());
+            while(iterator.hasNext()){
+                Document document = (Document)iterator.next();
+                String name = document.get(mongoQueryVo.getTarget())+"";
+                if(isNumeric(name)){
+                    name = subZeroAndDot(name);
+                }
+                if(codeMap!=null && !codeMap.isEmpty()){
+                    String value = codeMap.get(name)==null?"":codeMap.get(name).toString();
+                    if(!StringUtils.isEmptyParam(value)){
+                        name = value;
+                    }
+                }
+                String value = document.get("value")+"";
+                if(!"null".equals(name)){
+                    MongoResultVo mongoResultVo = new MongoResultVo();
+                    mongoResultVo.setName(name);
+                    mongoResultVo.setValue(Double.valueOf(value).intValue());
+                    mongoResultVos.add(mongoResultVo);
+                }
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+            throw new Exception("查询统计异常");
+        }
+        return mongoResultVos;
+    }
+
+    /**
+     * 保存修改删除查询规则
+     * @param templateQueryRule
+     * @return
+     * @throws Exception
+     */
+    @POST
+    @Path("merge-query-rule")
+    @Transactional
+    public Response mergeQueryRule(TemplateQueryRule templateQueryRule) throws Exception{
+        if(!"-1".equals(templateQueryRule.getStatus())){//新增设置状态值
+            String hql = "select templateId from TemplateQueryRule where status<>'-1' and templateId = '"+templateQueryRule.getTemplateId()+"' and ruleName = '"+templateQueryRule.getRuleName()+"' and id<>'"+templateQueryRule.getId()+"'";
+            List<String> list = baseFacade.createQuery(String.class,hql,new ArrayList<Object>()).getResultList();
+            if(list!=null && !list.isEmpty()){
+                throw new Exception("相同表单模板下不能添加相同的规则名称");
+            }
+            templateQueryRule.setStatus("0");
+        }
+        TemplateQueryRule merge = baseFacade.merge(templateQueryRule);
+        return Response.status(Response.Status.OK).entity(merge).build();
+    }
+    /**
      * 保存或者更新查询条件
      * @param mongoQueryVo
      * @throws Exception
      */
+    @Transactional
     public void saveOrUpdateQueryRule(MongoQueryVo mongoQueryVo)throws Exception{
         String hql = " from TemplateQueryRule where status<>'-1' and templateId = '"+mongoQueryVo.getTemplateId()+"' and ruleName = '"+mongoQueryVo.getTargetName()+"'";
         List<TemplateQueryRule> templateQueryRules = baseFacade.createQuery(TemplateQueryRule.class,hql,new ArrayList<Object>()).getResultList();
@@ -179,6 +325,7 @@ public class MongoService {
             templateQueryRule.setTemplateId(mongoQueryVo.getTemplateId());
             templateQueryRule.setRuleName(mongoQueryVo.getTargetName());
             templateQueryRule.setContent(JSONUtil.objectToJsonString(mongoQueryVo));
+            templateQueryRule.setStatus("0");
             baseFacade.merge(templateQueryRule);
         }
     }
@@ -188,37 +335,67 @@ public class MongoService {
             if(mongoQueryVo.getQueryParamList()!=null && !mongoQueryVo.getQueryParamList().isEmpty()){
                List<QueryTerm> queryParamList = mongoQueryVo.getQueryParamList();
                for(QueryTerm queryParam:queryParamList){
-                   if("and".equals(queryParam.getLogicOpt())){
+                   String value = queryParam.getValue();
+                   //Map returnMap = getCodeName2ValueMap(queryParam.getParamName());
+                   List<String> valueList = getValueListByNameAndCode(queryParam.getParamName(),value);
+                   if(valueList!=null && !valueList.isEmpty()){
+                       value = valueList.get(0);
+                   }
+                   if("and".equals(queryParam.getLogicOpt()) || StringUtils.isEmptyParam(queryParam.getLogicOpt())){
                        if("=".equals(queryParam.getOperator())){
-                           criteria.and(queryParam.getParamName()).is(queryParam.getValue());
+                           if("0".equals(value)||(isNumeric(value) && !value.startsWith("0"))){
+                               criteria.and(queryParam.getParamName()).is(Double.valueOf(value));
+                           }else{
+                               criteria.and(queryParam.getParamName()).is(value);
+                           }
                        }else if(">".equals(queryParam.getOperator())){
-                           criteria.and(queryParam.getParamName()).gt(queryParam.getValue());
+                           criteria.and(queryParam.getParamName()).gt(Double.valueOf(value));
                        }else if(">=".equals(queryParam.getOperator())){
-                           criteria.and(queryParam.getParamName()).gte(queryParam.getValue());
+                           criteria.and(queryParam.getParamName()).gte(Double.valueOf(value));
                        }else if("<".equals(queryParam.getOperator())){
-                           criteria.and(queryParam.getParamName()).lt(queryParam.getValue());
+                           criteria.and(queryParam.getParamName()).lt(Double.valueOf(value));
                        }else if("<=".equals(queryParam.getOperator())){
-                           criteria.and(queryParam.getParamName()).lte(queryParam.getValue());
+                           criteria.and(queryParam.getParamName()).lte(Double.valueOf(value));
                        }else if("<>".equals(queryParam.getOperator())){
-                           criteria.and(queryParam.getParamName()).ne(queryParam.getValue());
+                           if("0".equals(value)||(isNumeric(value) && !value.startsWith("0"))){
+                               criteria.and(queryParam.getParamName()).ne(Double.valueOf(value));
+                           }else{
+                               criteria.and(queryParam.getParamName()).ne(value);
+                           }
                        }else if("like".equals(queryParam.getOperator())){
-                           criteria.and(queryParam.getParamName()).regex(".*?" + queryParam.getValue() + ".*");//? like
+                           if(valueList!=null && !valueList.isEmpty()){
+                               criteria.and(queryParam.getParamName()).in(valueList);
+                           }else{
+                               criteria.and(queryParam.getParamName()).regex(".*?" + queryParam.getValue() + ".*");//? like
+                           }
                        }
                    }else{
                        if("=".equals(queryParam.getOperator())){
-                           criteria.orOperator(where(queryParam.getParamName()).is(queryParam.getValue()));
+                           if("0".equals(value)||(isNumeric(value) && !value.startsWith("0"))){
+                               criteria.orOperator(where(queryParam.getParamName()).is(Double.valueOf(value)));
+                           }else{
+                               criteria.orOperator(where(queryParam.getParamName()).is(value));
+                           }
                        }else if(">".equals(queryParam.getOperator())){
-                           criteria.orOperator(where(queryParam.getParamName()).gt(queryParam.getValue()));
+                           criteria.orOperator(where(queryParam.getParamName()).gt(Double.valueOf(value)));
                        }else if(">=".equals(queryParam.getOperator())){
-                           criteria.orOperator(where(queryParam.getParamName()).gte(queryParam.getValue()));
+                           criteria.orOperator(where(queryParam.getParamName()).gte(Double.valueOf(value)));
                        }else if("<".equals(queryParam.getOperator())){
-                           criteria.orOperator(where(queryParam.getParamName()).lt(queryParam.getValue()));
+                           criteria.orOperator(where(queryParam.getParamName()).lt(Double.valueOf(value)));
                        }else if("<=".equals(queryParam.getOperator())){
-                           criteria.orOperator(where(queryParam.getParamName()).lte(queryParam.getValue()));
+                           criteria.orOperator(where(queryParam.getParamName()).lte(Double.valueOf(value)));
                        }else if("<>".equals(queryParam.getOperator())){
-                           criteria.orOperator(where(queryParam.getParamName()).ne(queryParam.getValue()));
+                           if("0".equals(value)||(isNumeric(value) && !value.startsWith("0"))){
+                               criteria.orOperator(where(queryParam.getParamName()).ne(Double.valueOf(value)));
+                           }else{
+                               criteria.orOperator(where(queryParam.getParamName()).ne(value));
+                           }
                        }else if("like".equals(queryParam.getOperator())){
-                           criteria.orOperator(where(queryParam.getParamName()).regex(".*?" + queryParam.getValue() + ".*"));//? like
+                           if(valueList!=null && !valueList.isEmpty()){
+                               criteria.orOperator(where(queryParam.getParamName()).in(valueList));//? like
+                           }else{
+                               criteria.orOperator(where(queryParam.getParamName()).regex(".*?" + queryParam.getValue() + ".*"));//? like
+                           }
                        }
                    }
                }
@@ -235,9 +412,60 @@ public class MongoService {
         if(list!=null && !list.isEmpty()){
             for(int i=0;i<list.size();i++){
                 Object[] innerParams = (Object[])list.get(i);
-                map.put(innerParams[0].toString(),innerParams[1]);
+                map.put(innerParams[1].toString(),innerParams[0]);
             }
         }
         return map;
+    }
+
+    public List<String> getValueListByNameAndCode(String dataElementCode,String name){
+        List<String> returnList = new ArrayList<>();
+        String sql = "select d.data_value_name,d.data_value from template_data_value d,template_data_element t " +
+                "where d.data_element_id = t.id and t.data_element_code = '"+dataElementCode+"' and d.data_value_name like '%"+name+"%'";
+        List list = baseFacade.createNativeQuery(sql).getResultList();
+        if(list!=null && !list.isEmpty()){
+            for(int i=0;i<list.size();i++){
+                Object[] innerParams = (Object[])list.get(i);
+                returnList.add(innerParams[1].toString());
+            }
+        }
+        return returnList;
+    }
+    /**
+     * 根据编码获取名称和值域的对照关系集合
+     * @param dataElementCode
+     * @return
+     */
+    public Map getCodeName2ValueMap(String dataElementCode){
+        Map returnMap = new HashMap();
+        Map map = getMapValue(dataElementCode);
+        for(Object obj:map.keySet()){
+            returnMap.put(map.get(obj),obj);
+        }
+        return returnMap;
+    }
+
+    /**
+     * 判断是否为数字
+     * @param input
+     * @return
+     */
+    public boolean isNumeric(String input){
+        Pattern pattern = Pattern.compile("-?[0-9]+\\.?[0-9]*");
+        Matcher isNum = pattern.matcher(input);
+        return isNum.matches();
+    }
+
+    /**
+     * 使用java正则表达式去掉多余的.与0
+     * @param s
+     * @return
+     */
+    public static String subZeroAndDot(String s){
+        if(s.indexOf(".") > 0){
+            s = s.replaceAll("0+?$", "");//去掉多余的0
+            s = s.replaceAll("[.]$", "");//如最后一位是.则去掉
+        }
+        return s;
     }
 }

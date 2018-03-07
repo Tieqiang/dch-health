@@ -3,7 +3,9 @@ package com.dch.facade;
 import com.dch.entity.DictType;
 import com.dch.entity.DictValue;
 import com.dch.facade.common.BaseFacade;
+import com.dch.facade.common.VO.Page;
 import com.dch.util.PinYin2Abbreviation;
+import com.dch.util.StringUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,12 +39,18 @@ public class DictFacade extends BaseFacade {
      * @param inputCode
      * @return
      */
-    public List<DictType> getDictTypes(String inputCode){
+    public Page<DictType> getDictTypes(String inputCode,int perPage,int currentPage){
         String hql = "from DictType where status <> '-1'";
         if(inputCode != null&&!"".equals(inputCode)){
             hql += " and upper(inputCode) like '%" + inputCode.toUpperCase() + "%'";
         }
-        return createQuery(DictType.class,hql,new ArrayList<Object>()).getResultList();
+        if(StringUtils.isEmptyParam(inputCode) && perPage<1 && currentPage<1){
+            String hqlCount = "select count(id) from DictType where status <> '-1'";
+            Long total = createQuery(Long.class,hqlCount,new ArrayList<Object>()).getSingleResult();
+            perPage = Integer.valueOf(total+"");
+            currentPage = 1;
+        }
+        return getPageResult(DictType.class,hql,perPage,currentPage);
     }
 
     /**
