@@ -42,11 +42,18 @@ public class UserService {
      * @return
      * @throws Exception
      */
-    @GET
-    @Path("get-current-user")
     public UserVo getCurrentUser() throws Exception {
         UserVo yunUsers = UserUtils.getCurrentUser();
         return yunUsers;
+    }
+
+    @GET
+    @Path("get-current-user")
+    public User getCurrentUserInfo() throws Exception{
+        UserVo userVo = getCurrentUser();
+        String userId = userVo.getId();
+        User user = getUserById(userId, "");
+        return user;
     }
 
     /**
