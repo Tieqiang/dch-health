@@ -52,6 +52,9 @@ public class UserService {
     public User getCurrentUserInfo() throws Exception{
         UserVo userVo = getCurrentUser();
         String userId = userVo.getId();
+        if(userId==null||"".equals(userId)){
+            return new User();
+        }
         User user = getUserById(userId, "");
         return user;
     }
