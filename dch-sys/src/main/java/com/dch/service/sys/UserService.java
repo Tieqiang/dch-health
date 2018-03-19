@@ -221,6 +221,7 @@ public class UserService {
      */
     @POST
     @Path("set-user-modules")
+    @Transactional
     public Response setUserModules(@QueryParam("userId") String userId,List<Module> moduleList) throws Exception{
         try {
             userFacade.setUserModules(userId,moduleList);
@@ -251,6 +252,7 @@ public class UserService {
      */
     @POST
     @Path("set-user-role")
+    @Transactional
     public Response setUserRoles(@QueryParam("userId") String userId,@QueryParam("moduleId") String moduleId,List<Role> roleList) throws Exception{
         try {
             userFacade.setUserRoles(userId,moduleId,roleList);

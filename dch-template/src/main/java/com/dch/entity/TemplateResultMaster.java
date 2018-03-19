@@ -14,6 +14,7 @@ public class TemplateResultMaster extends BaseEntity {
     private String templateName;
     private Double completeRate;
     private String templateResult;
+    //private String modelId;//所属模块
 
     @Basic
     @Column(name = "template_id", nullable = true, length = 64)

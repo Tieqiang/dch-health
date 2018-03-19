@@ -32,6 +32,7 @@ import static org.springframework.data.mongodb.core.query.Criteria.where;
 @Controller
 public class TemplateResultService {
     private static final String tempCollectionName = "templateResult";
+    private static final String tempFillName = "templateFilling";
 
     @Autowired
     private TemplateResultFacade templateResultFacade;
@@ -42,7 +43,7 @@ public class TemplateResultService {
     @POST
     @Path("save-all-template-result")
     @Transactional
-    public Response saveAllTemplateResult(@QueryParam("templateId") String templateId,@QueryParam("masterId") String masterId) throws Exception {
+    public Response saveAllTemplateResult(@QueryParam("templateId") String templateId,@QueryParam("masterId") String masterId,@QueryParam("type")String type) throws Exception {
         List<String> list = new ArrayList<>();
         String hql = "select templateResult from TemplateResult where status<>'-1' and templateId = '"+templateId+"' " +
                 "and masterId = '"+masterId+"'";
@@ -67,8 +68,12 @@ public class TemplateResultService {
             String toMongoResult = stringBuffer.toString();
             TemplateResultMaster templateResultMaster = templateResultFacade.get(TemplateResultMaster.class,masterId);
             try{
-                removeTemplateResultByMasterId(masterId);
-                mongoTemplate.insert(toMongoResult,tempCollectionName);
+                removeTemplateResultByMasterId(masterId,type);
+                if("fill".equals(type)){
+                    mongoTemplate.insert(toMongoResult,tempFillName);
+                }else{
+                    mongoTemplate.insert(toMongoResult,tempCollectionName);
+                }
             }catch (Exception e){
                 throw new Exception("表单数据保存异常");
             }
@@ -76,7 +81,7 @@ public class TemplateResultService {
                 templateResultMaster.setStatus("2");//表单状态设置为已保存
                 templateResultFacade.merge(templateResultMaster);
             }catch (Exception e){
-                removeTemplateResultByMasterId(masterId);//保存异常 清除mongo中已保存的数据
+                removeTemplateResultByMasterId(masterId,type);//保存异常 清除mongo中已保存的数据
                 throw new Exception("表单信息保存异常");
             }
         }else{
@@ -120,13 +125,17 @@ public class TemplateResultService {
      * 根据templaeId删除mongodb数据库中已存在的表单信息
      * @param masterId
      */
-    public void removeTemplateResultByMasterId(String masterId){
+    public void removeTemplateResultByMasterId(String masterId,String type){
         Query query = new Query();
         // query.addCriteria(where("age").gt(22));
         Criteria criteria = where("masterId").is(masterId);
         // 删除年龄大于22岁的用户
         query.addCriteria(criteria);
-        mongoTemplate.remove(query,tempCollectionName);
+        if("fill".equals(type)){
+            mongoTemplate.remove(query,tempFillName);
+        }else{
+            mongoTemplate.remove(query,tempCollectionName);
+        }
     }
     /**
      * 保存表单数据

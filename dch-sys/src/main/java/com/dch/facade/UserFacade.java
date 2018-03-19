@@ -173,12 +173,16 @@ public class UserFacade extends BaseFacade {
      */
     @Transactional
     public void setUserModules(String userId, List<Module> moduleList) {
-        deleteUserVsModule(userId);
-        for(Module module:moduleList){
-            UserVsModule userVsModule = new UserVsModule();
-            userVsModule.setModuleId(module.getId());
-            userVsModule.setUserId(userId);
-            merge(userVsModule);
+        try{
+            deleteUserVsModule(userId);
+            for(Module module:moduleList){
+                UserVsModule userVsModule = new UserVsModule();
+                userVsModule.setModuleId(module.getId());
+                userVsModule.setUserId(userId);
+                merge(userVsModule);
+            }
+        }catch (Exception e){
+            e.printStackTrace();
         }
     }
 

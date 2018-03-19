@@ -9,12 +9,16 @@ import com.dch.facade.common.VO.Page;
 import com.dch.util.PinYin2Abbreviation;
 import com.dch.util.StringUtils;
 import com.dch.vo.SolrVo;
+import com.dch.vo.TemplateMasterModuleVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.TypedQuery;
 import javax.ws.rs.core.Response;
+import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -161,5 +165,54 @@ public class TemplateMasterFacade extends BaseFacade{
         String hql=" from TemplateMaster where status <> '-1' and projectId='"+projectId+"'";
         Page<TemplateMaster> templateMasterPage = getPageResult(TemplateMaster.class, hql, perPage, currentPage);
         return templateMasterPage;
+    }
+
+    public Page<TemplateMasterModuleVo> getTemplateMastersByModel(String modelId, String templateLevel, String templateStauts, String whereHql, int perPage, int currentPage, String publishStatus) {
+        String hql="select new com.dch.vo.TemplateMasterModuleVo(m.id,m.templateName,m.templateLevel,m.templateStatus,m.projectId,m.fillLimit,m.templateDesc,m.publishStatus,m.modelId," +
+                "m.displayConfig,m.createDate,m.modifyDate,m.createBy,m.modifyBy,m.status,(SELECT COUNT(distinct masterId) FROM TemplateResult r WHERE r.templateId = m.id) as fillNum," +
+                "(SELECT COUNT(id) FROM TemplateResultMaster rm WHERE rm.templateId = m.id and rm.status='2') as commitNum) from TemplateMaster as m where m.status <> '-1' ";
+
+        String hqlCount="select count(*) from TemplateMaster m where m.status <> '-1' ";
+
+        if(!StringUtils.isEmptyParam(modelId)){
+            hql += " and modelId = '"+modelId+"'";
+            hqlCount += " and modelId = '"+modelId+"'";
+        }
+        if(!StringUtils.isEmptyParam(templateLevel)){
+            hql += " and templateLevel = '"+templateLevel+"'";
+            hqlCount += " and templateLevel = '"+templateLevel+"'";
+        }
+        if(!StringUtils.isEmptyParam(templateStauts)){
+            hql += " and templateStatus = '"+templateStauts+"'";
+            hqlCount += " and templateStatus = '"+templateStauts+"'";
+        }
+        if(!StringUtils.isEmptyParam(whereHql)){
+            hql += " and "+whereHql;
+            hqlCount += " and "+whereHql;
+        }
+        if(!StringUtils.isEmptyParam(publishStatus)){
+            hql += " and publishStatus = '"+publishStatus+"'";
+            hqlCount += " and publishStatus = '"+publishStatus+"'";
+        }
+        hql += " order by createDate desc";
+
+        TypedQuery<TemplateMasterModuleVo> query = createQuery(TemplateMasterModuleVo.class, hql, new ArrayList<Object>());
+        Long counts = createQuery(Long.class,hqlCount,new ArrayList<Object>()).getSingleResult();
+        Page page =new Page();
+        if(perPage<=0){
+            perPage=15;
+        }
+        if (perPage > 0) {
+            if(currentPage<=0){
+                currentPage =1;
+            }
+            query.setFirstResult((currentPage-1) * perPage);
+            query.setMaxResults(perPage);
+            page.setPerPage((long) perPage);
+        }
+        List<TemplateMasterModuleVo> templateMasterVoList = query.getResultList();
+        page.setCounts(counts);
+        page.setData(templateMasterVoList);
+        return page;
     }
 }

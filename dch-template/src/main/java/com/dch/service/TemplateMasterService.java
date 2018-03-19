@@ -3,8 +3,10 @@ package com.dch.service;
 import com.dch.entity.TemplateMaster;
 import com.dch.facade.TemplateMasterFacade;
 import com.dch.facade.common.VO.Page;
+import com.dch.vo.TemplateMasterModuleVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
@@ -28,6 +30,7 @@ public class TemplateMasterService {
      */
     @POST
     @Path("merge-template-master")
+    @Transactional
     public Response mergeTemplateMaster(TemplateMaster templateMaster) throws Exception{
         return templateMasterFacade.mergeTemplateMaster(templateMaster);
     }
@@ -84,5 +87,23 @@ public class TemplateMasterService {
                                                              @QueryParam("perPage") int perPage,
                                                              @QueryParam("currentPage") int currentPage){
         return templateMasterFacade.getTemplateMasterByProjectId(projectId,perPage,currentPage);
+    }
+
+    /**
+     *获取表单
+     * @param modelId 项目Id（选传）
+     * @param templateLevel 表单级别（选传）
+     * @param templateStauts 表单状态（注意区分stauts)
+     * @param whereHql 前端拼接条件
+     * @param perPage 每页显示条数，默认15条
+     * @param currentPage 当前第几页，默认为1
+     * @return
+     */
+    @GET
+    @Path("get-template-masters-by-model")
+    public Page<TemplateMasterModuleVo> getTemplateMastersByModel(@QueryParam("modelId")String modelId, @QueryParam("templateLevel")String templateLevel,
+                                                                  @QueryParam("templateStauts")String templateStauts, @QueryParam("whereHql")String whereHql,
+                                                                  @QueryParam("perPage") int perPage, @QueryParam("currentPage")int currentPage, @QueryParam("publishStatus")String publishStatus){
+        return templateMasterFacade.getTemplateMastersByModel(modelId,templateLevel,templateStauts,whereHql,perPage,currentPage,publishStatus);
     }
 }

@@ -20,6 +20,9 @@ public class TemplateMaster extends BaseEntity {
     private Integer fillLimit;
     private String templateDesc;
     private String publishStatus;// 0为未发布 1表示已发布
+    private String modelId;//所属模块
+    private String displayConfig;//展示配置信息
+
 
     @Basic
     @Column(name = "publish_status", nullable = true, length = 10)
@@ -92,5 +95,25 @@ public class TemplateMaster extends BaseEntity {
             fillLimit =0;
         }
         this.fillLimit = fillLimit;
+    }
+
+    @Basic
+    @Column(name = "model_id", nullable = true, length = 64)
+    public String getModelId() {
+        return modelId;
+    }
+
+    public void setModelId(String modelId) {
+        this.modelId = modelId;
+    }
+
+    @Basic
+    @Column(name = "display_config", nullable = true, length = -1)
+    public String getDisplayConfig() {
+        return displayConfig;
+    }
+
+    public void setDisplayConfig(String displayConfig) {
+        this.displayConfig = displayConfig;
     }
 }

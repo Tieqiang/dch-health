@@ -16,6 +16,7 @@ public class TemplateQueryRule extends BaseEntity {
     private String templateId;
     private String ruleName;
     private String content;
+    private String ruleDesc;//描述
 
     @Basic
     @Column(name = "template_id", nullable = true, length = 64)
@@ -45,5 +46,15 @@ public class TemplateQueryRule extends BaseEntity {
 
     public void setContent(String content) {
         this.content = content;
+    }
+
+    @Basic
+    @Column(name = "rule_desc", nullable = true, length = 300)
+    public String getRuleDesc() {
+        return ruleDesc;
+    }
+
+    public void setRuleDesc(String ruleDesc) {
+        this.ruleDesc = ruleDesc;
     }
 }

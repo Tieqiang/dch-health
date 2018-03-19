@@ -48,7 +48,12 @@ public class TemplatePageService {
         templatePage.setTemplatePageContent(templatePageVo.getTemplatePageContent());
         templatePage.setTemplatePageName(templatePageVo.getTemplatePageName());
         templatePage.setTemplatePageOrder(templatePageVo.getTemplatePageOrder());
-        templatePage.setTemplatePageDataModel(JSON.toString(templatePageVo.getTemplatePageDataModel()));
+        String json = JSON.toString(templatePageVo.getTemplatePageDataModel());
+        if("null".equals(json)){
+            templatePage.setTemplatePageDataModel(null);
+        }else{
+            templatePage.setTemplatePageDataModel(json);
+        }
         templatePage.setStatus(templatePageVo.getStatus());
         templatePage.setParentId(templatePageVo.getParentId());
         return templatePageFacade.mergeTemplatePage(templatePage);
