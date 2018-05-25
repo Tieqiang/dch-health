@@ -34,6 +34,9 @@ public class UserFacade extends BaseFacade {
         }catch (Exception e){
             throw new Exception("查询拼接where语句错误");
         }
+        if(resultList==null||resultList.isEmpty()){//mysql时间过长链接失效进行二次查询 暂时解决方法
+            resultList = createQuery(User.class, hql, new ArrayList<>()).getResultList();
+        }
         if(resultList!=null && resultList.size()>0){
             return resultList.get(0);
         }else{

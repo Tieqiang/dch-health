@@ -47,6 +47,7 @@
                 <property name="brokerURL">
                     <value>${mq.url}</value>
                 </property>
+                <!--<property name="trustAllPackages" value="true"/>-->
             </bean>
         </property>
         <property name="maxConnections" value="100"></property>

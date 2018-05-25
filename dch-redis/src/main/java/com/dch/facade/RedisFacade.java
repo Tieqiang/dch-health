@@ -1,7 +1,10 @@
 package com.dch.facade;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
+import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.core.ListOperations;
+import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Component;
@@ -100,4 +103,53 @@ public class RedisFacade {
         return bytes;
     }
 
+    private static String redisCode = "utf-8";
+
+    /**
+     * @param keys
+     */
+    public Object del(final String... keys) {
+        return redisTemplate.execute(new RedisCallback() {
+            public Long doInRedis(RedisConnection connection) throws DataAccessException {
+                long result = 0;
+                for (int i = 0; i < keys.length; i++) {
+                    result = connection.del(keys[i].getBytes());
+                }
+                return result;
+            }
+        });
+    }
+
+    /**
+     * @param key
+     * @return
+     */
+    public Object get(final String key) {
+        return redisTemplate.execute(new RedisCallback() {
+            public String doInRedis(RedisConnection connection) throws DataAccessException {
+                try {
+                    return new String(connection.get(key.getBytes()), redisCode);
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                }
+                return "";
+            }
+        });
+    }
+
+    /**
+     * @return
+     */
+    public Object flushDB() {
+        return redisTemplate.execute(new RedisCallback() {
+            public String doInRedis(RedisConnection connection) throws DataAccessException {
+                connection.flushDb();
+                return "ok";
+            }
+        });
+    }
+
+    public RedisTemplate getRedisTemplate(){
+        return redisTemplate;
+    }
 }

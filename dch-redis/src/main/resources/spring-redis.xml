@@ -9,9 +9,9 @@
           p:hostName="${redis.host}"
           p:port="${redis.port}">
     </bean>
+    <bean id="defaultRedisSerializer" class="org.springframework.data.redis.serializer.StringRedisSerializer"></bean>
     <!-- redis template definition -->
-    <bean id="redisTemplate" class="org.springframework.data.redis.core.RedisTemplate"
-          p:connection-factory-ref="jedisConnectionFactory"/>
-
+    <bean id="redisTemplate" class="org.springframework.data.redis.core.StringRedisTemplate"
+          p:connection-factory-ref="jedisConnectionFactory" p:defaultSerializer-ref="defaultRedisSerializer"/>
 
 </beans>
