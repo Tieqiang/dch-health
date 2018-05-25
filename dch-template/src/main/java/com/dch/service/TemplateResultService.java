@@ -3,10 +3,13 @@ package com.dch.service;
 import com.dch.entity.TemplateMaster;
 import com.dch.entity.TemplateResult;
 import com.dch.entity.TemplateResultMaster;
+import com.dch.entity.User;
 import com.dch.facade.TemplateResultFacade;
 import com.dch.facade.common.VO.Page;
 import com.dch.util.JSONUtil;
+import com.dch.util.ReadExcelToDb;
 import com.dch.util.StringUtils;
+import com.dch.util.UserUtils;
 import com.dch.vo.TemplateMasterVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -17,11 +20,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -33,6 +35,9 @@ import static org.springframework.data.mongodb.core.query.Criteria.where;
 public class TemplateResultService {
     private static final String tempCollectionName = "templateResult";
     private static final String tempFillName = "templateFilling";
+    private final String specialChar = "@";
+    private final String inputSpeChar = "$";
+    private static Map<String,Map> initMap = new HashMap<>();
 
     @Autowired
     private TemplateResultFacade templateResultFacade;
@@ -53,7 +58,7 @@ public class TemplateResultService {
                     .append(",").append("\"masterId\":").append("\"").append(masterId).append("\"");
             int i=0;
             for(String result:resultList){
-                if(!"null".equals(result)){
+                if(!"null".equals(result) && !StringUtils.isEmptyParam(result) && !"{}".equals(result)){
                     result = getNewResult(result);
                     if(i==0 && !StringUtils.isEmptyParam(result)){
                         result = result.substring(1,result.length()-1);
@@ -67,6 +72,8 @@ public class TemplateResultService {
             stringBuffer.append("}");
             String toMongoResult = stringBuffer.toString();
             TemplateResultMaster templateResultMaster = templateResultFacade.get(TemplateResultMaster.class,masterId);
+            toMongoResult = toMongoResult.replace(inputSpeChar,specialChar);
+            System.out.println("=====toMongoResult"+toMongoResult);
             try{
                 removeTemplateResultByMasterId(masterId,type);
                 if("fill".equals(type)){
@@ -75,12 +82,16 @@ public class TemplateResultService {
                     mongoTemplate.insert(toMongoResult,tempCollectionName);
                 }
             }catch (Exception e){
+                System.out.println("=====1");
+                e.printStackTrace();
                 throw new Exception("表单数据保存异常");
             }
             try{
                 templateResultMaster.setStatus("2");//表单状态设置为已保存
                 templateResultFacade.merge(templateResultMaster);
             }catch (Exception e){
+                System.out.println("=====2");
+                e.printStackTrace();
                 removeTemplateResultByMasterId(masterId,type);//保存异常 清除mongo中已保存的数据
                 throw new Exception("表单信息保存异常");
             }
@@ -97,11 +108,54 @@ public class TemplateResultService {
                 Map map = (Map) JSONUtil.JSONToObj(result,Map.class);
                 for(Object obj:map.keySet()){
                     String value =  map.get(obj)==null?"":map.get(obj).toString();
-                    if(!value.startsWith("0")){//不是以0开头的数字
-                        boolean isNum = isNumeric(value);
-                        if(isNum){
-                            map.put(obj,map.put(obj,new BigDecimal(value)));
+                    try {
+                        if(value.startsWith("[{") && value.endsWith("}]") && value.contains(inputSpeChar)){
+                            List<Map> mapList = (List<Map>)map.get(obj);
+                            for(Map inMap:mapList){
+                                for(Object key:inMap.keySet()){
+                                    String inValue = inMap.get(key)==null?"":inMap.get(key).toString();
+                                    boolean isNum = isNumeric(inValue);
+                                    if(isNum){
+                                        inMap.put(key,new BigDecimal(inValue));
+                                    }
+                                }
+                            }
+                        }else if(value.startsWith("[") && value.endsWith("]") && !value.contains("{")){
+                            List list = (List)map.get(obj);
+                            List newList = new ArrayList();
+                            if(list!=null && !list.isEmpty()){
+                                for(int i=0;i<list.size();i++){
+                                    String inValue = list.get(i)==null?"":list.get(i).toString();
+                                    boolean isNum = isNumeric(inValue);
+                                    if(isNum){
+                                        newList.add(new BigDecimal(inValue));
+                                    }else{
+                                        newList.add(inValue);
+                                    }
+                                }
+                            }
+                            map.put(obj,newList);
+                        }else if(value.startsWith("{") && value.endsWith("}") && !value.contains("[")){
+                            Map inMap = (Map)map.get(obj);
+                            for(Object key:inMap.keySet()){
+                                String invalue = inMap.get(key)==null?"": inMap.get(key).toString();
+                                boolean isNum = isNumeric(invalue);
+                                if(isNum){
+                                    inMap.put(key,new BigDecimal(invalue));
+                                }
+                            }
+                        }else if(value.startsWith("{") && value.endsWith("}") && value.contains("[")){//Map里面 嵌套集合
+
+                        }else{
+                            if(!value.startsWith("0")||"0".equals(value)){//不是以0开头的数字
+                                boolean isNum = isNumeric(value);
+                                if(isNum){
+                                    map.put(obj,new BigDecimal(value));
+                                }
+                            }
                         }
+                    }catch (Exception e){
+                        e.printStackTrace();
                     }
                 }
                 result = JSONUtil.objectToJsonString(map);
@@ -119,7 +173,11 @@ public class TemplateResultService {
     public boolean isNumeric(String input){
         Pattern pattern = Pattern.compile("-?[0-9]+\\.?[0-9]*");
         Matcher isNum = pattern.matcher(input);
-        return isNum.matches();
+        Boolean isMach = isNum.matches();
+        if(isMach && input.length()>18){
+            isMach = false;
+        }
+        return isMach;
     }
     /**
      * 根据templaeId删除mongodb数据库中已存在的表单信息
@@ -150,18 +208,20 @@ public class TemplateResultService {
         try{
             //如果是保存的第一个页面，则自动生成
             String masterId = templateResult.getMasterId();
+            String userId = UserUtils.getCurrentUser().getId();
             if(StringUtils.isEmptyParam(templateResult.getId())){
                 if(StringUtils.isEmptyParam(templateResult.getMasterId())){
                     String templateId = templateResult.getTemplateId();
                     TemplateMaster templateMaster = templateResultFacade.get(TemplateMaster.class, templateId);
                     Integer limit = templateMaster.getFillLimit();
                     if(limit>0){
-                        String countHql = "select masterId from TemplateResult where status<>'-1' and templateId = '"+templateId+"' group by masterId";
+                        String countHql = "select masterId from TemplateResult where status<>'-1' and templateId = '"+templateId+"' and createBy = '"+userId+"' group by masterId";
                         List<String> ctList = templateResultFacade.createQuery(String.class,countHql,new ArrayList<Object>()).getResultList();
                         if(ctList!=null && ctList.size()==limit){
                             throw new Exception("表单录入数超过表单填报限制次数，不允许录入数据");
                         }
                     }
+                    String masterIdHql = "select id from TemplateResultMaster where templateId = '"+templateId+"' and createBy = '"+userId+"'";
                     TemplateResultMaster master = new TemplateResultMaster();
                     master.setTemplateId(templateId);
                     master.setTemplateName(templateMaster.getTemplateName());
@@ -176,9 +236,17 @@ public class TemplateResultService {
                 }
             }
             templateResultMerge = templateResultFacade.merge(templateResult);
-            String totalHql = "select count(*) from TemplatePage where status<>'-1' and templatePageContent is not null and templateId = '"+templateResultMerge.getTemplateId()+"'";
-            Long total = templateResultFacade.createQuery(Long.class,totalHql,new ArrayList<Object>()).getSingleResult();
-            String doneHql = "select count(pageId) from TemplateResult where status<>'-1' and templateResult is not null and masterId = '"+masterId+"'";
+            String totalHql = "select id from TemplatePage where status<>'-1' and templatePageContent is not null and templateId = '"+templateResultMerge.getTemplateId()+"'";
+            List<String> IdList = templateResultFacade.createQuery(String.class,totalHql,new ArrayList<Object>()).getResultList();
+            Long total = Long.valueOf(IdList.size()+"");
+            for(String id:IdList){
+                Boolean isHaveEmptyChildren = judgeIsHaveAllEmptyChildren(id);
+                if(isHaveEmptyChildren){
+                    total = total-1;
+                }
+            }
+
+            String doneHql = "select count(distinct pageId) from TemplateResult where status<>'-1' and templateResult is not null and masterId = '"+masterId+"'";
             Long doneNum = templateResultFacade.createQuery(Long.class,doneHql,new ArrayList<Object>()).getSingleResult();
             String completeRate = "0.0";
             if(total>0){
@@ -194,6 +262,27 @@ public class TemplateResultService {
             e.printStackTrace();
         }
         return Response.status(Response.Status.OK).entity(templateResultMerge).build();
+    }
+
+    public Boolean judgeIsHaveAllEmptyChildren(String id){
+        Boolean isAllEmpty = false;
+        String hql = "select count(*) from TemplatePage where parentId = '"+id+"' and status<>'-1' ";
+        Long number = templateResultFacade.createQuery(Long.class,hql,new ArrayList<Object>()).getSingleResult();
+        if(number>0){
+            String hqlIn = "select id from TemplatePage where parentId = '"+id+"' and templatePageContent is not null and status<>'-1' ";
+            List<String> IdList = templateResultFacade.createQuery(String.class,hqlIn,new ArrayList<Object>()).getResultList();
+            if(IdList==null || IdList.isEmpty()){
+                isAllEmpty = true;
+            }else{
+                for(String tid:IdList){
+                    isAllEmpty = judgeIsHaveAllEmptyChildren(tid);
+                    if(!isAllEmpty){
+                        return isAllEmpty;
+                    }
+                }
+            }
+        }
+        return isAllEmpty;
     }
     /**
      * 获取表单结果
@@ -255,5 +344,85 @@ public class TemplateResultService {
         }
         TemplateResultMaster merge = templateResultFacade.merge(templateResultMaster);
         return Response.status(Response.Status.OK).entity(merge).build();
+    }
+
+
+    @GET
+    @Path("init-user-page")
+    @Transactional
+    public List<String> initUserPageResult(){
+        List<String> list = new ArrayList<>();
+        try {
+            List<TemplateResult> templateResults = new ArrayList<>();
+
+            String hql = "from User where status = '3'";
+            List<User> userList = templateResultFacade.createQuery(User.class,hql,new ArrayList<Object>()).getResultList();
+            if(userList!=null && !userList.isEmpty()){
+                TemplateMaster templateMaster = getTemplateMasterByName("公益性卫生行业科研专项上报系统");
+                String pageHql = "select id from TemplatePage where status<>'-1' and templateId = '"+templateMaster.getId()+"' and templatePageName='封面'";
+                List<String> pageNameList = templateResultFacade.createQuery(String.class,pageHql,new ArrayList<Object>()).getResultList();
+                String pageId = pageNameList.isEmpty()?"":pageNameList.get(0);
+                if(templateMaster!=null){
+                    for(User user:userList){
+                        TemplateResultMaster templateResultMaster = new TemplateResultMaster();
+                        templateResultMaster.setStatus("1");
+                        templateResultMaster.setCompleteRate(0.14);
+                        templateResultMaster.setTemplateId(templateMaster.getId());
+                        templateResultMaster.setTemplateName(templateMaster.getTemplateName());
+                        templateResultMaster.setCreateBy(user.getId());
+                        templateResultMaster.setModifyBy(user.getId());
+                        String initTempResult = getInitTempResult(user.getLoginName());
+                        //templateResultMaster.setTemplateResult(initTempResult);
+                        TemplateResultMaster merge = templateResultFacade.merge(templateResultMaster);
+                        TemplateResult templateResult = new TemplateResult();
+                        templateResult.setMasterId(merge.getId());
+                        templateResult.setPageId(pageId);
+                        templateResult.setTemplateId(templateMaster.getId());
+                        templateResult.setStatus("1");
+                        templateResult.setCreateBy(user.getId());
+                        templateResult.setModifyBy(user.getId());
+                        templateResult.setTemplateResult(initTempResult);
+                        templateResults.add(templateResult);
+                    }
+                }
+                templateResultFacade.batchInsert(templateResults);
+            }
+            list.add("success");
+        }catch (Exception e){
+            list.add("failed");
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public TemplateMaster getTemplateMasterByName(String name){
+        String hql = " from TemplateMaster where templateName = '"+name+"' and status<>'-1'";
+        List<TemplateMaster> templateMasters = templateResultFacade.createQuery(TemplateMaster.class,hql,new ArrayList<Object>()).getResultList();
+        return templateMasters.isEmpty()?null:templateMasters.get(0);
+    }
+
+    public String getInitTempResult(String loginName) throws Exception{
+        String proNumber = loginName.substring(0,loginName.indexOf("_"));
+        if(initMap.isEmpty()){
+            Properties properties = new Properties();
+            InputStream inputStream ;
+            inputStream=this.getClass().getClassLoader().getResourceAsStream("pan.properties");
+            properties.load(inputStream);
+            String excelDir = properties.getProperty("excelDir");
+            List<Map> list = ReadExcelToDb.readDirExcel(excelDir);
+            for(Map map:list){
+                String projectNum = map.get("col_0")==null?"":map.get("col_0").toString();
+                initMap.put(projectNum,map);
+            }
+        }
+        Map resultMap = initMap.get(proNumber);
+        Map reMap = new HashMap();
+        reMap.put("dch_1523154179240",resultMap.get("col_1"));
+        reMap.put("dch_1523154196755",resultMap.get("col_0"));
+        reMap.put("dch_1523154214456",resultMap.get("col_3"));
+        reMap.put("dch_1523154230711",resultMap.get("col_2"));
+        reMap.put("dch_1523154246779","");
+        reMap.put("dch_1523154257015","2018-04-09");
+        return JSONUtil.objectToJsonString(reMap);
     }
 }

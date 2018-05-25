@@ -67,4 +67,20 @@ public class TemplateSupportService {
         return Response.status(Response.Status.OK).entity(streamingOutput).header("Content-disposition","attachment;filename="+ fileName)
                 .header("Cache-Control","no-cache").build();
     }
+
+    /**
+     * 根据表单数据id判断是否上传了佐证材料
+     * @param masterId
+     * @return
+     */
+    @GET
+    @Path("judge-if-upload")
+    public Response ifUpload(@QueryParam("masterId")String masterId){
+        Boolean isUpload = false;
+        Map<String,String> mapFile = templateSupportFacade.getFileStorePath(masterId);
+        if(mapFile!=null && !mapFile.isEmpty()){
+            isUpload = true;
+        }
+        return Response.status(Response.Status.OK).entity(isUpload).build();
+    }
 }

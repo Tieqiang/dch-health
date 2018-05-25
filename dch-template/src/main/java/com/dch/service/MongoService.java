@@ -297,7 +297,9 @@ public class MongoService {
     @Transactional
     public Response mergeQueryRule(TemplateQueryRule templateQueryRule) throws Exception{
         if(!"-1".equals(templateQueryRule.getStatus())){//新增设置状态值
-            String hql = "select templateId from TemplateQueryRule where status<>'-1' and templateId = '"+templateQueryRule.getTemplateId()+"' and ruleName = '"+templateQueryRule.getRuleName()+"' and id<>'"+templateQueryRule.getId()+"'";
+            String userId = UserUtils.getCurrentUser().getId();
+            String hql = "select templateId from TemplateQueryRule where status<>'-1' and templateId = '"+templateQueryRule.getTemplateId()+"' and ruleName = '"+templateQueryRule.getRuleName()+"' and id<>'"+templateQueryRule.getId()+"'" +
+                         " and createBy = '"+userId+"'";
             List<String> list = baseFacade.createQuery(String.class,hql,new ArrayList<Object>()).getResultList();
             if(list!=null && !list.isEmpty()){
                 throw new Exception("相同表单模板下不能添加相同的规则名称");

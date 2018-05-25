@@ -93,7 +93,7 @@ public class TemplateMasterService {
      *获取表单
      * @param modelId 项目Id（选传）
      * @param templateLevel 表单级别（选传）
-     * @param templateStauts 表单状态（注意区分stauts)
+     * @param templateStatus 表单状态（注意区分stauts)
      * @param whereHql 前端拼接条件
      * @param perPage 每页显示条数，默认15条
      * @param currentPage 当前第几页，默认为1
@@ -102,8 +102,8 @@ public class TemplateMasterService {
     @GET
     @Path("get-template-masters-by-model")
     public Page<TemplateMasterModuleVo> getTemplateMastersByModel(@QueryParam("modelId")String modelId, @QueryParam("templateLevel")String templateLevel,
-                                                                  @QueryParam("templateStauts")String templateStauts, @QueryParam("whereHql")String whereHql,
+                                                                  @QueryParam("templateStatus")String templateStatus, @QueryParam("whereHql")String whereHql,
                                                                   @QueryParam("perPage") int perPage, @QueryParam("currentPage")int currentPage, @QueryParam("publishStatus")String publishStatus){
-        return templateMasterFacade.getTemplateMastersByModel(modelId,templateLevel,templateStauts,whereHql,perPage,currentPage,publishStatus);
+        return templateMasterFacade.getTemplateMastersByModel(modelId,templateLevel,templateStatus,whereHql,perPage,currentPage,publishStatus);
     }
 }

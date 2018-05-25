@@ -6,6 +6,7 @@ import com.dch.entity.User;
 import com.dch.facade.common.BaseFacade;
 import com.dch.facade.common.VO.Page;
 import com.dch.util.StringUtils;
+import com.dch.util.UserUtils;
 import com.dch.vo.TemplateMasterVo;
 import org.springframework.stereotype.Component;
 
@@ -85,7 +86,11 @@ public class TemplateResultFacade extends BaseFacade {
         }else{
             hql += " and status <> '-1' ";
         }
-        if(!StringUtils.isEmptyParam(userId)){
+        if(StringUtils.isEmptyParam(userId)){
+            userId = UserUtils.getCurrentUser().getId();
+        }
+        boolean isAdmin = judgeIfAdmin(userId);
+        if(!isAdmin){//管理员查看用户填报的数据不用添加create_by条件
             hql += " and createBy = '"+userId+"'";
         }
         hql += " order by createDate desc ";
@@ -103,6 +108,16 @@ public class TemplateResultFacade extends BaseFacade {
         return templateResultMasterPage;
     }
 
+    public boolean judgeIfAdmin(String userId){
+        boolean isAdmin = false;
+        String sql = "select r.role_name from user_vs_role as ur,role as r where ur.role_id = r.id and r.role_name in ('表单管理者') and ur.user_id = " +
+                "'"+userId+"'";
+        List list = createNativeQuery(sql).getResultList();
+        if(list!=null && !list.isEmpty()){
+            isAdmin = true;
+        }
+        return isAdmin;
+    }
     /**
      * 获取表单填写的值
      * @param id
@@ -116,7 +131,7 @@ public class TemplateResultFacade extends BaseFacade {
         List<TemplateResult> templateResults= createQuery(TemplateResult.class,hql,new ArrayList<Object>()).getResultList();
         for (TemplateResult result:templateResults){
             String templateResult = result.getTemplateResult();
-            if(templateResult.startsWith("{")&&templateResult.endsWith("}")){
+            if(templateResult.startsWith("{")&&templateResult.endsWith("}") && !"{}".equals(templateResult)){
                 jsonBuffer.append(templateResult.substring(1,templateResult.length()-1));
                 jsonBuffer.append(",");
             }else{

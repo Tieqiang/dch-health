@@ -8,6 +8,7 @@ import com.dch.facade.common.BaseFacade;
 import com.dch.facade.common.VO.Page;
 import com.dch.util.PinYin2Abbreviation;
 import com.dch.util.StringUtils;
+import com.dch.util.UserUtils;
 import com.dch.vo.SolrVo;
 import com.dch.vo.TemplateMasterModuleVo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,7 +53,12 @@ public class TemplateMasterFacade extends BaseFacade{
             }
         }
 
-        String sql = "select id from template_master where status<>'-1' and template_name = '"+templateMaster.getTemplateName()+"' and id<>'"+templateMaster.getId()+"' and project_id = '"+templateMaster.getProjectId()+"'";
+        String sql = "select id from template_master where status<>'-1' and template_name = '"+templateMaster.getTemplateName()+"' and id<>'"+templateMaster.getId()+"' ";
+        if(StringUtils.isEmptyParam(templateMaster.getProjectId())){
+            sql = sql + " and project_id is null";
+        }else{
+            sql = sql + " and project_id = '"+templateMaster.getProjectId()+"'";
+        }
         List list = createNativeQuery(sql).getResultList();
         if(list!=null && !list.isEmpty()){
             throw new Exception("该表单名称已存在，请重新填写");
@@ -168,8 +174,9 @@ public class TemplateMasterFacade extends BaseFacade{
     }
 
     public Page<TemplateMasterModuleVo> getTemplateMastersByModel(String modelId, String templateLevel, String templateStauts, String whereHql, int perPage, int currentPage, String publishStatus) {
+        String userId = UserUtils.getCurrentUser().getId();//获取当前登陆用户id
         String hql="select new com.dch.vo.TemplateMasterModuleVo(m.id,m.templateName,m.templateLevel,m.templateStatus,m.projectId,m.fillLimit,m.templateDesc,m.publishStatus,m.modelId," +
-                "m.displayConfig,m.createDate,m.modifyDate,m.createBy,m.modifyBy,m.status,(SELECT COUNT(distinct masterId) FROM TemplateResult r WHERE r.templateId = m.id) as fillNum," +
+                "m.displayConfig,m.createDate,m.modifyDate,m.createBy,m.modifyBy,m.status,(SELECT COUNT(distinct masterId) FROM TemplateResult r WHERE r.templateId = m.id and r.status<>'-1' and r.createBy='"+userId+"') as fillNum," +
                 "(SELECT COUNT(id) FROM TemplateResultMaster rm WHERE rm.templateId = m.id and rm.status='2') as commitNum) from TemplateMaster as m where m.status <> '-1' ";
 
         String hqlCount="select count(*) from TemplateMaster m where m.status <> '-1' ";
