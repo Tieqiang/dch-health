@@ -11,6 +11,7 @@ import com.dch.util.ReadExcelToDb;
 import com.dch.util.StringUtils;
 import com.dch.util.UserUtils;
 import com.dch.vo.TemplateMasterVo;
+import com.dch.vo.TemplateResultMasterVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -321,13 +322,28 @@ public class TemplateResultService {
      * @return
      */
     @GET
-    @Path("get-template-result-masters")
+    @Path("get-template-result-masters-bak")
     public Page<TemplateResultMaster> getTemplateResultMasters(@QueryParam("templateId")String templateId, @QueryParam("perPage")int perPage,
                                                                  @QueryParam("userId")String userId, @QueryParam("currentPage")int currentPage,
                                                                  @QueryParam("status")String status){
         return  templateResultFacade.getTemplateResultMasters(templateId,perPage,currentPage,userId,status);
     }
 
+    /**
+     * 获取某个人填写的表单项目
+     * @param templateId 模板的ID
+     * @param perPage    单页显示数量
+     * @param userId     用户的ID，不传则表示获取这个表单的所有录入的数据
+     * @param currentPage 当前页
+     * @return
+     */
+    @GET
+    @Path("get-template-result-masters")
+    public Page<TemplateResultMasterVo> getTemplateResultMastersNew(@QueryParam("templateId")String templateId, @QueryParam("perPage")int perPage,
+                                                                    @QueryParam("userId")String userId, @QueryParam("currentPage")int currentPage,
+                                                                    @QueryParam("status")String status){
+        return  templateResultFacade.getTemplateResultMastersNew(templateId,perPage,currentPage,userId,status);
+    }
     /**
      * 驳回用户填写表单数据，状态重置改为1
      * @param masterId

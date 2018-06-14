@@ -1,5 +1,15 @@
 package com.dch.util;
 
+import net.sourceforge.pinyin4j.PinyinHelper;
+import net.sourceforge.pinyin4j.format.HanyuPinyinCaseType;
+import net.sourceforge.pinyin4j.format.HanyuPinyinOutputFormat;
+import net.sourceforge.pinyin4j.format.HanyuPinyinToneType;
+import net.sourceforge.pinyin4j.format.HanyuPinyinVCharType;
+import net.sourceforge.pinyin4j.format.exception.BadHanyuPinyinOutputFormatCombination;
+import org.omg.IOP.Encoding;
+
+import static java.net.URLEncoder.encode;
+
 public class PinYin2Abbreviation {
 
 	// 简体中文的编码范围从B0A1（45217）一直到F7FE（63486）
@@ -59,6 +69,7 @@ public class PinYin2Abbreviation {
 		// 若不是，则直接返回。
 		// 若是，则在码表内的进行判断。
 		int gb = gbValue(ch);// 汉字转换首字母
+		//int gb = GetCode10(String.valueOf(ch));
 		if ((gb < BEGIN) || (gb > END))// 在码表区间之前，直接返回
 		{
 			return ch;
@@ -106,7 +117,38 @@ public class PinYin2Abbreviation {
 		}
 		return firstPy;
 	}
+/**
+ * 汉字转为拼音
+ * @param chinese
+ * @return
+ */
+     public static String ToPinyin(String chinese){
+		 String pinyinStr = "";
+		 char[] newChar = chinese.toCharArray();  //转为单个字符
+		 HanyuPinyinOutputFormat defaultFormat = new HanyuPinyinOutputFormat();
+		 defaultFormat.setCaseType(HanyuPinyinCaseType.LOWERCASE);
+		 defaultFormat.setToneType(HanyuPinyinToneType.WITHOUT_TONE);
+		 for (int i = 0; i < newChar.length; i++) {
+			 if (newChar[i] > 128) {
+				 try {
+				 	String [] result = PinyinHelper.toHanyuPinyinStringArray(newChar[i], defaultFormat);
+				 	if(result==null){
+						pinyinStr += newChar[i];
+					}else{
+						pinyinStr += PinyinHelper.toHanyuPinyinStringArray(newChar[i], defaultFormat)[0].charAt(0);
+					}
+				 } catch (BadHanyuPinyinOutputFormatCombination e) {
+					 e.printStackTrace();
+				 }
+			 }else{
+				 pinyinStr += newChar[i];
+			 }
+		 }
+		 return pinyinStr;
+     }
+
 	public static void main(String[] args) throws Exception {
-		System.out.println(cn2py("重庆重视发展IT行业，大多数外企，如，IBM等进驻山城"));
+		System.out.println(cn2py("娅"));
+		System.out.println(ToPinyin("罗娅红"));
 	}
 }

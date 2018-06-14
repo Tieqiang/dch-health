@@ -147,6 +147,54 @@ public class TemplateCountService {
      * @return
      */
     @GET
+    @Path("get-topic-person-count")
+    public List<MongoResultVo> getTopicPersonCount(@QueryParam("templateId")String templateId){
+        String topicField = "dch_1523154179240";
+        String firstField = "dch_1523179199291";
+        String groupField = "dch_1523179199291.dch_1523179379101";
+        if(StringUtils.isEmptyParam(templateId)){
+            templateId = "5e5d857c628fe2940162a2e82bf000a9";
+        }
+        Criteria criteria = where("templateId").is(templateId);
+        Aggregation aggregation = Aggregation.newAggregation(Aggregation.match(criteria),
+                Aggregation.unwind(firstField),Aggregation.group(topicField).count().as("value"));
+        AggregationResults<BasicDBObject> groupResults = mongoTemplate.aggregate(aggregation,collectionName,BasicDBObject.class);
+        GroupByResults<BasicDBObject> groupByResults = new GroupByResults(groupResults.getMappedResults(),groupResults.getRawResults());
+        List<MongoResultVo> mongoResultVos = getMongoResultVos(groupByResults,groupField);
+
+        firstField = "dch_1523180339648";
+        groupField = "dch_1523180339648.dch_1523180535934";
+        aggregation = Aggregation.newAggregation(Aggregation.match(criteria),
+                Aggregation.unwind(firstField),Aggregation.group(topicField).count().as("value"));
+        AggregationResults<BasicDBObject> groupResults2 = mongoTemplate.aggregate(aggregation,collectionName,BasicDBObject.class);
+        GroupByResults<BasicDBObject> groupByResults2 = new GroupByResults(groupResults2.getMappedResults(),groupResults2.getRawResults());
+        Map<String,Integer> map = getFlowPerson(groupByResults2);
+        for(MongoResultVo mongoResultVo:mongoResultVos){
+            if(map.get(mongoResultVo.getName())!=null){
+                mongoResultVo.setValue(mongoResultVo.getValue()+map.get(mongoResultVo.getName()));
+            }
+        }
+        return mongoResultVos;
+    }
+
+    public Map<String,Integer> getFlowPerson(GroupByResults groupByResults){
+        Map<String,Integer> map = new HashMap<>();
+        Iterator iterator = groupByResults.iterator();
+        while(iterator.hasNext()) {
+            Document document = (Document) iterator.next();
+            String topic = document.get("_id") + "";
+            String value = document.get("value")==null?"0":document.get("value").toString();
+            value = value.trim().equals("")?"0":value.trim();
+            map.put(topic,Integer.valueOf(value));
+        }
+        return map;
+    }
+    /**
+     *兼职人员类型统计分析
+     * @param templateId 模板id
+     * @return
+     */
+    @GET
     @Path("get-partjob-count")
     public List<MongoResultVo> getPartJobTypeCount(@QueryParam("templateId")String templateId){
         String firstField = "dch_1523180339648";
@@ -244,15 +292,20 @@ public class TemplateCountService {
         }
         String groupField = "dch_1523260226473";
         Criteria criteria = where("templateId").is(templateId);
-        Aggregation aggregation = Aggregation.newAggregation(Aggregation.match(criteria),Aggregation.group(groupField).count().as("value"));
-        AggregationResults<BasicDBObject> groupResults = mongoTemplate.aggregate(aggregation,collectionName,BasicDBObject.class);
-        GroupByResults<BasicDBObject> groupByResults = new GroupByResults(groupResults.getMappedResults(),groupResults.getRawResults());
-        Map<String,Integer> map = getCourseMapByType(type,groupByResults);
-        for(String key:map.keySet()){
-            MongoResultVo mongoResultVo = new MongoResultVo();
-            mongoResultVo.setName(key);
-            mongoResultVo.setValue(map.get(key));
-            mongoResultVos.add(mongoResultVo);
+        try {
+            Aggregation aggregation = Aggregation.newAggregation(Aggregation.match(criteria),Aggregation.group(groupField).count().as("value"));
+            AggregationResults<BasicDBObject> groupResults = mongoTemplate.aggregate(aggregation,collectionName,BasicDBObject.class);
+            GroupByResults<BasicDBObject> groupByResults = new GroupByResults(groupResults.getMappedResults(),groupResults.getRawResults());
+            Map<String,Integer> map = getCourseMapByType(type,groupByResults);
+            for(String key:map.keySet()){
+                MongoResultVo mongoResultVo = new MongoResultVo();
+                mongoResultVo.setName(key);
+                mongoResultVo.setValue(map.get(key));
+                mongoResultVos.add(mongoResultVo);
+            }
+        }catch (Exception e){
+            System.out.println("======");
+            e.printStackTrace();
         }
         return mongoResultVos;
     }
@@ -494,6 +547,94 @@ public class TemplateCountService {
         return getSortListBySortType("1",mongoResultVos);
     }
 
+    /**
+     * 获取专利申请数统计
+     * @param templateId
+     * @return
+     */
+    @GET
+    @Path("get-patent-apply-count")
+    public List<MongoResultVo> getPatentApplyCount(@QueryParam("templateId")String templateId){
+        String firstField = "dch_1523167757808";
+        String topicField = "dch_1523154179240";
+        String secodeField = "dch_1523168091405";
+        if(StringUtils.isEmptyParam(templateId)){
+            templateId = "5e5d857c628fe2940162a2e82bf000a9";
+        }
+        String groupField2 = firstField+"."+secodeField;
+        Criteria criteria = where("templateId").is(templateId);
+        Aggregation aggregation = Aggregation.newAggregation(Aggregation.match(criteria),
+                Aggregation.unwind(firstField),Aggregation.group(topicField,groupField2).count().as("value"));
+        AggregationResults<BasicDBObject> groupResults2 = mongoTemplate.aggregate(aggregation,collectionName,BasicDBObject.class);
+        GroupByResults<BasicDBObject> groupByResults2 = new GroupByResults(groupResults2.getMappedResults(),groupResults2.getRawResults());
+        List<MongoResultVo> mongoResultVos = getApplyPatentNum(groupByResults2,topicField,secodeField);
+        return getSortListBySortType("1",mongoResultVos);
+    }
+
+    /**
+     * 授权率最高的前10排名统计
+     * @param templateId
+     * @return
+     */
+    @GET
+    @Path("get-authorize-rate-count")
+    public List<AuthorizeRateVo> getAuthorizeRateCount(@QueryParam("templateId")String templateId){
+        List<AuthorizeRateVo> authorizeRateVos = new ArrayList<>();
+        String firstField = "dch_1523167757808";
+        String topicField = "dch_1523154179240";
+        if(StringUtils.isEmptyParam(templateId)){
+            templateId = "5e5d857c628fe2940162a2e82bf000a9";
+        }
+        List<MongoResultVo> mongoResultVos = getPatentApplyCount(templateId);
+        Criteria criteria = where("templateId").is(templateId);
+        Aggregation aggregation = Aggregation.newAggregation(Aggregation.match(criteria),
+                Aggregation.unwind(firstField),Aggregation.group(topicField).addToSet("$dch_1523167757808.dch_1523167999517").as("value"));
+        AggregationResults<BasicDBObject> groupResults = mongoTemplate.aggregate(aggregation,collectionName,BasicDBObject.class);
+        GroupByResults<BasicDBObject> groupByResults = new GroupByResults(groupResults.getMappedResults(),groupResults.getRawResults());
+        Map<String,Integer> treatiseMap = getTreatiseNumber(groupByResults);
+        for(MongoResultVo mongoResultVo:mongoResultVos){
+            Integer treatiseNum = treatiseMap.get(mongoResultVo.getName());
+            Integer applyNum = mongoResultVo.getValue();
+            Double dvalue = getIntegerDivideValue(treatiseNum,applyNum);
+            if(dvalue>0){
+                AuthorizeRateVo authorizeRateVo = new AuthorizeRateVo();
+                authorizeRateVo.setTopic(mongoResultVo.getName());
+                authorizeRateVo.setRate(dvalue);
+                authorizeRateVos.add(authorizeRateVo);
+            }
+        }
+        return getAuthorizeRateSort(authorizeRateVos);
+    }
+
+    public List<MongoResultVo> getApplyPatentNum(GroupByResults groupByResults,String topicField,String secodeField){
+        List<MongoResultVo> mongoResultVos = new ArrayList<>();
+        Map<String,Integer> map = new HashMap<>();
+        if(groupByResults!=null && !groupByResults.getRawResults().isEmpty()) {
+            Iterator iterator = groupByResults.iterator();
+            while(iterator.hasNext()){
+                Document document = (Document)iterator.next();
+                String topic = document.get(topicField)+"";
+                String applyer = document.get(secodeField)==null?"":document.get(secodeField).toString();
+                applyer = applyer.trim();
+                if("".equals(applyer)){
+                    continue;
+                }
+                String value = document.get("value")==null?"0":document.get("value").toString();
+                if(map.containsKey(topic)){
+                    map.put(topic,map.get(topic)+Integer.valueOf(value));
+                }else{
+                    map.put(topic,Integer.valueOf(value));
+                }
+            }
+            for(String key:map.keySet()){
+                MongoResultVo mongoResultVo = new MongoResultVo();
+                mongoResultVo.setName(key);
+                mongoResultVo.setValue(map.get(key));
+                mongoResultVos.add(mongoResultVo);
+            }
+        }
+        return mongoResultVos;
+    }
     public List<TeamTalentCountVo> getTopicIntellectualVos(GroupByResults groupByResults,String secodeField,String topicField){
         List<TeamTalentCountVo> topicIntellectualVos = new ArrayList<>();
         Map<String,Map<String,Integer>> reMap = new HashMap<>();
@@ -739,7 +880,11 @@ public class TemplateCountService {
         Iterator iterator = groupByResults.iterator();
         while(iterator.hasNext()) {
             Document document = (Document) iterator.next();
+            System.out.println("===="+document.toString());
             List valueList = (List)document.get("_id");
+            if(valueList==null||valueList.isEmpty()){
+                continue;
+            }
             String firstCs = valueList.isEmpty()?"":(valueList.get(0)==null?"":valueList.get(0).toString());
             String secondCs = valueList.isEmpty()?"":(valueList.size()<2?"":valueList.get(1).toString());
             String value = document.get("value")==null?"0":document.get("value").toString();
@@ -763,8 +908,8 @@ public class TemplateCountService {
         while(iterator.hasNext()){
             Document document = (Document)iterator.next();
             String topic = document.get("dch_1523154179240")+"";
-            String unit = document.get("dch_1523156003036")+"";
-            String fundsStr = document.get("dch_1523243831591")+"";
+            String unit = document.get("dch_1523156003036")==null?"0":document.get("dch_1523156003036").toString();
+            String fundsStr = document.get("dch_1523243831591")==null?"0":document.get("dch_1523243831591").toString();
             fundsStr = fundsStr.replace(" ","");
             if("".equals(fundsStr)){
                 fundsStr = "0";
@@ -931,6 +1076,11 @@ public class TemplateCountService {
         return s;
     }
 
+    public Double getIntegerDivideValue(int a,int b){
+        DecimalFormat df = new DecimalFormat("0.00");
+        String s = df.format((float)a/b);
+        return Double.valueOf(s);
+    }
     public  List<TalentNumberVo> getTalentNumberVoSort(String sortType,List<TalentNumberVo> talentNumberVos){
         if(talentNumberVos==null || talentNumberVos.isEmpty()){
             return talentNumberVos;
@@ -990,5 +1140,22 @@ public class TemplateCountService {
             }
         });
         return topicTreatiseVos;
+    }
+
+    public List<AuthorizeRateVo>  getAuthorizeRateSort( List<AuthorizeRateVo>  authorizeRateVos){
+        if(authorizeRateVos==null || authorizeRateVos.isEmpty()){
+            return authorizeRateVos;
+        }
+        Collections.sort(authorizeRateVos, new Comparator<AuthorizeRateVo>() {
+            @Override
+            public int compare(AuthorizeRateVo o1, AuthorizeRateVo o2) {
+                if(o1.getRate()<o2.getRate()){
+                    return 1;
+                }else{
+                    return -1;
+                }
+            }
+        });
+        return authorizeRateVos;
     }
 }

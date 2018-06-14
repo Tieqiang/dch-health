@@ -135,6 +135,11 @@
             <artifactId>poi-ooxml</artifactId>
             <version>${poi.version}</version>
         </dependency>
+        <dependency>
+            <groupId>net.sourceforge.pinyin4j</groupId>
+            <artifactId>pinyin4j</artifactId>
+            <version>2.5.0</version>
+        </dependency>
         <!--<dependency>-->
             <!--<groupId>commons-logging</groupId>-->
             <!--<artifactId>commons-logging</artifactId>-->

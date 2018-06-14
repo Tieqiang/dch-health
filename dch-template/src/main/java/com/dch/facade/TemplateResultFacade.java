@@ -8,6 +8,7 @@ import com.dch.facade.common.VO.Page;
 import com.dch.util.StringUtils;
 import com.dch.util.UserUtils;
 import com.dch.vo.TemplateMasterVo;
+import com.dch.vo.TemplateResultMasterVo;
 import org.springframework.stereotype.Component;
 
 import javax.persistence.TypedQuery;
@@ -106,6 +107,59 @@ public class TemplateResultFacade extends BaseFacade {
             templateResultMasterPage.setData(templateResultMasterList);
         }
         return templateResultMasterPage;
+    }
+
+    public Page<TemplateResultMasterVo> getTemplateResultMastersNew(String templateId, int perPage, int currentPage, String userId, String status) {
+        long stime = System.currentTimeMillis();
+        String hql="select new com.dch.vo.TemplateResultMasterVo(m.id,m.templateId,m.templateName,m.completeRate,''" +
+                   ",m.createDate,m.modifyDate,(select userName from User where id = m.createBy) as createBy,m.modifyBy,m.status,(select distinct status FROM TemplateResultSupport  " +
+                   "WHERE relatedMasterId = m.id) as flag) from TemplateResultMaster as m where templateId='"+templateId+"'";
+
+        String hqlCount="select count(*) from TemplateResultMaster m where m.templateId='"+templateId+"'";
+        if(!StringUtils.isEmptyParam(status)){
+            hql += " and m.status='"+status+"'";
+            hqlCount += " and m.status='"+status+"'";
+        }else{
+            hql += " and m.status <> '-1' ";
+            hqlCount += " and m.status <> '-1' ";
+        }
+        if(StringUtils.isEmptyParam(userId)){
+            userId = UserUtils.getCurrentUser().getId();
+        }
+        boolean isAdmin = judgeIfAdmin(userId);
+        if(!isAdmin){//管理员查看用户填报的数据不用添加create_by条件
+            hql += " and m.createBy = '"+userId+"'";
+            hqlCount += " and m.createBy = '"+userId+"'";
+        }
+        hql += " order by m.createDate desc ";
+
+        TypedQuery<TemplateResultMasterVo> query = createQuery(TemplateResultMasterVo.class, hql, new ArrayList<Object>());
+        Long counts = createQuery(Long.class,hqlCount,new ArrayList<Object>()).getSingleResult();
+        Page page =new Page();
+        if(perPage<=0){
+            perPage=20;
+        }
+        if (perPage > 0) {
+            if(currentPage<=0){
+                currentPage =1;
+            }
+            query.setFirstResult((currentPage-1) * perPage);
+            query.setMaxResults(perPage);
+            page.setPerPage((long) perPage);
+        }
+        List<TemplateResultMasterVo> templateResultMasterVoList = query.getResultList();
+        long etime = System.currentTimeMillis();
+        System.out.println("===="+(etime-stime));
+        if(templateResultMasterVoList!=null && !templateResultMasterVoList.isEmpty()){
+            for(TemplateResultMasterVo templateResultMaster:templateResultMasterVoList){
+                templateResultMaster.setTemplateResult(getTemplateResultJSON(templateResultMaster.getId()));
+            }
+        }
+        page.setCounts(counts);
+        page.setData(templateResultMasterVoList);
+        long ptime = System.currentTimeMillis();
+        System.out.println("===="+(ptime-etime));
+        return page;
     }
 
     public boolean judgeIfAdmin(String userId){

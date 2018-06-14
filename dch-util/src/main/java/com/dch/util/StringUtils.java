@@ -4,6 +4,7 @@ package com.dch.util;
 import java.io.*;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -208,5 +209,33 @@ public class StringUtils {
             e.printStackTrace();
         }
         return value;
+    }
+
+    public static String getQueryIdsString(List<String> ids){
+        StringBuffer sb = new StringBuffer("");
+        if(ids!=null && !ids.isEmpty()){
+            int size = ids.size();
+            for(int i=0;i<size;i++){
+                if(i!=size-1){
+                    sb.append("'").append(ids.get(i)).append("',");
+                }else {
+                    sb.append("'").append(ids.get(i)).append("'");
+                }
+            }
+        }
+        return sb.toString();
+    }
+
+    /**
+     * 判断集合是否为空
+     * @param list
+     * @param <T>
+     * @return
+     */
+    public <T> Boolean isArrayEmpty(List<T> list){
+        if(list==null || list.isEmpty()){
+            return true;
+        }
+        return false;
     }
 }
