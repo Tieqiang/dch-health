@@ -4,12 +4,11 @@ import com.dch.entity.TemplateMaster;
 import com.dch.entity.TemplateResult;
 import com.dch.entity.TemplateResultMaster;
 import com.dch.entity.User;
+import com.dch.facade.BaseSolrFacade;
 import com.dch.facade.TemplateResultFacade;
 import com.dch.facade.common.VO.Page;
-import com.dch.util.JSONUtil;
-import com.dch.util.ReadExcelToDb;
-import com.dch.util.StringUtils;
-import com.dch.util.UserUtils;
+import com.dch.util.*;
+import com.dch.vo.SolrVo;
 import com.dch.vo.TemplateMasterVo;
 import com.dch.vo.TemplateResultMasterVo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +35,8 @@ import static org.springframework.data.mongodb.core.query.Criteria.where;
 public class TemplateResultService {
     private static final String tempCollectionName = "templateResult";
     private static final String tempFillName = "templateFilling";
+    public static final String templateResultList = "templateResultList";
+
     private final String specialChar = "@";
     private final String inputSpeChar = "$";
     private static Map<String,Map> initMap = new HashMap<>();
@@ -45,6 +46,7 @@ public class TemplateResultService {
 
     @Autowired
     private MongoTemplate mongoTemplate ;
+
 
     @POST
     @Path("save-all-template-result")
@@ -237,6 +239,8 @@ public class TemplateResultService {
                 }
             }
             templateResultMerge = templateResultFacade.merge(templateResult);
+            String jsonTemplateResult = JSONUtil.objectToJsonString(templateResult);
+            mongoTemplate.insert(jsonTemplateResult,templateResultList);
             String totalHql = "select id from TemplatePage where status<>'-1' and templatePageContent is not null and templateId = '"+templateResultMerge.getTemplateId()+"'";
             List<String> IdList = templateResultFacade.createQuery(String.class,totalHql,new ArrayList<Object>()).getResultList();
             Long total = Long.valueOf(IdList.size()+"");
@@ -441,4 +445,36 @@ public class TemplateResultService {
         reMap.put("dch_1523154257015","2018-04-09");
         return JSONUtil.objectToJsonString(reMap);
     }
+
+//    @GET
+//    @Path("init-template-result-list")
+//    public List<String> initTemplateResultList(){
+//        List<String> list = new ArrayList<>();
+//        String hql = " from TemplateResult where status<>'-1'";
+//        List<TemplateResult> templateResults= templateResultFacade.createQuery(TemplateResult.class,hql,new ArrayList<Object>()).getResultList();
+//        for (TemplateResult result:templateResults){
+//            SolrVo solrVo=new SolrVo();
+//            solrVo.setId(result.getId());
+//            solrVo.setTitle(result.getMasterId());
+//            solrVo.setDesc(result.getTemplateResult());
+//            solrVo.setCategoryCode("templateResult");
+//            solrVo.setLabel(result.getTemplateId());
+//            solrVo.setCategory("");
+//            solrVo.setFirstPy("");
+//            baseSolrFacade.addObjectMessageToMq(solrVo);
+//        }
+//        list.add("成功");
+//        return list;
+//    }
+//
+//    @GET
+//    @Path("get-my")
+//    public List<SolrVo> getTemplateResultListByIds() throws Exception{
+//        String param = "categoryCode:templateResult" ;
+//        param += " AND title:('8aa183c362e6d0520163164cdf820049','8aa183c362a94b5b0162a94c00180082','8aa183c363b1d7b80163f1965b820054'," +
+//                "'8aa183c362a94b5b0162a94c0028008c','8aa183c362e6d0520163194fac9e004e' , '8aa183c362a94b5b0162a94c0028008b' , '8aa183c362a94b5b0162a94c0028008a' ," +
+//                " , '8aa183c362e6d0520162fa96b9a30012' , '8aa183c362e6d052016300923b500026' , '8aa183c362a94b5b0162a94c00280085')";
+//        List<SolrVo> list = baseSolrFacade.getSolrObjectByParam(param,SolrVo.class);
+//        return list;
+//    }
 }

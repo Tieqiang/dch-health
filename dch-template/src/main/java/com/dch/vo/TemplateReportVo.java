@@ -8,6 +8,7 @@ import java.util.List;
  */
 public class TemplateReportVo implements Serializable{
     private String id;
+    private String templateId;
     private String reportName;
     private String maker;
     private String status;
@@ -19,6 +20,14 @@ public class TemplateReportVo implements Serializable{
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public String getTemplateId() {
+        return templateId;
+    }
+
+    public void setTemplateId(String templateId) {
+        this.templateId = templateId;
     }
 
     public String getReportName() {

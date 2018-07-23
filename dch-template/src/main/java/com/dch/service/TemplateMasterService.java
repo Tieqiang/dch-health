@@ -18,7 +18,7 @@ import java.util.List;
 @Controller
 @Produces("application/json")
 @Path("template/template-master")
-public class TemplateMasterService {
+    public class TemplateMasterService {
 
     @Autowired
     private TemplateMasterFacade templateMasterFacade;

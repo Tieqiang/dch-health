@@ -60,20 +60,20 @@ public class FormAuthenticationFilter extends org.apache.shiro.web.filter.authc.
 	protected boolean onAccessDenied(ServletRequest request, ServletResponse response) throws Exception {
 		HttpServletRequest httpServletRequest = (HttpServletRequest)request;
 		HttpSession httpSession = httpServletRequest.getSession();
-
-		String validateCode = (String)httpSession.getAttribute(httpSession.getId()+"pictureCode");//获取session中的验证码
-		//获取参数传递的验证码 暂时注释掉 skq
-		String randomCode = httpServletRequest.getParameter("randomCode");
-		if(StringUtils.isEmptyParam(validateCode)){
-			httpServletRequest.setAttribute("shiroLoginFailure", "randomCodeLoseEffect");//验证码失效
-			return true;
-		}
-		if(StringUtils.isEmptyParam(randomCode)||!randomCode.equals(validateCode)){
-			//如果校验失败，将验证码错误失败信息，通过shiroLoginFailure设置到request中
-			httpServletRequest.setAttribute("shiroLoginFailure", "randomCodeError");
-			//拒绝访问，不再校验账号和密码
-			return true;
-		}
+		//暂时注释掉关闭验证码功能
+//		String validateCode = (String)httpSession.getAttribute(httpSession.getId()+"pictureCode");//获取session中的验证码
+//		//获取参数传递的验证码 暂时注释掉 skq
+//		String randomCode = httpServletRequest.getParameter("randomCode");
+//		if(StringUtils.isEmptyParam(validateCode)){
+//			httpServletRequest.setAttribute("shiroLoginFailure", "randomCodeLoseEffect");//验证码失效
+//			return true;
+//		}
+//		if(StringUtils.isEmptyParam(randomCode)||!randomCode.equals(validateCode)){
+//			//如果校验失败，将验证码错误失败信息，通过shiroLoginFailure设置到request中
+//			httpServletRequest.setAttribute("shiroLoginFailure", "randomCodeError");
+//			//拒绝访问，不再校验账号和密码
+//			return true;
+//		}
 		return super.onAccessDenied(request, response);
 	}
 }

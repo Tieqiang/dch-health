@@ -53,6 +53,7 @@ public class TemplateReportFacade extends BaseFacade{
         if(!StringUtils.isEmptyParam(templateReportVo.getId())){
             templateReport.setId(templateReportVo.getId());
         }
+        templateReport.setTemplateId(templateReportVo.getTemplateId());
         templateReport.setMaker(templateReportVo.getMaker());
         templateReport.setReportName(templateReportVo.getReportName());
         templateReport.setStatus("1");

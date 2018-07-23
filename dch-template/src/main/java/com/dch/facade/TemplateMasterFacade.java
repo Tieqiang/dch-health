@@ -175,8 +175,13 @@ public class TemplateMasterFacade extends BaseFacade{
 
     public Page<TemplateMasterModuleVo> getTemplateMastersByModel(String modelId, String templateLevel, String templateStauts, String whereHql, int perPage, int currentPage, String publishStatus) {
         String userId = UserUtils.getCurrentUser().getId();//获取当前登陆用户id
+        boolean isAdmin = judgeIfAdmin(userId);
         String hql="select new com.dch.vo.TemplateMasterModuleVo(m.id,m.templateName,m.templateLevel,m.templateStatus,m.projectId,m.fillLimit,m.templateDesc,m.publishStatus,m.modelId," +
-                "m.displayConfig,m.createDate,m.modifyDate,m.createBy,m.modifyBy,m.status,(SELECT COUNT(distinct masterId) FROM TemplateResult r WHERE r.templateId = m.id and r.status<>'-1' and r.createBy='"+userId+"') as fillNum," +
+                "m.displayConfig,m.createDate,m.modifyDate,m.createBy,m.modifyBy,m.status,(SELECT COUNT(distinct masterId) FROM TemplateResult r WHERE r.templateId = m.id and r.status<>'-1'";
+        if(!isAdmin){
+            hql += "and r.createBy='"+userId+"'";
+        }
+        hql += " ) as fillNum," +
                 "(SELECT COUNT(id) FROM TemplateResultMaster rm WHERE rm.templateId = m.id and rm.status='2') as commitNum) from TemplateMaster as m where m.status <> '-1' ";
 
         String hqlCount="select count(*) from TemplateMaster m where m.status <> '-1' ";
@@ -221,5 +226,16 @@ public class TemplateMasterFacade extends BaseFacade{
         page.setCounts(counts);
         page.setData(templateMasterVoList);
         return page;
+    }
+
+    public boolean judgeIfAdmin(String userId){
+        boolean isAdmin = false;
+        String sql = "select r.role_name from user_vs_role as ur,role as r where ur.role_id = r.id and r.role_name in ('表单管理者') and ur.user_id = " +
+                "'"+userId+"'";
+        List list = createNativeQuery(sql).getResultList();
+        if(list!=null && !list.isEmpty()){
+            isAdmin = true;
+        }
+        return isAdmin;
     }
 }

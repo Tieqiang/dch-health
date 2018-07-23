@@ -7,9 +7,14 @@ import com.dch.facade.common.BaseFacade;
 import com.dch.facade.common.VO.Page;
 import com.dch.util.StringUtils;
 import com.dch.util.UserUtils;
+import com.dch.vo.SolrVo;
 import com.dch.vo.TemplateMasterVo;
 import com.dch.vo.TemplateResultMasterVo;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 
 import javax.persistence.TypedQuery;
 import java.util.ArrayList;
@@ -17,8 +22,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.springframework.data.mongodb.core.query.Criteria.where;
+
 @Component
 public class TemplateResultFacade extends BaseFacade {
+
     /**
      * 获取表单结果
      * @param projectId
@@ -101,7 +109,7 @@ public class TemplateResultFacade extends BaseFacade {
         if(templateResultMasterList!=null && !templateResultMasterList.isEmpty()){
             Map<String,String> map = getUserNameMap(templateResultMasterList);
             for(TemplateResultMaster templateResultMaster:templateResultMasterList){
-                templateResultMaster.setTemplateResult(getTemplateResultJSON(templateResultMaster.getId()));
+                //templateResultMaster.setTemplateResult(getTemplateResultJSON(templateResultMaster.getId()));
                 templateResultMaster.setCreateBy(map.get(templateResultMaster.getCreateBy()));
             }
             templateResultMasterPage.setData(templateResultMasterList);
@@ -150,9 +158,16 @@ public class TemplateResultFacade extends BaseFacade {
         List<TemplateResultMasterVo> templateResultMasterVoList = query.getResultList();
         long etime = System.currentTimeMillis();
         System.out.println("===="+(etime-stime));
+        Map<String,String> templatejsonMap = new HashMap<>();
         if(templateResultMasterVoList!=null && !templateResultMasterVoList.isEmpty()){
             for(TemplateResultMasterVo templateResultMaster:templateResultMasterVoList){
-                templateResultMaster.setTemplateResult(getTemplateResultJSON(templateResultMaster.getId()));
+                templatejsonMap.put(templateResultMaster.getId(),"");
+            }
+        }
+        fillMapResult(templatejsonMap);
+        if(templateResultMasterVoList!=null && !templateResultMasterVoList.isEmpty()){
+            for(TemplateResultMasterVo templateResultMaster:templateResultMasterVoList){
+                templateResultMaster.setTemplateResult(templatejsonMap.get(templateResultMaster.getId()));
             }
         }
         page.setCounts(counts);
@@ -162,6 +177,37 @@ public class TemplateResultFacade extends BaseFacade {
         return page;
     }
 
+    public void fillMapResult(Map<String,String> templatejsonMap){
+        Map<String,List<TemplateResult>> map = new HashMap<>();
+        StringBuffer sb = new StringBuffer("");
+        for(String key:templatejsonMap.keySet()){
+            sb.append("'").append(key).append("',");
+        }
+        String ids = sb.toString();
+        ids = ids.length()>1?ids.substring(0,ids.length()-1):"";
+        try{
+            String hql = "from TemplateResult a where a.masterId in ("+ids+")" ;
+            List<TemplateResult> templateResults= createQuery(TemplateResult.class,hql,new ArrayList<Object>()).getResultList();
+//            String param = "categoryCode:templateResult" ;
+//            param += " AND title:("+ids+") ";
+//            List<SolrVo> list = baseSolrFacade.getSolrObjectByParam(param,SolrVo.class);
+            for (TemplateResult result:templateResults){
+                if(map.containsKey(result.getMasterId())){
+                    List<TemplateResult> innerTempList = map.get(result.getMasterId());
+                    innerTempList.add(result);
+                }else{
+                    List<TemplateResult> innerTempList = new ArrayList<>();
+                    innerTempList.add(result);
+                    map.put(result.getMasterId(),innerTempList);
+                }
+            }
+            for(String key:map.keySet()){
+                templatejsonMap.put(key,getTemplateResultJSON(map.get(key)));
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
     public boolean judgeIfAdmin(String userId){
         boolean isAdmin = false;
         String sql = "select r.role_name from user_vs_role as ur,role as r where ur.role_id = r.id and r.role_name in ('表单管理者') and ur.user_id = " +
@@ -174,15 +220,12 @@ public class TemplateResultFacade extends BaseFacade {
     }
     /**
      * 获取表单填写的值
-     * @param id
+     * @param templateResults
      * @return
      */
-    private String getTemplateResultJSON(String id) {
+    private String getTemplateResultJSON(List<TemplateResult> templateResults) {
         StringBuffer jsonBuffer = new StringBuffer() ;
         jsonBuffer.append("{");
-
-        String hql = "from TemplateResult a where a.masterId= '"+id+"'" ;
-        List<TemplateResult> templateResults= createQuery(TemplateResult.class,hql,new ArrayList<Object>()).getResultList();
         for (TemplateResult result:templateResults){
             String templateResult = result.getTemplateResult();
             if(templateResult.startsWith("{")&&templateResult.endsWith("}") && !"{}".equals(templateResult)){
@@ -222,5 +265,22 @@ public class TemplateResultFacade extends BaseFacade {
             }
         }
         return map;
+    }
+
+    private String getTemplateResultJsonBySolr(List<SolrVo> solrVos) {
+        StringBuffer jsonBuffer = new StringBuffer() ;
+        jsonBuffer.append("{");
+        for (SolrVo result:solrVos){
+            String templateResult = result.getDesc();
+            if(templateResult.startsWith("{")&&templateResult.endsWith("}") && !"{}".equals(templateResult)){
+                jsonBuffer.append(templateResult.substring(1,templateResult.length()-1));
+                jsonBuffer.append(",");
+            }else{
+                continue;
+            }
+        }
+        jsonBuffer.delete(jsonBuffer.lastIndexOf(","),jsonBuffer.lastIndexOf(",")+1);
+        jsonBuffer.append("}");
+        return jsonBuffer.toString();
     }
 }
