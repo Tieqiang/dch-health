@@ -26,6 +26,7 @@
         <module>dch-project</module>
         <module>dch-template</module>
         <module>dch-ikAnalyzer</module>
+        <module>dch-rdf</module>
     </modules>
 
     <properties>
