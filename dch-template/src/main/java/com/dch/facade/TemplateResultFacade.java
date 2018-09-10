@@ -5,6 +5,7 @@ import com.dch.entity.TemplateResultMaster;
 import com.dch.entity.User;
 import com.dch.facade.common.BaseFacade;
 import com.dch.facade.common.VO.Page;
+import com.dch.service.TemplateResultService;
 import com.dch.util.StringUtils;
 import com.dch.util.UserUtils;
 import com.dch.vo.SolrVo;
@@ -15,8 +16,10 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.TypedQuery;
+import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -282,5 +285,59 @@ public class TemplateResultFacade extends BaseFacade {
         jsonBuffer.delete(jsonBuffer.lastIndexOf(","),jsonBuffer.lastIndexOf(",")+1);
         jsonBuffer.append("}");
         return jsonBuffer.toString();
+    }
+
+    /**
+     * 删除填报的表单及mongo中存储的数据
+     * @param id
+     * @param userId
+     * @param type
+     * @param mongoTemplate
+     * @return
+     * @throws Exception
+     */
+    @Transactional
+    public Response deleteTemplateResultMaster(String id, String userId,String type,MongoTemplate mongoTemplate) throws Exception{
+        TemplateResultMaster templateResultMaster = null;
+        try{
+            templateResultMaster = get(TemplateResultMaster.class,id);
+            String status = templateResultMaster.getStatus();
+            Boolean isAdmin = judgeIfAdmin(userId);
+            if(!isAdmin){
+                throw new Exception("您不是表单管理者，不能删除表单！");
+            }
+            Query query = new Query();
+            Criteria criteria = where("masterId").is(id);
+            query.addCriteria(criteria);
+            if("fill".equals(type)){
+                if("2".equals(status)){
+                    mongoTemplate.remove(query, TemplateResultService.tempFillName);
+                }
+                mongoTemplate.remove(query, TemplateResultService.templateResultList);
+            }else{
+                mongoTemplate.remove(query,TemplateResultService.tempCollectionName);
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+            throw e;
+        }
+        if(templateResultMaster!=null){
+            remove(templateResultMaster);//删除表单
+            removeTemplateResult(id);
+            removeTemplateResultSupport(id);
+        }
+        return Response.status(Response.Status.OK).entity(templateResultMaster).build();
+    }
+
+    @Transactional
+    public void removeTemplateResult(String masterId){
+        String hql = "delete from TemplateResult where masterId = '"+masterId+"'";
+        excHql(hql);
+    }
+
+    @Transactional
+    public void removeTemplateResultSupport(String masterId){
+        String hql = "delete from TemplateResultSupport where relatedMasterId = '"+masterId+"'";
+        excHql(hql);
     }
 }
