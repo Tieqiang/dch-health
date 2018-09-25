@@ -5,8 +5,12 @@
  */
 package com.dch.security;
 
-import com.dch.util.StringUtils;
+import com.dch.entity.User;
+import com.dch.util.UserUtils;
+import com.dch.vo.UserVo;
+import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.AuthenticationToken;
+import org.apache.shiro.subject.Subject;
 import org.apache.shiro.web.util.WebUtils;
 import org.springframework.stereotype.Service;
 
@@ -60,6 +64,19 @@ public class FormAuthenticationFilter extends org.apache.shiro.web.filter.authc.
 	protected boolean onAccessDenied(ServletRequest request, ServletResponse response) throws Exception {
 		HttpServletRequest httpServletRequest = (HttpServletRequest)request;
 		HttpSession httpSession = httpServletRequest.getSession();
+		String username = getUsername(request);
+		String password = getPassword(request);
+		Subject subject = SecurityUtils.getSubject();
+		UsernamePasswordToken usernamePasswordToken = new UsernamePasswordToken();
+		usernamePasswordToken.setUsername(username);
+		usernamePasswordToken.setPassword(password.toCharArray());
+		try{
+			subject.login(usernamePasswordToken);
+		}catch (Exception e){
+			e.printStackTrace();
+		}
+		UserVo currentUser = UserUtils.getCurrentUser();
+		httpSession.setAttribute("user", currentUser);
 		//暂时注释掉关闭验证码功能
 //		String validateCode = (String)httpSession.getAttribute(httpSession.getId()+"pictureCode");//获取session中的验证码
 //		//获取参数传递的验证码 暂时注释掉 skq

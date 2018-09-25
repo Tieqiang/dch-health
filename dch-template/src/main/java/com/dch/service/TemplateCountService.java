@@ -142,7 +142,7 @@ public class TemplateCountService {
     }
 
     /**
-     *兼职人员类型统计分析
+     *项目人员类型统计分析
      * @param templateId 模板id
      * @return
      */
@@ -904,45 +904,61 @@ public class TemplateCountService {
     public List<FundsCountVo> getTopicFundsCount(GroupByResults groupByResults){
         List<FundsCountVo> fundsCountVos = new ArrayList<>();
         Map<String,Map<String,Double>> reMap = new HashMap<String,Map<String,Double>>();
-        Iterator iterator = groupByResults.iterator();
-        while(iterator.hasNext()){
-            Document document = (Document)iterator.next();
-            String topic = document.get("dch_1523154179240")+"";
-            String unit = document.get("dch_1523156003036")==null?"0":document.get("dch_1523156003036").toString();
-            String fundsStr = document.get("dch_1523243831591")==null?"0":document.get("dch_1523243831591").toString();
-            fundsStr = fundsStr.replace(" ","");
-            if("".equals(fundsStr)){
-                fundsStr = "0";
-            }
-            Double funds = Double.valueOf(fundsStr);
-            if(reMap.containsKey(topic)){
-                Map<String,Double> map = reMap.get(topic);
-                if(!map.containsKey(unit)){
-                    map.put(unit,funds);
+        try{
+            Iterator iterator = groupByResults.iterator();
+            while(iterator.hasNext()){
+                Document document = (Document)iterator.next();
+                String topic = document.get("dch_1523154179240")+"";
+                String unit = document.get("dch_1523156003036")==null?"0":document.get("dch_1523156003036").toString();
+                String fundsStr = document.get("dch_1523243831591")==null?"0":document.get("dch_1523243831591").toString();
+                fundsStr = fundsStr.replace(" ","");
+                fundsStr = fundsStr.replace(",","");
+                fundsStr = fundsStr.replace("/","");
+                fundsStr = getRealFounds(fundsStr);
+                if("".equals(fundsStr)){
+                    fundsStr = "0";
                 }
-            }else{
-                Map<String,Double> map = new HashMap<String,Double>();
-                map.put(unit,funds);
-                reMap.put(topic,map);
+                System.out.println("============"+fundsStr);
+                Double funds = Double.valueOf(fundsStr);
+                if(reMap.containsKey(topic)){
+                    Map<String,Double> map = reMap.get(topic);
+                    if(!map.containsKey(unit)){
+                        map.put(unit,funds);
+                    }
+                }else{
+                    Map<String,Double> map = new HashMap<String,Double>();
+                    map.put(unit,funds);
+                    reMap.put(topic,map);
+                }
             }
-        }
-        for(String key:reMap.keySet()){
-            FundsCountVo fundsCountVo = new FundsCountVo();
-            fundsCountVo.setTopic(key);
-            Map<String,Double> map = reMap.get(key);
-            List<UnitFunds> unitFundsList = new ArrayList<>();
-            for(String inKey:map.keySet()){
-                UnitFunds unitFunds = new UnitFunds();
-                unitFunds.setUnit(inKey);
-                unitFunds.setFunds(map.get(inKey));
-                unitFundsList.add(unitFunds);
+            for(String key:reMap.keySet()){
+                FundsCountVo fundsCountVo = new FundsCountVo();
+                fundsCountVo.setTopic(key);
+                Map<String,Double> map = reMap.get(key);
+                List<UnitFunds> unitFundsList = new ArrayList<>();
+                for(String inKey:map.keySet()){
+                    UnitFunds unitFunds = new UnitFunds();
+                    unitFunds.setUnit(inKey);
+                    unitFunds.setFunds(map.get(inKey));
+                    unitFundsList.add(unitFunds);
+                }
+                fundsCountVo.setFundsList(unitFundsList);
+                fundsCountVos.add(fundsCountVo);
             }
-            fundsCountVo.setFundsList(unitFundsList);
-            fundsCountVos.add(fundsCountVo);
+        }catch (Exception e){
+            e.printStackTrace();
         }
         return fundsCountVos;
     }
 
+    public String getRealFounds(String founds){
+        Pattern pattern = Pattern.compile(".*?(\\d+[.]\\d+)[.].*");
+        Matcher matcher = pattern.matcher(founds);
+        if (matcher.find()){
+            return matcher.group(1);
+        }
+        return founds;
+    }
     public List<MongoResultVo> getTopicPositionCount(GroupByResults groupByResults){
         List<MongoResultVo> mongoResultVos = new ArrayList<>();
         Map<String,Map> reMap = new HashMap<String,Map>();

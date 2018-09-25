@@ -109,7 +109,7 @@ public class LoginService {
             }
         }
 //        UserVo yunUsers = UserUtils.getYunUsers();
-        User yunUsers = userFacade.getUserByLoginName(username, "");
+//        User yunUsers = userFacade.getUserByLoginName(username, "");
         Subject subject = SecurityUtils.getSubject();
         UsernamePasswordToken usernamePasswordToken = new UsernamePasswordToken();
         usernamePasswordToken.setUsername(username);
@@ -121,6 +121,7 @@ public class LoginService {
         }
         httpServletRequest.getSession().removeAttribute(httpServletRequest.getSession().getId()+"pictureCode");
         UserVo currentUser = UserUtils.getCurrentUser();
+        httpServletRequest.getSession().setAttribute("user", currentUser);
         return Response.status(Response.Status.OK).entity(currentUser).build();
     }
 

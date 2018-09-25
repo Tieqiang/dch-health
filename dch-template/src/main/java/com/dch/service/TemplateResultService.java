@@ -1,16 +1,17 @@
 package com.dch.service;
 
+
 import com.dch.entity.TemplateMaster;
 import com.dch.entity.TemplateResult;
 import com.dch.entity.TemplateResultMaster;
 import com.dch.entity.User;
-import com.dch.facade.BaseSolrFacade;
 import com.dch.facade.TemplateResultFacade;
 import com.dch.facade.common.VO.Page;
 import com.dch.util.*;
-import com.dch.vo.SolrVo;
+import com.dch.vo.QueryCondition;
 import com.dch.vo.TemplateMasterVo;
 import com.dch.vo.TemplateResultMasterVo;
+import com.sun.jersey.spi.container.ResourceFilters;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -26,6 +27,8 @@ import java.text.DecimalFormat;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import static org.springframework.data.mongodb.core.query.Criteria.where;
 
@@ -33,13 +36,19 @@ import static org.springframework.data.mongodb.core.query.Criteria.where;
 @Produces("application/json")
 @Controller
 public class TemplateResultService {
-    private static final String tempCollectionName = "templateResult";
-    private static final String tempFillName = "templateFilling";
+    public static final String tempCollectionName = "templateResult";
+    public static final String tempFillName = "templateFilling";
     public static final String templateResultList = "templateResultList";
 
     private final String specialChar = "@";
     private final String inputSpeChar = "$";
     private static Map<String,Map> initMap = new HashMap<>();
+    //public static final Logger logger = LogManager.getLogger(TemplateResultService.class);
+//    static {
+//        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+//        Logger rootLogger = loggerContext.getLogger("org.mongodb.driver");
+//        rootLogger.setLevel(Level.OFF);
+//    }
 
     @Autowired
     private TemplateResultFacade templateResultFacade;
@@ -51,6 +60,7 @@ public class TemplateResultService {
     @POST
     @Path("save-all-template-result")
     @Transactional
+    @ResourceFilters(com.dch.security.LoginFilter.class)
     public Response saveAllTemplateResult(@QueryParam("templateId") String templateId,@QueryParam("masterId") String masterId,@QueryParam("type")String type) throws Exception {
         List<String> list = new ArrayList<>();
         String hql = "select templateResult from TemplateResult where status<>'-1' and templateId = '"+templateId+"' " +
@@ -206,6 +216,7 @@ public class TemplateResultService {
     @POST
     @Path("merge-template-result")
     @Transactional
+    @ResourceFilters(com.dch.security.LoginFilter.class)
     public Response mergeTemplateResult(TemplateResult templateResult) throws Exception {
         TemplateResult templateResultMerge =null;
         try{
@@ -264,6 +275,7 @@ public class TemplateResultService {
                 templateResultFacade.merge(templateResultMaster);
             }
         }catch (Exception e){
+            //logger.error(e);
             e.printStackTrace();
         }
         return Response.status(Response.Status.OK).entity(templateResultMerge).build();
@@ -446,6 +458,32 @@ public class TemplateResultService {
         return JSONUtil.objectToJsonString(reMap);
     }
 
+    /**
+     * 删除表单填报数据
+     * @param id
+     * @param userId
+     * @param type
+     * @return
+     * @throws Exception
+     */
+    @POST
+    @Path("delete-template-result-master")
+    @Transactional
+    public Response deleteTemplateResultMaster(@QueryParam("id")String id,@QueryParam("userId")String userId,@QueryParam("type")String type) throws Exception{
+        return  templateResultFacade.deleteTemplateResultMaster(id,userId,type,mongoTemplate);
+    }
+
+    /**
+     * 获取某个人填写的表单项目
+     * @param queryCondition 传入的参数条件
+     * @return
+     */
+    @GET
+    @Path("get-template-result-mastervo-by-param")
+    public Page<TemplateResultMasterVo> getTemplateResultMasterVoByParam(QueryCondition queryCondition){
+        Map<String,Object> paramMap = queryCondition.getParamMap();
+        return  templateResultFacade.getTemplateResultMasterVoByParam(paramMap,mongoTemplate);
+    }
 //    @GET
 //    @Path("init-template-result-list")
 //    public List<String> initTemplateResultList(){
