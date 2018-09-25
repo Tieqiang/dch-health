@@ -79,7 +79,11 @@
             <artifactId>dch-template</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
-
+        <dependency>
+            <groupId>com.dch</groupId>
+            <artifactId>dch-rdf</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
         <!--<dependency>-->
             <!--<groupId>com.dch</groupId>-->
             <!--<artifactId>dch-hdfs</artifactId>-->
@@ -528,6 +532,20 @@
             <artifactId>gson</artifactId>
             <version>2.2.4</version>
         </dependency>
-
+        <!--<dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <version>${log4j2.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
+            <version>${log4j2.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-web</artifactId>
+            <version>${log4j2.version}</version>
+        </dependency>-->
     </dependencies>
 </project>
