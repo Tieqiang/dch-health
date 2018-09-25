@@ -6,11 +6,14 @@ import com.dch.entity.User;
 import com.dch.facade.common.BaseFacade;
 import com.dch.facade.common.VO.Page;
 import com.dch.service.TemplateResultService;
+import com.dch.util.JSONUtil;
 import com.dch.util.StringUtils;
 import com.dch.util.UserUtils;
 import com.dch.vo.SolrVo;
 import com.dch.vo.TemplateMasterVo;
 import com.dch.vo.TemplateResultMasterVo;
+import com.mongodb.BasicDBObject;
+import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Component;
@@ -339,5 +342,95 @@ public class TemplateResultFacade extends BaseFacade {
     public void removeTemplateResultSupport(String masterId){
         String hql = "delete from TemplateResultSupport where relatedMasterId = '"+masterId+"'";
         excHql(hql);
+    }
+
+    public Page<TemplateResultMasterVo> getTemplateResultMasterVoByParam(Map<String,Object> paramMap,MongoTemplate mongoTemplate) {
+        String templateId = (String)paramMap.get("templateId");
+        String userId = (String)paramMap.get("userId");
+        String status = (String)paramMap.get("status");
+        int perPage = paramMap.get("perPage")==null?0:((int)paramMap.get("perPage"));
+        int currentPage = paramMap.get("currentPage")==null?0:((int)paramMap.get("currentPage"));
+        List<String> mongoFields = (List<String>)paramMap.get("fields");
+        long stime = System.currentTimeMillis();
+        String hql="select new com.dch.vo.TemplateResultMasterVo(m.id,m.templateId,m.templateName,m.completeRate,''" +
+                ",m.createDate,m.modifyDate,(select userName from User where id = m.createBy) as createBy,m.modifyBy,m.status,(select distinct status FROM TemplateResultSupport  " +
+                "WHERE relatedMasterId = m.id) as flag) from TemplateResultMaster as m where templateId='"+templateId+"'";
+
+        String hqlCount="select count(*) from TemplateResultMaster m where m.templateId='"+templateId+"'";
+        if(!StringUtils.isEmptyParam(status)){
+            hql += " and m.status='"+status+"'";
+            hqlCount += " and m.status='"+status+"'";
+        }else{
+            hql += " and m.status <> '-1' ";
+            hqlCount += " and m.status <> '-1' ";
+        }
+        if(StringUtils.isEmptyParam(userId)){
+            userId = UserUtils.getCurrentUser().getId();
+        }
+        boolean isAdmin = judgeIfAdmin(userId);
+        if(!isAdmin){//管理员查看用户填报的数据不用添加create_by条件
+            hql += " and m.createBy = '"+userId+"'";
+            hqlCount += " and m.createBy = '"+userId+"'";
+        }
+        hql += " order by m.createDate desc ";
+
+        TypedQuery<TemplateResultMasterVo> query = createQuery(TemplateResultMasterVo.class, hql, new ArrayList<Object>());
+        Long counts = createQuery(Long.class,hqlCount,new ArrayList<Object>()).getSingleResult();
+        Page page =new Page();
+        if(perPage<=0){
+            perPage=20;
+        }
+        if (perPage > 0) {
+            if(currentPage<=0){
+                currentPage =1;
+            }
+            query.setFirstResult((currentPage-1) * perPage);
+            query.setMaxResults(perPage);
+            page.setPerPage((long) perPage);
+        }
+        List<TemplateResultMasterVo> templateResultMasterVoList = query.getResultList();
+        long etime = System.currentTimeMillis();
+        System.out.println("===="+(etime-stime));
+        Map<String,String> templatejsonMap = new HashMap<>();
+        if(templateResultMasterVoList!=null && !templateResultMasterVoList.isEmpty()){
+            for(TemplateResultMasterVo templateResultMaster:templateResultMasterVoList){
+                templatejsonMap.put(templateResultMaster.getId(),"");
+            }
+        }
+        getMongoQueryResult(templatejsonMap,mongoFields,mongoTemplate);
+        if(templateResultMasterVoList!=null && !templateResultMasterVoList.isEmpty()){
+            for(TemplateResultMasterVo templateResultMaster:templateResultMasterVoList){
+                templateResultMaster.setTemplateResult(templatejsonMap.get(templateResultMaster.getId()));
+            }
+        }
+        page.setCounts(counts);
+        page.setData(templateResultMasterVoList);
+        long ptime = System.currentTimeMillis();
+        System.out.println("===="+(ptime-etime));
+        return page;
+    }
+
+    public void getMongoQueryResult(Map<String,String> templatejsonMap,List<String> mongoFields,MongoTemplate mongoTemplate){
+        try{
+            Query query = new Query();
+            query.addCriteria(Criteria.where("masterId").in(templatejsonMap.keySet()));
+            query.fields().include("masterId");
+            for(String field:mongoFields){
+                query.fields().include(field);
+            }
+//            query.fields().include("dch_1523154179240");
+//            query.fields().include("dch_1523154196755");
+//            query.fields().include("dch_1523154214456");
+//            query.fields().include("dch_1523179199291.dch_1523179560994");
+            List<Document> resultList = mongoTemplate.find(query,Document.class,"templateFilling");
+            for (Document result:resultList){
+                String masterId = result.get("masterId")+"";
+                if(templatejsonMap.containsKey(masterId)){
+                    templatejsonMap.put(masterId, JSONUtil.objectToJsonString(result));
+                }
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
     }
 }

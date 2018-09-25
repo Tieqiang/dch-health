@@ -91,4 +91,27 @@ public class TemplatePageService {
     public List<TemplatePageAndResultVo> getTemplatePagesAndResults(@QueryParam("templateId") String templateId, @QueryParam("masterId")String masterId){
         return templatePageFacade.getTemplatePagesAndResults(templateId,masterId);
     }
+
+    /**
+     * 获取表单页面及表单值(只展示一个表单页面的值)
+     * @param templateId
+     * @return
+     */
+    @GET
+    @Path("get-template-pages-and-first-result")
+    public List<TemplatePageAndResultVo> getTemplatePagesAndFirstResult(@QueryParam("templateId") String templateId, @QueryParam("masterId")String masterId){
+        return templatePageFacade.getTemplatePagesAndFirstResult(templateId,masterId);
+    }
+
+    /**
+     * 根据表单id和表单页id获取该表单页的值
+     * @param templateId
+     * @return
+     */
+    @GET
+    @Path("get-template-page-result")
+    public List<TemplatePageAndResultVo> getTemplatePageResult(@QueryParam("templateId") String templateId,
+                                                                @QueryParam("masterId")String masterId, @QueryParam("pageId")String pageId){
+        return templatePageFacade.getTemplatePageResult(templateId,masterId,pageId);
+    }
 }

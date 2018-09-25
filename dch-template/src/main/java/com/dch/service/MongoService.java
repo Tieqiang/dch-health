@@ -6,13 +6,10 @@ import com.dch.facade.common.BaseFacade;
 import com.dch.util.JSONUtil;
 import com.dch.util.StringUtils;
 import com.dch.util.UserUtils;
-import com.dch.vo.MongoQueryVo;
-import com.dch.vo.MongoResultVo;
-import com.dch.vo.Person;
-import com.dch.vo.QueryTerm;
+import com.dch.vo.*;
 import com.mongodb.BasicDBObject;
-//import org.apache.logging.log4j.LogManager;
-//import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -27,9 +24,8 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.json.JsonArray;
-import javax.json.JsonObject;
 import javax.ws.rs.*;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 import java.math.BigDecimal;
 import java.util.*;
@@ -146,15 +142,78 @@ public class MongoService {
      */
     @GET
     @Path("get-template-query-rules")
-    public List<TemplateQueryRule> getTemplateQueryRules(@QueryParam("templateId")String templateId,@QueryParam("ruleName")String ruleName){
+    public List<TemplateQueryRule> getTemplateQueryRules(@QueryParam("templateId")String templateId,@QueryParam("ruleName")String ruleName,
+                                                          @QueryParam("parentId")String parentId){
         String userId = UserUtils.getCurrentUser().getId();
         String hql = "from TemplateQueryRule where status<>'-1' and templateId = '"+templateId+"' and createBy = '"+userId+"'";
         if(!StringUtils.isEmptyParam(ruleName)){
             hql += " and ruleName = '"+ruleName+"'";
         }
+        if(!StringUtils.isEmptyParam(parentId)){
+            hql += " and parentId = '"+parentId+"'";
+        }else {
+            hql += " and parentId is null";
+        }
         List<TemplateQueryRule> templateQueryRuleList = baseFacade.createQuery(TemplateQueryRule.class,hql,new ArrayList<Object>()).getResultList();
         return templateQueryRuleList;
     }
+
+    /**
+     * 查询一级和二级报表信息（front-end developer has no inability，i have to do so）
+     * @return
+     */
+    @GET
+    @Path("get-all-template-query-rules")
+    public List<TemplateReportRuleVo> getAllTemplateQueryRules(@QueryParam("templateId")String templateId, @QueryParam("ruleName")String ruleName){
+        List<TemplateReportRuleVo> list = new ArrayList<>();
+        String userId = UserUtils.getCurrentUser().getId();
+        String hql = "from TemplateQueryRule where status<>'-1' and templateId = '"+templateId+"' and createBy = '"+userId+"'";
+        if(!StringUtils.isEmptyParam(ruleName)){
+            hql += " and ruleName = '"+ruleName+"'";
+        }
+        hql += " order by createDate asc";
+        List<TemplateQueryRule> templateQueryRuleList = baseFacade.createQuery(TemplateQueryRule.class,hql,new ArrayList<Object>()).getResultList();
+        Map<String,List<TemplateReportRuleVo>> firstMap = getFirstAndSecondRules(templateQueryRuleList,"0");
+        Map<String,List<TemplateReportRuleVo>> secondMap = getFirstAndSecondRules(templateQueryRuleList,"1");
+        for(String key:firstMap.keySet()){
+            TemplateReportRuleVo templateReportRuleVo = firstMap.get(key).get(0);
+            templateReportRuleVo.setReportRuleVoList(secondMap.get(key));
+            list.add(templateReportRuleVo);
+        }
+        return list;
+    }
+
+    public TreeMap<String,List<TemplateReportRuleVo>> getFirstAndSecondRules(List<TemplateQueryRule> templateQueryRuleList,String type){
+        TreeMap<String,List<TemplateReportRuleVo>> allMap = new TreeMap<>();
+        for(TemplateQueryRule templateQueryRule:templateQueryRuleList){
+            if("0".equals(type)){
+                if(StringUtils.isEmptyParam(templateQueryRule.getParentId())){
+                    List<TemplateReportRuleVo> firstList = new ArrayList<>();
+                    TemplateReportRuleVo templateReportRuleVo = new TemplateReportRuleVo(templateQueryRule.getId(),templateQueryRule.getTemplateId(),
+                            templateQueryRule.getRuleName(),templateQueryRule.getContent(),templateQueryRule.getRuleDesc(),
+                            templateQueryRule.getCreateBy(),templateQueryRule.getModifyBy());
+                    firstList.add(templateReportRuleVo);
+                    allMap.put(templateReportRuleVo.getId(),firstList);
+                }
+            }else{
+                if(!StringUtils.isEmptyParam(templateQueryRule.getParentId())){
+                    TemplateReportRuleVo templateReportRuleVo = new TemplateReportRuleVo(templateQueryRule.getId(),templateQueryRule.getTemplateId(),
+                            templateQueryRule.getRuleName(),templateQueryRule.getContent(),templateQueryRule.getRuleDesc(),
+                            templateQueryRule.getCreateBy(),templateQueryRule.getModifyBy());
+                    if(allMap.containsKey(templateQueryRule.getParentId())){
+                        List<TemplateReportRuleVo> templateReportRuleVos = allMap.get(templateQueryRule.getParentId());
+                        templateReportRuleVos.add(templateReportRuleVo);
+                    }else{
+                        List<TemplateReportRuleVo> templateReportRuleVos = new ArrayList<>();
+                        templateReportRuleVos.add(templateReportRuleVo);
+                        allMap.put(templateQueryRule.getParentId(),templateReportRuleVos);
+                    }
+                }
+            }
+        }
+        return allMap;
+    }
+
     @GET
     @Path("test-query")
     @Transactional
@@ -469,5 +528,31 @@ public class MongoService {
             s = s.replaceAll("[.]$", "");//如最后一位是.则去掉
         }
         return s;
+    }
+
+
+    @GET
+    @Path("test-log")
+    public List<String> testQuery(@QueryParam("templateId")String templateId) throws Exception{
+//        logger.debug("测试查询...debug.");
+//        logger.info("测试查询....info");
+//        logger.error("测试查询....error");
+        List list = new ArrayList();
+        list.add("sucess");
+        Query query = new Query();
+        query.addCriteria(Criteria.where("masterId").gt("8aa183c362a94b5b0162a94c00280090"));
+        query.fields().include("_id");
+        query.fields().include("dch_1523154179240");
+        query.fields().include("dch_1523154196755");
+        query.fields().include("dch_1523154214456");
+        query.fields().include("dch_1523179199291.dch_1523179560994");
+        List<Document> result = mongoTemplate.find(query,Document.class,"templateFilling");
+        for(int i=0;i<result.size();i++){
+            Document document = (Document)result.get(i);
+            System.out.println(document.get("dch_1523154179240"));
+        }
+        String json = JSONUtil.objectToJsonString(result);
+        System.out.println(json);
+        return list;
     }
 }

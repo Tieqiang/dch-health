@@ -139,7 +139,7 @@ public class TemplatePageFacade extends BaseFacade {
         String templatePageIds = pageIds.toString();
         if(!StringUtils.isEmptyParam(templatePageIds) && !StringUtils.isEmptyParam(masterId)){
             templatePageIds = templatePageIds.substring(0,templatePageIds.length()-1);
-            String resultSql = " from TemplateResult where status<>'-1' and pageId in ("+templatePageIds+")";
+            String resultSql = " from TemplateResult where status<>'-1' and pageId in ("+templatePageIds+") and masterId = '"+masterId+"'";
             List<TemplateResult> templateResultList = createQuery(TemplateResult.class, resultSql, new ArrayList<Object>()).getResultList();
             for(TemplateResult templateResult:templateResultList){
                 map.put(templateResult.getPageId()+templateResult.getMasterId(),templateResult);
@@ -159,6 +159,64 @@ public class TemplatePageFacade extends BaseFacade {
                 templatePageAndResultVos.add(templatePageAndResultVo);
             }
         }
+        return templatePageAndResultVos;
+    }
+
+    public List<TemplatePageAndResultVo> getTemplatePagesAndFirstResult(String templateId, String masterId) {
+        List<TemplatePageAndResultVo> templatePageAndResultVos = new ArrayList<TemplatePageAndResultVo>();
+        Map map = new HashMap();
+        String hql = " from TemplatePage where status<>'-1' and templateId = '"+templateId+"'";
+        List<TemplatePage> templatePageList = createQuery(TemplatePage.class, hql, new ArrayList<Object>()).getResultList();
+        StringBuffer pageIds = new StringBuffer("");
+        if(templatePageList!=null && !templatePageList.isEmpty()){
+            for(TemplatePage templatePage:templatePageList){
+                if("1".equals(templatePage.getTemplatePageOrder())){
+                    pageIds.append(templatePage.getId());
+                }
+            }
+        }
+        String templatePageIds = pageIds.toString();
+        if(!"".equals(templatePageIds)){
+            templatePageIds = templatePageList.get(1).getId();
+        }
+        if(!StringUtils.isEmptyParam(templatePageIds) && !StringUtils.isEmptyParam(masterId)){
+            String resultSql = " from TemplateResult where status<>'-1' and pageId in ("+templatePageIds+") and masterId = '"+masterId+"'";
+            List<TemplateResult> templateResultList = createQuery(TemplateResult.class, resultSql, new ArrayList<Object>()).getResultList();
+            for(TemplateResult templateResult:templateResultList){
+                map.put(templateResult.getPageId()+templateResult.getMasterId(),templateResult);
+            }
+            for(TemplatePage templatePage:templatePageList){
+                TemplatePageAndResultVo templatePageAndResultVo = new TemplatePageAndResultVo();
+                templatePageAndResultVo.setTemplatePage(templatePage);
+                if(map.get(templatePage.getId()+masterId)!=null){
+                    templatePageAndResultVo.setTemplateResult((TemplateResult)map.get(templatePage.getId()+masterId));
+                }
+                templatePageAndResultVos.add(templatePageAndResultVo);
+            }
+        }else{
+            for(TemplatePage templatePage:templatePageList){
+                TemplatePageAndResultVo templatePageAndResultVo = new TemplatePageAndResultVo();
+                templatePageAndResultVo.setTemplatePage(templatePage);
+                templatePageAndResultVos.add(templatePageAndResultVo);
+            }
+        }
+        return templatePageAndResultVos;
+    }
+
+    public List<TemplatePageAndResultVo> getTemplatePageResult(String templateId, String masterId, String pageId) {
+        List<TemplatePageAndResultVo> templatePageAndResultVos = new ArrayList<TemplatePageAndResultVo>();
+        TemplatePageAndResultVo templatePageAndResultVo = new TemplatePageAndResultVo();
+        String hql = " from TemplatePage where status<>'-1' and id = '"+pageId+"'";
+        List<TemplatePage> templatePageList = createQuery(TemplatePage.class, hql, new ArrayList<Object>()).getResultList();
+        if(!templatePageList.isEmpty()){
+            templatePageAndResultVo.setTemplatePage(templatePageList.get(0));
+        }
+        String resultSql = " from TemplateResult where status<>'-1' and pageId = '"+pageId+"' and masterId = '"+masterId+"'";
+        List<TemplateResult> templateResultList = createQuery(TemplateResult.class, resultSql, new ArrayList<Object>()).getResultList();
+        if(!templateResultList.isEmpty()){
+            templatePageAndResultVo.setTemplateResult(templateResultList.get(0));
+        }
+        templatePageAndResultVos.add(templatePageAndResultVo);
         return templatePageAndResultVos;
     }
 }
