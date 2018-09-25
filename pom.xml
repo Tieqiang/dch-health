@@ -26,6 +26,7 @@
         <module>dch-project</module>
         <module>dch-template</module>
         <module>dch-ikAnalyzer</module>
+        <module>dch-rdf</module>
     </modules>
 
     <properties>
@@ -66,7 +67,9 @@
         <hibernate.validator.version>4.3.1.Final</hibernate.validator.version>
         <hadoop.version>2.7.3</hadoop.version>
         <spring.hadoop.version>2.5.0.RELEASE</spring.hadoop.version>
-        <spring.mongdb.version>2.0.2.RELEASE</spring.mongdb.version>
+        <spring.mongdb.version>2.0.3.RELEASE</spring.mongdb.version>
+        <log4j2.version>2.6.2</log4j2.version>
+        <poi.version>3.10-FINAL</poi.version>
     </properties>
     <dependencyManagement>
         <dependencies>
@@ -535,6 +538,26 @@
                 <artifactId>spring-data-mongodb</artifactId>
                 <version>${spring.mongdb.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.apache.poi</groupId>
+                <artifactId>poi-ooxml</artifactId>
+                <version>${poi.version}</version>
+            </dependency>
+            <!--<dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-core</artifactId>
+                <version>${log4j2.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-api</artifactId>
+                <version>${log4j2.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-web</artifactId>
+                <version>${log4j2.version}</version>
+            </dependency>-->
         </dependencies>
     </dependencyManagement>
 
