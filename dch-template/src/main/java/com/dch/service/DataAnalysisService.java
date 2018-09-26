@@ -54,5 +54,16 @@ public class DataAnalysisService {
     }
 
 
+    /**
+     * 从MongoDb中获取最新的数据dataVersion = dataVersion +1
+     * @param tableId
+     * @return
+     */
+    @POST
+    @Path("fetch-data")
+    public TableColVO fetchTableFromMongo(@QueryParam("tableId")String tableId){
+        return null ;
+    }
+
 
 }
