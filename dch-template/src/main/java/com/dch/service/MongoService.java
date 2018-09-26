@@ -8,8 +8,6 @@ import com.dch.util.StringUtils;
 import com.dch.util.UserUtils;
 import com.dch.vo.*;
 import com.mongodb.BasicDBObject;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;

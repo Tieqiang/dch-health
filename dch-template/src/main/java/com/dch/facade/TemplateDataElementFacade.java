@@ -64,7 +64,6 @@ public class TemplateDataElementFacade extends BaseFacade {
      * @param currentPage
      * @return
      */
-    @Deprecated
     public Page<TemplateDataElementVo> getTemplateDataElements(String groupId,String dataElementName, String templateId, int perPage, int currentPage) {
         String hql="select new com.dch.vo.TemplateDataElementVo(t.id,t.dataElementName," +
                 "t.dataElementCode,t.parentDataId,t.dataStandRefId,(select dataElementName from DataElement where id = t.dataStandRefId) as dataStandRefName" +
@@ -279,4 +278,12 @@ public class TemplateDataElementFacade extends BaseFacade {
         return elementList;
     }
 
+    public List<TemplateDataElement> getTemplateDataElements(String templateId) {
+
+
+        String hql = " select a from TemplateDataElement as a  ,TemplatePage b where  a.pageId=b.id and b.templateId= '"+templateId+"'";
+        List<TemplateDataElement> resultList = createQuery(TemplateDataElement.class, hql, new ArrayList<Object>()).getResultList();
+
+        return resultList;
+    }
 }

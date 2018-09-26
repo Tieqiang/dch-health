@@ -1,7 +1,7 @@
 package com.dch.service;
 
 import com.dch.entity.MrFile;
-import com.dch.facade.RedisFacade;
+//import com.dch.facade.RedisFacade;
 import com.dch.facade.common.BaseFacade;
 import org.jboss.logging.annotations.Pos;
 import org.jsoup.Jsoup;
@@ -31,99 +31,99 @@ import java.util.Map;
 /**
  * Created by Administrator on 2017/9/20.
  */
-@Produces("application/json")
-@Path("redis")
-@Controller
+//@Produces("application/json")
+//@Path("redis")
+//@Controller
 public class RedisTest {
-
-    @Autowired
-    private RedisTemplate<String,String> redisTemplate ;
-
-
-    @Autowired
-    private RedisFacade redisFacade ;
-
-    @Autowired
-    private BaseFacade baseFacade ;
-
-    @Resource(name="redisTemplate")
-    private ListOperations<String, String> listOps;
-
-
-
-    @GET
-    @Path("put-value")
-    public Response addValueToRedis(@QueryParam("value") String value,@QueryParam("key")String key){
-        Long aLong = listOps.leftPush(key, value);
-        if(aLong>0){
-            return Response.status(Response.Status.OK).build();
-        }
-        return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
-    }
-
-    @GET
-    @Path("get-value")
-    public List<String> getValues(@QueryParam("key") String key){
-        List<String> list = listOps.range(key, 0, -1);
-        return list;
-    }
-
-
-    @POST
-    @Path("save-person")
-    public Response savePersion(Person person) throws IOException {
-        redisFacade.writeObject(person.getFirstName(),person);
-        return Response.status(Response.Status.OK).build();
-    }
-
-    @GET
-    @Path("get-person")
-    public Person getPerson(@QueryParam("f") String firstName) throws IOException, ClassNotFoundException {
-        return redisFacade.readObject(firstName);
-    }
-
-    @Transactional
-    @Path("merge")
-    @GET
-    public Response clearData(){
-        List<MrFile> all = baseFacade.findAll(MrFile.class);
-        int i = 0 ;
-        for(MrFile file:all){
-            clearFile(file);
-            System.out.println("处理数据第"+i+"条");
-            baseFacade.merge(file);
-            i++;
-        }
-        return Response.status(Response.Status.OK).build();
-    }
-
-    private void clearFile(MrFile file) {
-        String fileContent = file.getFileContent();
-        if(fileContent==null||"".equals(fileContent)){
-            return ;
-        }
-
-
-        Document document = Jsoup.parse(fileContent);
-        Iterator<Element> img = document.getElementsByTag("img").iterator();
-        while(img.hasNext()){
-            Element next = img.next();
-            String src = next.attr("src");
-            if(!src.startsWith("/")){
-                src="/"+src;
-            }
-            next.attr("src",src);
-        }
-
-
-        Elements content_share = document.getElementsByClass("content_share");
-        Elements readCT = document.getElementsByClass("readCT");
-        content_share.remove();
-        readCT.remove();
-
-        String html = document.html();
-        file.setFileContent(html);
-    }
+//
+//    @Autowired
+//    private RedisTemplate<String,String> redisTemplate ;
+//
+//
+//    @Autowired
+//    private RedisFacade redisFacade ;
+//
+//    @Autowired
+//    private BaseFacade baseFacade ;
+//
+//    @Resource(name="redisTemplate")
+//    private ListOperations<String, String> listOps;
+//
+//
+//
+//    @GET
+//    @Path("put-value")
+//    public Response addValueToRedis(@QueryParam("value") String value,@QueryParam("key")String key){
+//        Long aLong = listOps.leftPush(key, value);
+//        if(aLong>0){
+//            return Response.status(Response.Status.OK).build();
+//        }
+//        return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+//    }
+//
+//    @GET
+//    @Path("get-value")
+//    public List<String> getValues(@QueryParam("key") String key){
+//        List<String> list = listOps.range(key, 0, -1);
+//        return list;
+//    }
+//
+//
+//    @POST
+//    @Path("save-person")
+//    public Response savePersion(Person person) throws IOException {
+//        redisFacade.writeObject(person.getFirstName(),person);
+//        return Response.status(Response.Status.OK).build();
+//    }
+//
+//    @GET
+//    @Path("get-person")
+//    public Person getPerson(@QueryParam("f") String firstName) throws IOException, ClassNotFoundException {
+//        return redisFacade.readObject(firstName);
+//    }
+//
+//    @Transactional
+//    @Path("merge")
+//    @GET
+//    public Response clearData(){
+//        List<MrFile> all = baseFacade.findAll(MrFile.class);
+//        int i = 0 ;
+//        for(MrFile file:all){
+//            clearFile(file);
+//            System.out.println("处理数据第"+i+"条");
+//            baseFacade.merge(file);
+//            i++;
+//        }
+//        return Response.status(Response.Status.OK).build();
+//    }
+//
+//    private void clearFile(MrFile file) {
+//        String fileContent = file.getFileContent();
+//        if(fileContent==null||"".equals(fileContent)){
+//            return ;
+//        }
+//
+//
+//        Document document = Jsoup.parse(fileContent);
+//        Iterator<Element> img = document.getElementsByTag("img").iterator();
+//        while(img.hasNext()){
+//            Element next = img.next();
+//            String src = next.attr("src");
+//            if(!src.startsWith("/")){
+//                src="/"+src;
+//            }
+//            next.attr("src",src);
+//        }
+//
+//
+//        Elements content_share = document.getElementsByClass("content_share");
+//        Elements readCT = document.getElementsByClass("readCT");
+//        content_share.remove();
+//        readCT.remove();
+//
+//        String html = document.html();
+//        file.setFileContent(html);
+//    }
 
 }
 

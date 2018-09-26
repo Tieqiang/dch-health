@@ -49,34 +49,34 @@
         <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
     </listener>
 
-    <context-param>
-        <param-name>isLog4jAutoInitializationDisabled</param-name>
-        <param-value>true</param-value>
-    </context-param>
-    <context-param>
-        <param-name>webAppRootKey</param-name>
-        <param-value>webApp.root</param-value>
-    </context-param>
-    <context-param>
-        <param-name>log4jConfiguration</param-name>
-        <param-value>classpath:log4j2.xml</param-value>
-    </context-param>
+    <!--<context-param>-->
+        <!--<param-name>isLog4jAutoInitializationDisabled</param-name>-->
+        <!--<param-value>true</param-value>-->
+    <!--</context-param>-->
+    <!--<context-param>-->
+        <!--<param-name>webAppRootKey</param-name>-->
+        <!--<param-value>webApp.root</param-value>-->
+    <!--</context-param>-->
+    <!--<context-param>-->
+        <!--<param-name>log4jConfiguration</param-name>-->
+        <!--<param-value>classpath:log4j2.xml</param-value>-->
+    <!--</context-param>-->
 
-    <listener>
-        <listener-class>org.apache.logging.log4j.web.Log4jServletContextListener</listener-class>
-    </listener>
-    <filter>
-        <filter-name>log4jServletFilter</filter-name>
-        <filter-class>org.apache.logging.log4j.web.Log4jServletFilter</filter-class>
-    </filter>
-    <filter-mapping>
-        <filter-name>log4jServletFilter</filter-name>
-        <url-pattern>/*</url-pattern>
-        <dispatcher>REQUEST</dispatcher>
-        <dispatcher>FORWARD</dispatcher>
-        <dispatcher>INCLUDE</dispatcher>
-        <dispatcher>ERROR</dispatcher>
-    </filter-mapping>
+    <!--<listener>-->
+        <!--<listener-class>org.apache.logging.log4j.web.Log4jServletContextListener</listener-class>-->
+    <!--</listener>-->
+    <!--<filter>-->
+        <!--<filter-name>log4jServletFilter</filter-name>-->
+        <!--<filter-class>org.apache.logging.log4j.web.Log4jServletFilter</filter-class>-->
+    <!--</filter>-->
+    <!--<filter-mapping>-->
+        <!--<filter-name>log4jServletFilter</filter-name>-->
+        <!--<url-pattern>/*</url-pattern>-->
+        <!--<dispatcher>REQUEST</dispatcher>-->
+        <!--<dispatcher>FORWARD</dispatcher>-->
+        <!--<dispatcher>INCLUDE</dispatcher>-->
+        <!--<dispatcher>ERROR</dispatcher>-->
+    <!--</filter-mapping>-->
 
     <servlet>
         <servlet-name>jerseySpring</servlet-name>
