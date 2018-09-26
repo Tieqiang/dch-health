@@ -32,7 +32,7 @@ import java.util.Map;
  * Created by Administrator on 2017/9/20.
  */
 @Produces("application/json")
-@Path("redis")
+@Path("redis-test")
 @Controller
 public class RedisTest {
 
