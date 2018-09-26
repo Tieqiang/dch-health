@@ -20,7 +20,7 @@ public class DataAnalysisService {
     @Autowired
     private TableFacade tableFacade;
 
-    @POST
+    @GET
     @Path("create-tables")
     public List<TableConfig> createTableConfig(@QueryParam("templateId")String templateId) throws Exception {
 

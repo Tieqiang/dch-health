@@ -65,7 +65,7 @@ public class TableFacade extends BaseFacade {
 //                firstLevelDataElement.add(vo);
                 String dataElementType = vo.getDataElementType();
                 if (dataElementType.contains("table")) {
-                    tableCreateVos = createNextTable(vo, templateDataElements, templateId);
+                    tableCreateVos = createNextTable(vo, templateDataElements, templateId,"master");
                     vos.addAll(tableCreateVos);
                 } else {
                     firstLevelDataElement.add(vo);
@@ -147,7 +147,7 @@ public class TableFacade extends BaseFacade {
     }
 
 
-    private List<TableCreateVo> createNextTable(TemplateDataElement vo, List<TemplateDataElement> data, String templateId) {
+    private List<TableCreateVo> createNextTable(TemplateDataElement vo, List<TemplateDataElement> data, String templateId, String master) {
 
         logger.info("创建子表："+vo);
         List<TableCreateVo> vos = new ArrayList<>();
@@ -158,7 +158,7 @@ public class TableFacade extends BaseFacade {
         sql += " " + tableName + ";";
         sql = sql + " create table " + tableName + " (" +
                 "id varchar(200) NOT NULL comment '主键' ," +
-                "" + tableName + "_id varchar(200) comment '外键与主记录',";
+                "" + master + "_id varchar(200) comment '外键与主记录',";
         TableColConfig tableColConfig = new TableColConfig();
         tableColConfig.setColCode("id");
         tableColConfig.setColName("主键");
@@ -167,7 +167,7 @@ public class TableFacade extends BaseFacade {
         tableColConfigs.add(tableColConfig);
 
         TableColConfig tableColConfigName = new TableColConfig();
-        tableColConfigName.setColCode(tableName + "_id");
+        tableColConfigName.setColCode(master + "_id");
         tableColConfigName.setColName("外键");
         tableColConfigName.setColDescription(vo.getDataElementName() + "外键");
         tableColConfigName.setDataVersion(0);
@@ -183,7 +183,7 @@ public class TableFacade extends BaseFacade {
         for (TemplateDataElement elementVo : data) {
             if (vo.getId().equals(elementVo.getParentDataId())) {
                 if (elementVo.getDataElementType().contains("table")) {
-                    List<TableCreateVo> nextTable = createNextTable(elementVo, data, templateId);
+                    List<TableCreateVo> nextTable = createNextTable(elementVo, data, templateId, vo.getDataElementCode());
                     vos.addAll(nextTable);
                 } else {
                     TableColConfig tableCol = new TableColConfig();
