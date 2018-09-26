@@ -212,7 +212,7 @@ public class TableFacade extends BaseFacade {
 
 
     public List<TableConfig> getTableConfig(String templateId) {
-        String hql = "from TableConfig as t where t.formId='"+templateId+"'" ;
+        String hql = "from TableConfig as t where t.formId='"+templateId+"' order by t.tableName asc" ;
         return createQuery(TableConfig.class,hql,new ArrayList<Object>()).getResultList();
     }
 
@@ -226,7 +226,10 @@ public class TableFacade extends BaseFacade {
             sql+=config.getColCode()+",";
         }
         sql=sql.substring(0,sql.length()-1);
-        sql+=" from "+tableConfig.getTableName()+" where data_version = (select max(data_version) from "+tableName+")";
+        sql+=" from "+tableConfig.getTableName();
+        if(sql.contains("data_version")){
+            sql+=" where data_version = (select max(data_version) from "+tableName+")";
+        }
         logger.info(sql);
 
         List<Object[]> datas = this.createNativeQuery(sql).getResultList();
