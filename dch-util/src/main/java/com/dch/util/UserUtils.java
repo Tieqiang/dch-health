@@ -10,10 +10,12 @@ import com.dch.vo.Principal;
 import com.dch.vo.UserVo;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.Account;
+import org.apache.shiro.mgt.SecurityManager;
 import org.apache.shiro.session.Session;
 import org.apache.shiro.session.mgt.eis.SessionDAO;
 import org.apache.shiro.subject.SimplePrincipalCollection;
 import org.apache.shiro.subject.Subject;
+import org.apache.shiro.util.ThreadContext;
 import org.apache.shiro.web.session.mgt.DefaultWebSessionManager;
 import org.crazycake.shiro.RedisCacheManager;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,6 +49,9 @@ public class UserUtils {
 	public static UserVo getCurrentUser(){
 		UserVo userVo = new UserVo();
 		try {
+            SecurityManager securityManager = ThreadContext.getSecurityManager();
+            if(securityManager==null)
+                return userVo;
 			Subject subject = SecurityUtils.getSubject();
 			Principal principal = (Principal)subject.getPrincipal();
 			if(principal!=null){

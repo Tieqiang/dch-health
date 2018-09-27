@@ -3,11 +3,15 @@ package com.dch.service;
 
 import com.dch.entity.TableConfig;
 import com.dch.facade.TableFacade;
+import com.dch.vo.CreateTableVO;
 import com.dch.vo.TableColVO;
+import org.apache.zookeeper.Op;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import sun.security.provider.certpath.OCSPResponse;
 
 import javax.ws.rs.*;
+import javax.ws.rs.core.Response;
 import java.util.List;
 
 @Controller
@@ -65,5 +69,21 @@ public class DataAnalysisService {
         return null ;
     }
 
+
+    /***
+     * 创建用户自定义表
+     * @param createTableVO
+     * @return
+     */
+    @POST
+    @Path("create-custom-table")
+    public Response createCustomTableConfig(CreateTableVO createTableVO){
+        try {
+            TableConfig tableConfig =  tableFacade.createCustomTableConfig(createTableVO);
+            return Response.status(Response.Status.OK).entity(tableConfig).build();
+        }catch (Exception e){
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e).build();
+        }
+    }
 
 }
