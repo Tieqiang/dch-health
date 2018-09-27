@@ -285,12 +285,17 @@ public class TableFacade extends BaseFacade {
     private String createCreateCustomTableSQL(List<TableColConfig> tableColConfigs, String tableName) {
 
         String SQL = "drop table if EXISTS "+tableName+";";
-        SQL = SQL + " create table " + tableName + " ( id varchar(200) NOT NULL comment '主键' ," ;
+        SQL = SQL + " create table " + tableName + " (" ;
         for (TableColConfig config:tableColConfigs){
-            SQL += "" + config.getColCode() + " varchar(1600) comment '" + config.getColName() + "',";
+            if("id".equals(config.getColCode())){
+                SQL += "" + config.getColCode() + " varchar(64) comment '" + config.getColName() + "',";
+            }else{
+                SQL += "" + config.getColCode() + " varchar(1600) comment '" + config.getColName() + "',";
+            }
+
         }
         SQL = SQL + " data_version int DEFAULT 0  comment '版本',";
-        SQL = SQL + "  PRIMARY KEY (id) ) ENGINE=InnoDB DEFAULT CHARSET=utf8 comment '" ;
+        SQL = SQL + "  PRIMARY KEY (id) ) ENGINE=InnoDB DEFAULT CHARSET=utf8" ;
         return SQL;
     }
 
@@ -332,7 +337,7 @@ public class TableFacade extends BaseFacade {
      */
     private String createExecuteSQL(List<UserCustomTableVO> userCustomTableVOs, List<OperationConditionVO> operationConditionVOS) {
         String sql = "select ";
-        String from = "from ";
+        String from = " from ";
         String condition = "  where 1=1 and ";
         for (UserCustomTableVO vo : userCustomTableVOs) {
             List<TableColConfig> tableColConfigs = vo.getTableColConfigs();
@@ -356,7 +361,7 @@ public class TableFacade extends BaseFacade {
                         condition += "'" + str + "',";
                     }
                     condition = condition.substring(0, condition.length() - 1);
-                    condition += " " + conditionVO.getNextOperation();
+                    condition += " ) " + conditionVO.getNextOperation();
                     break;
                 case EQUAL:
                     condition += this.buildCondition("=", conditionVO);

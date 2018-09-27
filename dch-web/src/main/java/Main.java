@@ -21,7 +21,7 @@ public class Main {
 
         //新添加的一个注释
         if (webPort == null || "".equals(webPort)) {
-            webPort = "8090";
+            webPort = "9998";
         }
 
         File file = new File(webappDirLocation) ;
