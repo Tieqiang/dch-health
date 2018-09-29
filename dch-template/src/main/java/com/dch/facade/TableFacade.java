@@ -234,7 +234,7 @@ public class TableFacade extends BaseFacade {
         }
         sql = sql.substring(0, sql.length() - 1);
         sql += " from " + tableConfig.getTableName();
-        if (!tableConfig.getTableName().startsWith("data_master")) {//sql.contains("data_version")
+        if (sql.contains("data_version")) {//sql.contains("data_version")
             sql += " where data_version = (select max(data_version) from " + tableName + ")";
         }
         logger.info(sql);
@@ -330,7 +330,12 @@ public class TableFacade extends BaseFacade {
         colConfig.setColCode("id");
         colConfig.setColName("主键");
         colConfig.setColDescription("自定义主键");
-        colConfigs.add(colConfig);
+
+        TableColConfig colConfig2 = new TableColConfig();
+        colConfig2.setColCode("data_version");
+        colConfig.setColName("版本号");
+        colConfig.setColDescription("版本号");
+        colConfigs.add(colConfig2);
 
         return colConfigs;
     }
