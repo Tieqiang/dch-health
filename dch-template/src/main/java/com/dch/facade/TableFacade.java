@@ -22,7 +22,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class TableFacade extends BaseFacade {
@@ -272,6 +275,8 @@ public class TableFacade extends BaseFacade {
         }
 
         tableConfig.setExecuteSql(executeSQL);
+        tableConfig.setCreateDate(new Timestamp(new Date().getTime()));
+        tableConfig.setModifyDate(new Timestamp(new Date().getTime()));
         TableConfig merge = merge(tableConfig);
         logger.info("保存自定义表信息成功！");
         for (TableColConfig config : tableColConfigs) {
@@ -330,12 +335,7 @@ public class TableFacade extends BaseFacade {
         colConfig.setColCode("id");
         colConfig.setColName("主键");
         colConfig.setColDescription("自定义主键");
-
-        TableColConfig colConfig2 = new TableColConfig();
-        colConfig2.setColCode("data_version");
-        colConfig.setColName("版本号");
-        colConfig.setColDescription("版本号");
-        colConfigs.add(colConfig2);
+        colConfigs.add(colConfig);
 
         return colConfigs;
     }
@@ -744,5 +744,138 @@ public class TableFacade extends BaseFacade {
             }
         }
         return list;
+    }
+
+    public List<UnitFunds> getReportStatistics(ReportQueryParam reportQueryParam) throws Exception{
+        List<UnitFunds> reportList = new ArrayList<>();
+        String tableName = reportQueryParam.getTableName();
+        String x_field = reportQueryParam.getXaxis();
+        String y_field = reportQueryParam.getYaxis();
+        String sort = reportQueryParam.getSortType();
+        String type = reportQueryParam.getType();
+        String table_name = getTableNameById(tableName);
+        StringBuffer sqlBuffer = new StringBuffer("SELECT ");
+        try {
+            if(x_field.equals(y_field)){//如果所选的字段一致，则为统计计数
+                sqlBuffer.append(" count(*),").append(x_field).append(" FROM ").append(table_name)
+                        .append(" GROUP BY ").append(x_field);
+                if("0".equals(sort)){//降序
+                    sqlBuffer.append(" ORDER BY ").append(x_field).append(" DESC");
+                }else{
+                    sqlBuffer.append(" ORDER BY ").append(x_field).append(" ASC");
+                }
+                List resultList = createNativeQuery(sqlBuffer.toString()).getResultList();
+                for(int i=0;i<resultList.size();i++) {
+                    UnitFunds unitFunds = new UnitFunds();
+                    Object[] innerParams = (Object[]) resultList.get(i);
+                    Integer countNum = Integer.valueOf(innerParams[0].toString());
+                    String fieldValue = innerParams[1].toString();
+                    unitFunds.setUnit(fieldValue);
+                    unitFunds.setFunds(countNum.doubleValue());
+                    reportList.add(unitFunds);
+                }
+                return reportList;
+            }else{
+                sqlBuffer.append(x_field).append(",").append(y_field).append(" FROM ").append(table_name);
+                List resultList = createNativeQuery(sqlBuffer.toString()).getResultList();
+                Map<String,List<UnitFunds>> resultMap = new HashMap<>();
+                for(int i=0;i<resultList.size();i++){
+                    Object[] innerParams = (Object[]) resultList.get(i);
+                    String xValue = innerParams[0].toString();
+                    System.out.println(innerParams[1]);
+                    String yValue = getRealYvalue(innerParams[1].toString());
+                    Double yValueNum = Double.valueOf(yValue);
+                    if(yValueNum>0){
+                        if(resultMap.containsKey(xValue)){
+                            List<UnitFunds> unitFundsList = resultMap.get(xValue);
+                            UnitFunds unitFunds = new UnitFunds();
+                            unitFunds.setUnit(y_field);
+                            unitFunds.setFunds(yValueNum);
+                            unitFundsList.add(unitFunds);
+                        }else{
+                            List<UnitFunds> unitFundsList = new ArrayList<>();
+                            UnitFunds unitFunds = new UnitFunds();
+                            unitFunds.setUnit(y_field);
+                            unitFunds.setFunds(yValueNum);
+                            unitFundsList.add(unitFunds);
+                            resultMap.put(xValue,unitFundsList);
+                        }
+                    }
+                }
+                for(String key:resultMap.keySet()){
+                    UnitFunds unitFunds = new UnitFunds();
+                    Double statValue = getStatisticsValue(resultMap.get(key),type);
+                    unitFunds.setUnit(key);
+                    unitFunds.setFunds(statValue);
+                    reportList.add(unitFunds);
+                }
+            }
+        }catch (NumberFormatException e){
+            throw new Exception("所选y轴字段非数字类型，无法进行统计");
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return reportList;
+    }
+
+    public String getTableNameById(String tableId){
+        String sql = "select table_name from table_config where id = '"+tableId+"'";
+        List<String> list = createNativeQuery(sql).getResultList();
+        return list.get(0);
+    }
+    public Double getStatisticsValue(List<UnitFunds> unitFundsList,String type){
+        Double result = 0D;
+        if(unitFundsList!=null && !unitFundsList.isEmpty()){
+            if("1".equals(type)){//求和
+                return unitFundsList.stream().mapToDouble(UnitFunds::getFunds).sum();
+            }else if("2".equals(type)){
+                return unitFundsList.stream().mapToDouble(UnitFunds::getFunds).average().getAsDouble();
+            }
+        }
+        return result;
+    }
+    public static String getRealYvalue(String value){
+        String numStr = value;
+        numStr = numStr.replace(" ","");
+        numStr = numStr.replace(",","");
+        numStr = numStr.replace("/","");
+        numStr = numStr.replace("-","");
+        numStr = numStr.replace("无","");
+        if("".equals(numStr)){
+            numStr = "0";
+        }
+        Pattern pattern = Pattern.compile(".*?(\\d+[.]\\d+)[.].*");
+        Matcher matcher = pattern.matcher(numStr);
+        if (matcher.find()){
+            return matcher.group(1);
+        }
+        return numStr;
+    }
+
+    public static void main(String args[]){
+        List<MongoResultVo> list = new ArrayList<>();
+        MongoResultVo mongoResultVo = new MongoResultVo();
+        mongoResultVo.setName("1");
+        mongoResultVo.setValue(2);
+        list.add(mongoResultVo);
+        MongoResultVo mongoResultVo2 = new MongoResultVo();
+        mongoResultVo2.setName("1");
+        mongoResultVo2.setValue(2);
+        list.add(mongoResultVo2);
+        System.out.println(list.stream().mapToDouble(MongoResultVo::getValue).average().getAsDouble());
+        System.out.println(list.stream().mapToDouble(MongoResultVo::getValue).sum());
+
+        List<UnitFunds> unitFundsList = new ArrayList<>();
+        UnitFunds unitFunds = new UnitFunds();
+        unitFunds.setUnit("1");
+        unitFunds.setFunds(2.0);
+        UnitFunds unitFunds1 = new UnitFunds();
+        unitFunds1.setUnit("1");
+        unitFunds1.setFunds(2.0);
+        unitFundsList.add(unitFunds);
+        if(!unitFundsList.contains(unitFunds1)){
+            unitFundsList.add(unitFunds1);
+        }
+        System.out.println(unitFundsList.stream().mapToDouble(UnitFunds::getFunds).sum());
     }
 }

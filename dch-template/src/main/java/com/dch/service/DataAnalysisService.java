@@ -3,8 +3,7 @@ package com.dch.service;
 
 import com.dch.entity.TableConfig;
 import com.dch.facade.TableFacade;
-import com.dch.vo.CreateTableVO;
-import com.dch.vo.TableColVO;
+import com.dch.vo.*;
 import org.apache.zookeeper.Op;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -14,6 +13,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 import org.bson.Document;
 import javax.ws.rs.*;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 import java.util.*;
 
@@ -106,5 +106,21 @@ public class DataAnalysisService {
             e.printStackTrace();
         }
         return list;
+    }
+
+    /**
+     * 获取报表统计结果
+     * @param reportQueryParam
+     * @return
+     */
+    @POST
+    @Path("get-report-statistics")
+    public Response getReportStatistics(ReportQueryParam reportQueryParam){
+        try {
+            List<UnitFunds> mongoResultVoList = tableFacade.getReportStatistics(reportQueryParam);
+            return Response.status(Response.Status.OK).entity(mongoResultVoList).build();
+        }catch (Exception e){
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e).build();
+        }
     }
 }

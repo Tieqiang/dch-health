@@ -22,4 +22,22 @@ public class UnitFunds {
     public void setFunds(Double funds) {
         this.funds = funds;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        UnitFunds unitFunds = (UnitFunds) o;
+
+        if (!unit.equals(unitFunds.unit)) return false;
+        return funds.equals(unitFunds.funds);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = unit.hashCode();
+        result = 31 * result + funds.hashCode();
+        return result;
+    }
 }
