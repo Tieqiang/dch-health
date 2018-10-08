@@ -263,14 +263,14 @@ public class TableFacade extends BaseFacade {
         tableConfig.setCreateFrom("user");
         String executeSQL = createExecuteSQL(createTableVO.getUserCustomTableVOs(), createTableVO.getOperationConditionVOS());
         List<TableColConfig> tableColConfigs = createTAbleColConfigs(createTableVO.getUserCustomTableVOs(), createTableVO.getOperationConditionVOS());
-        String tableName = PinYin2Abbreviation.cn2py("user_custom_"+tableConfig.getTableName());
-        String createTableSql = createCreateCustomTableSQL(tableColConfigs,tableName);
+        String tableName = PinYin2Abbreviation.cn2py("user_custom_" + tableConfig.getTableName());
+        String createTableSql = createCreateCustomTableSQL(tableColConfigs, tableName);
         Connection connection = this.dataSource.getConnection();
 
         String[] split = createTableSql.split(";");
-        for(String sql:split){
+        for (String sql : split) {
             PreparedStatement preparedStatement = connection.prepareStatement(sql);
-            logger.info("开始执行SQL："+sql);
+            logger.info("开始执行SQL：" + sql);
             preparedStatement.execute();
         }
 
@@ -289,24 +289,25 @@ public class TableFacade extends BaseFacade {
 
     /**
      * 生成建表语句
+     *
      * @param tableColConfigs
      * @param tableName
      * @return
      */
     private String createCreateCustomTableSQL(List<TableColConfig> tableColConfigs, String tableName) {
 
-        String SQL = "drop table if EXISTS "+tableName+";";
-        SQL = SQL + " create table " + tableName + " (" ;
-        for (TableColConfig config:tableColConfigs){
-            if("id".equals(config.getColCode())){
+        String SQL = "drop table if EXISTS " + tableName + ";";
+        SQL = SQL + " create table " + tableName + " (";
+        for (TableColConfig config : tableColConfigs) {
+            if ("id".equals(config.getColCode())) {
                 SQL += "" + config.getColCode() + " varchar(64) comment '" + config.getColName() + "',";
-            }else{
+            } else {
                 SQL += "" + config.getColCode() + " varchar(1600) comment '" + config.getColName() + "',";
             }
 
         }
-        SQL = SQL + " data_version int DEFAULT 0  comment '版本',";
-        SQL = SQL + "  PRIMARY KEY (id) ) ENGINE=InnoDB DEFAULT CHARSET=utf8" ;
+//        SQL = SQL + " data_version int DEFAULT 0  comment '版本',";
+        SQL = SQL + "  PRIMARY KEY (id) ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
         return SQL;
     }
 
@@ -320,9 +321,9 @@ public class TableFacade extends BaseFacade {
     private List<TableColConfig> createTAbleColConfigs(List<UserCustomTableVO> userCustomTableVOs, List<OperationConditionVO> operationConditionVOS) {
 
         List<TableColConfig> colConfigs = new ArrayList<>();
-        for (UserCustomTableVO customTableVO:userCustomTableVOs){
+        for (UserCustomTableVO customTableVO : userCustomTableVOs) {
             List<TableColConfig> tableColConfigs = customTableVO.getTableColConfigs();
-            for(TableColConfig config:tableColConfigs){
+            for (TableColConfig config : tableColConfigs) {
                 TableColConfig colConfig = new TableColConfig();
                 colConfig.setColName(config.getColName());
                 colConfig.setColDescription(config.getColDescription());
@@ -337,11 +338,18 @@ public class TableFacade extends BaseFacade {
         colConfig.setColDescription("自定义主键");
         colConfigs.add(colConfig);
 
+        TableColConfig colConfig2 = new TableColConfig();
+        colConfig2.setColCode("data_version");
+        colConfig.setColName("版本号");
+        colConfig.setColDescription("版本号");
+        colConfigs.add(colConfig2);
+
         return colConfigs;
     }
 
     /**
      * 创建表执行的sql
+     *
      * @param userCustomTableVOs
      * @param operationConditionVOS
      * @return
@@ -390,16 +398,17 @@ public class TableFacade extends BaseFacade {
                     condition += this.buildCondition(">=", conditionVO);
                     break;
                 default:
-                    condition+=" 1=1 "+conditionVO.getNextOperation();
+                    condition += " 1=1 " + conditionVO.getNextOperation();
             }
-            condition+=" 1=1 ";
+            condition += " 1=1 ";
         }
 
-        return sql+from+condition;
+        return sql + from + condition;
     }
 
     /**
-     *  创建条件语句
+     * 创建条件语句
+     *
      * @param operation
      * @param conditionVO
      * @return
@@ -417,153 +426,158 @@ public class TableFacade extends BaseFacade {
 
     /**
      * 解析mongo中的数据并生成sql，保存入库
+     *
      * @param templateId
      * @return
      */
-    public String fetchMongoToTable(String templateId){
+    public String fetchMongoToTable(String templateId) {
         Query query = new Query();
         query.addCriteria(Criteria.where("templateId").is(templateId));
         try {
-            List<Document> result = mongoTemplate.find(query,Document.class,"templateFilling");
-            Map<String,List<String>> inserSqlMap = new HashMap<>();
+            List<Document> result = mongoTemplate.find(query, Document.class, "templateFilling");
+            Map<String, List<String>> inserSqlMap = new HashMap<>();
             String masterTable = getMasterTableByTemplateId(templateId);
-            Map<String,List<String>> tableColMap = getAllTableColInfo(templateId);
-            initInserSql(result,masterTable,inserSqlMap,tableColMap);
+            Map<String, List<String>> tableColMap = getAllTableColInfo(templateId);
+            initInserSql(result, masterTable, inserSqlMap, tableColMap);
             saveToDb(inserSqlMap);
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return "SUCESS";
     }
 
-    public Map<String,List<String>> getAllTableColInfo(String templateId){
-        Map<String,List<String>> tableColMap = new HashMap<>();
+    public Map<String, List<String>> getAllTableColInfo(String templateId) {
+        Map<String, List<String>> tableColMap = new HashMap<>();
         String sql = "SELECT COLUMN_NAME ,TABLE_NAME from information_schema.COLUMNS where TABLE_NAME in(select table_name from table_config where create_from = 'system'" +
-                " and form_id = '"+templateId + "')";
+                " and form_id = '" + templateId + "')";
         List colList = createNativeQuery(sql).getResultList();
-        for(int i=0;i<colList.size();i++){
-            Object[] innerParams = (Object[])colList.get(i);
+        for (int i = 0; i < colList.size(); i++) {
+            Object[] innerParams = (Object[]) colList.get(i);
             String colName = innerParams[0].toString();
             String tableName = innerParams[1].toString();
-            if(tableColMap.containsKey(tableName)){
+            if (tableColMap.containsKey(tableName)) {
                 List<String> columList = tableColMap.get(tableName);
                 columList.add(colName);
-            }else{
+            } else {
                 List<String> columList = new ArrayList<>();
                 columList.add(colName);
-                tableColMap.put(tableName,columList);
+                tableColMap.put(tableName, columList);
             }
-            if(!tableColMap.containsKey("data_version") && !tableName.startsWith("data_master")){
+            if (!tableColMap.containsKey("data_version") && !tableName.startsWith("data_master")) {
                 Integer version = getTableVersion(tableName);
                 List<String> versionList = new ArrayList<>();
                 versionList.add(version.toString());
-                tableColMap.put("data_version",versionList);
+                tableColMap.put("data_version", versionList);
             }
         }
         return tableColMap;
     }
-    public String getMasterTableByTemplateId(String templateId){
-        String sql = "select template_name from template_master where id = '"+templateId+"'";
+
+    public String getMasterTableByTemplateId(String templateId) {
+        String sql = "select template_name from template_master where id = '" + templateId + "'";
         List<String> colList = createNativeQuery(sql).getResultList();
         String table = "data_master";
-        if(colList!=null && !colList.isEmpty()){
+        if (colList != null && !colList.isEmpty()) {
             table = table + "_" + PinYin2Abbreviation.cn2py(colList.get(0));
         }
         return table;
     }
-    public String getInsertSqlBef(List<String> colList,String tableName){
+
+    public String getInsertSqlBef(List<String> colList, String tableName) {
         StringBuffer firstSqlBuf = new StringBuffer("insert into ").append(tableName).append("(");
-        if(!tableName.startsWith("dch")){
-            for(String key:colList){
-                if("templateId".equals(key)){
+        if (!tableName.startsWith("dch")) {
+            for (String key : colList) {
+                if ("templateId".equals(key)) {
                     continue;
                 }
-                if("masterId".equals(key)){
+                if ("masterId".equals(key)) {
                     firstSqlBuf.append("id,");
-                }else{
+                } else {
                     firstSqlBuf.append(key).append(",");
                 }
             }
-        }else{
-            for(String key:colList){
+        } else {
+            for (String key : colList) {
                 firstSqlBuf.append(key).append(",");
             }
         }
         String firstSqlStr = firstSqlBuf.toString();
-        firstSqlStr = firstSqlStr.substring(0,firstSqlStr.length()-1) + ") VALUES";
+        firstSqlStr = firstSqlStr.substring(0, firstSqlStr.length() - 1) + ") VALUES";
         return firstSqlStr;
     }
+
     /**
      * 将生成的sql执行保存操作
+     *
      * @param inserSqlMap
      * @throws Exception
      */
-    public void saveToDb(Map<String,List<String>> inserSqlMap) throws Exception{
+    public void saveToDb(Map<String, List<String>> inserSqlMap) throws Exception {
         PreparedStatement statement = null;
-        try{
+        try {
             statement = dataSource.getConnection().prepareStatement("");
-            for(String key:inserSqlMap.keySet()){
+            for (String key : inserSqlMap.keySet()) {
                 List<String> insertSqlList = inserSqlMap.get(key);
                 String insert_sql = insertSqlList.get(0);
                 statement.addBatch(insert_sql);
                 // 执行操作
                 statement.executeBatch();
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
-        }finally {
-            if(statement!=null){
+        } finally {
+            if (statement != null) {
                 statement.close();
             }
         }
     }
 
-    public Map<String,List<String>> initInserSql(List<Document> documentList,String tableName,Map<String,List<String>> inserSqlMap,Map<String,List<String>> tableColMap){
-        String insertSqlBef = getInsertSqlBef(tableColMap.get(tableName),tableName);
+    public Map<String, List<String>> initInserSql(List<Document> documentList, String tableName, Map<String, List<String>> inserSqlMap, Map<String, List<String>> tableColMap) {
+        String insertSqlBef = getInsertSqlBef(tableColMap.get(tableName), tableName);
         StringBuffer valueSqlBuf = new StringBuffer(insertSqlBef);
         List<String> keyList = tableColMap.get(tableName);
-        Map<String,String> sqlBefMap = new HashMap<>();
-        for(Document document:documentList){
+        Map<String, String> sqlBefMap = new HashMap<>();
+        for (Document document : documentList) {
             valueSqlBuf.append("(");
-            for(int i=0;i<keyList.size();i++){
+            for (int i = 0; i < keyList.size(); i++) {
                 String ckey = keyList.get(i);
-                if(i!=keyList.size()-1){
-                    if("id".equals(ckey)){
+                if (i != keyList.size() - 1) {
+                    if ("id".equals(ckey)) {
                         valueSqlBuf.append("'").append(document.get("masterId")).append("',");
-                    }else{
-                        String valueStr = document.get(ckey)==null?"":document.get(ckey).toString();
-                        valueStr = valueStr.replace("'","");
+                    } else {
+                        String valueStr = document.get(ckey) == null ? "" : document.get(ckey).toString();
+                        valueStr = valueStr.replace("'", "");
                         valueSqlBuf.append("'").append(valueStr).append("',");
                     }
-                }else{
-                    if("id".equals(ckey)){
+                } else {
+                    if ("id".equals(ckey)) {
                         valueSqlBuf.append("'").append(document.get("masterId")).append("'),");
-                    }else{
-                        String valueStr = document.get(ckey)==null?"":document.get(ckey).toString();
-                        valueStr = valueStr.replace("'","");
+                    } else {
+                        String valueStr = document.get(ckey) == null ? "" : document.get(ckey).toString();
+                        valueStr = valueStr.replace("'", "");
                         valueSqlBuf.append("'").append(valueStr).append("'),");
                     }
                 }
             }
-            for(String key:document.keySet()){
+            for (String key : document.keySet()) {
                 Object value = document.get(key);
-                if(value.getClass().isArray()){
+                if (value.getClass().isArray()) {
                     //System.out.println(key);
-                }else if(value instanceof List){
-                    if(!value.toString().contains("dch")){
-                    }else{
+                } else if (value instanceof List) {
+                    if (!value.toString().contains("dch")) {
+                    } else {
                         //System.out.println(key);
-                        dealListToMap((List)value,key,"","",document.get("masterId").toString(),inserSqlMap,tableColMap,sqlBefMap);
+                        dealListToMap((List) value, key, "", "", document.get("masterId").toString(), inserSqlMap, tableColMap, sqlBefMap);
                     }
                 }
             }
         }
         String inserSqlFinal = valueSqlBuf.toString();
-        inserSqlFinal = inserSqlFinal.substring(0,inserSqlFinal.length()-1);
-        if(inserSqlMap.containsKey(tableName)){
+        inserSqlFinal = inserSqlFinal.substring(0, inserSqlFinal.length() - 1);
+        if (inserSqlMap.containsKey(tableName)) {
             List<String> insertList = inserSqlMap.get(tableName);
             insertList.add(inserSqlFinal);
-        }else{
+        } else {
             List<String> insertList = new ArrayList<>();
             insertList.add(inserSqlFinal);
             inserSqlMap.put(tableName, insertList);
@@ -571,175 +585,176 @@ public class TableFacade extends BaseFacade {
         return inserSqlMap;
     }
 
-    public void dealListToMap(List list,String tableName,String parentKey,String parentId,String masterId,Map<String,List<String>> inserSqlMap,
-                              Map<String,List<String>> tableColMap,Map<String,String> sqlBefMap){
-        if(list!=null && !list.isEmpty()){
+    public void dealListToMap(List list, String tableName, String parentKey, String parentId, String masterId, Map<String, List<String>> inserSqlMap,
+                              Map<String, List<String>> tableColMap, Map<String, String> sqlBefMap) {
+        if (list != null && !list.isEmpty()) {
             Integer version = Integer.valueOf(tableColMap.get("data_version").get(0));
             StringBuffer valueSqlBuf = new StringBuffer();
-            if(sqlBefMap.containsKey(tableName)){
+            if (sqlBefMap.containsKey(tableName)) {
                 valueSqlBuf = valueSqlBuf.append(sqlBefMap.get(tableName)).append(",");
-            }else{
-                String insertSqlBef = getInsertSqlBef(tableColMap.get(tableName),tableName);
+            } else {
+                String insertSqlBef = getInsertSqlBef(tableColMap.get(tableName), tableName);
                 valueSqlBuf.append(insertSqlBef);
             }
             List<String> keyList = tableColMap.get(tableName);
-            for(int i=0;i<list.size();i++){
+            for (int i = 0; i < list.size(); i++) {
                 String uuid = getUID();
-                Document document = (Document)list.get(i);
+                Document document = (Document) list.get(i);
                 valueSqlBuf.append("(");
-                for(int k=0;k<keyList.size();k++){
+                for (int k = 0; k < keyList.size(); k++) {
                     String ckey = keyList.get(k);
-                    if(ckey.contains("$")){
-                        ckey = ckey.replace("$","@");
+                    if (ckey.contains("$")) {
+                        ckey = ckey.replace("$", "@");
                     }
-                    if(k!=keyList.size()-1){
-                        if("id".equals(ckey)){
+                    if (k != keyList.size() - 1) {
+                        if ("id".equals(ckey)) {
                             valueSqlBuf.append("'").append(uuid).append("',");
-                        }else if("data_version".equals(ckey)){
+                        } else if ("data_version".equals(ckey)) {
                             valueSqlBuf.append(version).append(",");
-                        }else if("master_id".equals(ckey)){
+                        } else if ("master_id".equals(ckey)) {
                             valueSqlBuf.append("'").append(masterId).append("',");
-                        }else if(parentKey.equals(ckey)){
+                        } else if (parentKey.equals(ckey)) {
                             valueSqlBuf.append("'").append(parentId).append("',");
-                        }else{
-                            String valueStr = document.get(ckey)==null?"":document.get(ckey).toString();
-                            valueStr = valueStr.replace("'","");
+                        } else {
+                            String valueStr = document.get(ckey) == null ? "" : document.get(ckey).toString();
+                            valueStr = valueStr.replace("'", "");
                             valueSqlBuf.append("'").append(valueStr).append("',");
                         }
-                    }else{
-                        if("id".equals(ckey)){
+                    } else {
+                        if ("id".equals(ckey)) {
                             valueSqlBuf.append("'").append(uuid).append("'),");
-                        }else if("data_version".equals(ckey)){
+                        } else if ("data_version".equals(ckey)) {
                             valueSqlBuf.append(version).append("),");
-                        }else if("master_id".equals(ckey)){
+                        } else if ("master_id".equals(ckey)) {
                             valueSqlBuf.append("'").append(masterId).append("'),");
-                        }else if(parentKey.equals(ckey)){
+                        } else if (parentKey.equals(ckey)) {
                             valueSqlBuf.append("'").append(parentId).append("'),");
-                        }else{
-                            String valueStr = document.get(ckey)==null?"":document.get(ckey).toString();
-                            valueStr = valueStr.replace("'","");
+                        } else {
+                            String valueStr = document.get(ckey) == null ? "" : document.get(ckey).toString();
+                            valueStr = valueStr.replace("'", "");
                             valueSqlBuf.append("'").append(valueStr).append("'),");
                         }
                     }
                 }
-                for(String key:document.keySet()){
+                for (String key : document.keySet()) {
                     Object value = document.get(key);
-                    if(value.getClass().isArray()){
+                    if (value.getClass().isArray()) {
 
-                    }else if(value instanceof List){
-                        if(!value.toString().contains("dch")){
+                    } else if (value instanceof List) {
+                        if (!value.toString().contains("dch")) {
 
-                        }else{
+                        } else {
                             //System.out.println(key);
-                            String parentCol = tableName+"_id";
-                            dealListToMap((List)value,key,parentCol,uuid,"",inserSqlMap,tableColMap,sqlBefMap);
+                            String parentCol = tableName + "_id";
+                            dealListToMap((List) value, key, parentCol, uuid, "", inserSqlMap, tableColMap, sqlBefMap);
                         }
                     }
                 }
             }
             String valueSqlStr = valueSqlBuf.toString();
-            if(valueSqlStr.contains("@")){
-                valueSqlStr = valueSqlStr.replace("@","$");
+            if (valueSqlStr.contains("@")) {
+                valueSqlStr = valueSqlStr.replace("@", "$");
             }
-            String inserSql = valueSqlStr.substring(0,valueSqlStr.length()-1);
-            if(inserSqlMap.containsKey(tableName)){
+            String inserSql = valueSqlStr.substring(0, valueSqlStr.length() - 1);
+            if (inserSqlMap.containsKey(tableName)) {
                 List<String> insertList = inserSqlMap.get(tableName);
                 insertList.remove(0);
-                insertList.add(0,inserSql);
-                sqlBefMap.put(tableName,inserSql);
-            }else{
+                insertList.add(0, inserSql);
+                sqlBefMap.put(tableName, inserSql);
+            } else {
                 List<String> insertList = new ArrayList<>();
                 insertList.add(inserSql);
                 inserSqlMap.put(tableName, insertList);
-                sqlBefMap.put(tableName,inserSql);
+                sqlBefMap.put(tableName, inserSql);
             }
         }
     }
 
-    public Integer getTableVersion(String tableName){
+    public Integer getTableVersion(String tableName) {
         Integer version = null;
-        String sql = "select max(data_version) as version from "+ tableName +" where 1=1";
+        String sql = "select max(data_version) as version from " + tableName + " where 1=1";
         List<Integer> colList = createNativeQuery(sql).getResultList();
-        if(colList!=null && !colList.isEmpty()){
+        if (colList != null && !colList.isEmpty()) {
             version = colList.get(0);
         }
-        return version==null?0:(version+1);
+        return version == null ? 0 : (version + 1);
     }
 
-    public String getUID(){
-        String uid = UUID.randomUUID().toString().replaceAll("-","");
+    public String getUID() {
+        String uid = UUID.randomUUID().toString().replaceAll("-", "");
         return uid;
     }
 
     /**
      * 获取数据并插入到表中
+     *
      * @param tableId
      * @return
      */
-    public TableColVO fetchTableFromMongo(String tableId) throws Exception{
-        String sql = "select table_name,form_id,execute_sql from table_config where id = '"+tableId+"'";
+    public TableColVO fetchTableFromMongo(String tableId) throws Exception {
+        String sql = "select table_name,form_id,execute_sql from table_config where id = '" + tableId + "'";
         List resultList = createNativeQuery(sql).getResultList();
-        if(resultList!=null && !resultList.isEmpty()){
-            Object[] innerParams = (Object[])resultList.get(0);
+        if (resultList != null && !resultList.isEmpty()) {
+            Object[] innerParams = (Object[]) resultList.get(0);
             String tableName = innerParams[0].toString();
             String execute_sql = innerParams[2].toString();
             List queryList = createNativeQuery(execute_sql).getResultList();
-            saveResultToDb(tableName,execute_sql,queryList);
+            saveResultToDb(tableName, execute_sql, queryList);
         }
         return getTableColVO(tableId);
     }
 
-    public void saveResultToDb(String tableName,String sql,List queryList) throws Exception{
+    public void saveResultToDb(String tableName, String sql, List queryList) throws Exception {
         PreparedStatement statement = null;
-        try{
+        try {
             StringBuffer inserSqlBef = new StringBuffer("insert into ").append(tableName).append("(id,data_version,");
             List<String> keyList = getTableColum(sql);
-            for(String key:keyList){
+            for (String key : keyList) {
                 inserSqlBef.append(key).append(",");
             }
             String insertSqlBefStr = inserSqlBef.toString();
-            insertSqlBefStr = insertSqlBefStr.substring(0,insertSqlBefStr.length()-1) + ") VALUES";
+            insertSqlBefStr = insertSqlBefStr.substring(0, insertSqlBefStr.length() - 1) + ") VALUES";
             StringBuffer valueSqlBuf = new StringBuffer(insertSqlBefStr);
             Integer version = getTableVersion(tableName);
-            for(int i=0;i<queryList.size();i++){
+            for (int i = 0; i < queryList.size(); i++) {
                 String uid = getUID();
                 valueSqlBuf.append("('").append(uid).append("',").append(version).append(",");
-                Object[] innerParams = (Object[])queryList.get(i);
-                for(int k=0;k<innerParams.length;k++){
-                    if(k!=innerParams.length-1){
+                Object[] innerParams = (Object[]) queryList.get(i);
+                for (int k = 0; k < innerParams.length; k++) {
+                    if (k != innerParams.length - 1) {
                         valueSqlBuf.append("'").append(innerParams[k]).append("',");
-                    }else{
+                    } else {
                         valueSqlBuf.append("'").append(innerParams[k]).append("'),");
                     }
                 }
             }
             String valueSqlStr = valueSqlBuf.toString();
-            valueSqlStr = valueSqlStr.substring(0,valueSqlStr.length()-1);
+            valueSqlStr = valueSqlStr.substring(0, valueSqlStr.length() - 1);
             statement = dataSource.getConnection().prepareStatement("");
             statement.addBatch(valueSqlStr);
             // 执行操作
             statement.executeBatch();
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
-        }finally {
-            if(statement!=null){
+        } finally {
+            if (statement != null) {
                 statement.close();
             }
         }
     }
 
-    public List<String> getTableColum(String sql){
+    public List<String> getTableColum(String sql) {
         List<String> list = new ArrayList<>();
         String sqlUpper = sql.toUpperCase();
         int table_index = sqlUpper.indexOf("FROM");
         int select_indxe = sqlUpper.indexOf("SELECT");
-        String tableColums = sqlUpper.substring(select_indxe+"SELECT".length(), table_index);
+        String tableColums = sqlUpper.substring(select_indxe + "SELECT".length(), table_index);
         String[] colums = tableColums.split(",");
-        for(String colum:colums){
+        for (String colum : colums) {
             int lindex = colum.lastIndexOf(".");
-            if(lindex>0){
-                list.add(colum.substring(lindex+1));
-            }else{
+            if (lindex > 0) {
+                list.add(colum.substring(lindex + 1));
+            } else {
                 list.add(colum);
             }
         }

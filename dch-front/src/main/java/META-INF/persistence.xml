@@ -3,12 +3,10 @@
 
     <persistence-unit name="NewPersistenceUnit">
         <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
-        <class>com.dch.entity.Feature</class>
-        <class>com.dch.entity.FeatureZone</class>
-        <class>com.dch.entity.ProjectInfo</class>
-        <class>com.dch.entity.ProjectSummaryPage</class>
+        <class>com.dch.entity.TableColConfig</class>
+        <class>com.dch.entity.TableConfig</class>
         <properties>
-            <property name="hibernate.connection.url" value="jdbc:mysql://localhost:3306/dch"/>
+            <property name="hibernate.connection.url" value="jdbc:mysql://10.1.85.36:3306/dch"/>
             <property name="hibernate.connection.driver_class" value="com.mysql.jdbc.Driver"/>
             <property name="hibernate.connection.username" value=""/>
             <property name="hibernate.connection.password" value=""/>
