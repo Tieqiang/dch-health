@@ -3,6 +3,7 @@ package com.dch.service;
 
 import com.dch.entity.TableConfig;
 import com.dch.facade.TableFacade;
+import com.dch.facade.common.VO.ReturnInfo;
 import com.dch.vo.*;
 import org.apache.zookeeper.Op;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -115,12 +116,26 @@ public class DataAnalysisService {
      */
     @POST
     @Path("get-report-statistics")
-    public Response getReportStatistics(ReportQueryParam reportQueryParam){
+    public Response getReportStatistics(ReportQueryParam reportQueryParam) throws Exception{
         try {
             List<UnitFunds> mongoResultVoList = tableFacade.getReportStatistics(reportQueryParam);
             return Response.status(Response.Status.OK).entity(mongoResultVoList).build();
         }catch (Exception e){
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e).build();
+            List<String> errorList = new ArrayList<>();
+            errorList.add(e.getMessage());
+            return Response.status(Response.Status.OK).entity(errorList).build();
         }
+    }
+
+    /**
+     * 根据表id删除用户自定义报表
+     * @param tableId
+     * @return
+     */
+    @POST
+    @Path("del-customer-table")
+    public Response delCustomerDefineTable(@QueryParam("tableId") String tableId){
+        ReturnInfo returnInfo = tableFacade.delCustomerDefineTable(tableId);
+        return Response.status(Response.Status.OK).entity(returnInfo).build();
     }
 }

@@ -5,6 +5,7 @@ import com.dch.entity.TableConfig;
 import com.dch.entity.TemplateDataElement;
 import com.dch.entity.TemplateMaster;
 import com.dch.facade.common.BaseFacade;
+import com.dch.facade.common.VO.ReturnInfo;
 import com.dch.util.PinYin2Abbreviation;
 import com.dch.util.StringUtils;
 import com.dch.vo.*;
@@ -274,6 +275,7 @@ public class TableFacade extends BaseFacade {
             preparedStatement.execute();
         }
 
+        tableConfig.setTableName(tableName);
         tableConfig.setExecuteSql(executeSQL);
         tableConfig.setCreateDate(new Timestamp(new Date().getTime()));
         tableConfig.setModifyDate(new Timestamp(new Date().getTime()));
@@ -358,6 +360,7 @@ public class TableFacade extends BaseFacade {
         String sql = "select ";
         String from = " from ";
         String condition = "  where 1=1 and ";
+        Map<String,String> tableInfo = new HashMap<>();
         for (UserCustomTableVO vo : userCustomTableVOs) {
             List<TableColConfig> tableColConfigs = vo.getTableColConfigs();
             TableConfig tableConfig = vo.getTableConfig();
@@ -365,6 +368,7 @@ public class TableFacade extends BaseFacade {
             for (TableColConfig colConfig : tableColConfigs) {
                 sql += " " + tableConfig.getTableName() + "." + colConfig.getColCode() + ",";
             }
+            tableInfo.put(tableConfig.getId(),tableConfig.getTableName());
         }
         sql = sql.substring(0, sql.length() - 1);
         from = from.substring(0, from.length() - 1);
@@ -372,7 +376,7 @@ public class TableFacade extends BaseFacade {
         for (OperationConditionVO conditionVO : operationConditionVOS) {
             OperationEnum operationEnum = conditionVO.getOperationEnum();
             TableColConfig firstTableColConfig = conditionVO.getFirstTableColConfig();
-            condition += " " + firstTableColConfig.getColCode();
+            condition += " " + tableInfo.get(firstTableColConfig.getTableId()) + "." + firstTableColConfig.getColCode();
             switch (operationEnum) {
                 case IN:
                     condition += " in (";
@@ -400,8 +404,8 @@ public class TableFacade extends BaseFacade {
                 default:
                     condition += " 1=1 " + conditionVO.getNextOperation();
             }
-            condition += " 1=1 ";
         }
+        condition += " 1=1 ";
 
         return sql + from + condition;
     }
@@ -892,5 +896,26 @@ public class TableFacade extends BaseFacade {
             unitFundsList.add(unitFunds1);
         }
         System.out.println(unitFundsList.stream().mapToDouble(UnitFunds::getFunds).sum());
+    }
+
+    @Transactional
+    public ReturnInfo delCustomerDefineTable(String tableId) {
+        ReturnInfo returnInfo = null;
+        try {
+            //删除table_config中定义的表
+            TableConfig tableConfig = get(TableConfig.class,tableId);
+            remove(tableConfig);
+            //删除table_col_config中的表字段
+            String hql = "delete from TableColConfig where tableId = '"+tableId+"'";
+            excHql(hql);
+            //删除创建的表
+            String tableName = tableConfig.getTableName();
+            String sql = "drop table "+ tableName;
+            createNativeQuery(sql).executeUpdate();
+            returnInfo = new ReturnInfo("true","操作成功");
+        }catch (Exception e){
+            returnInfo = new ReturnInfo("false",e.getMessage());
+        }
+        return returnInfo;
     }
 }
