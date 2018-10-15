@@ -12,6 +12,7 @@ public class TableColVO implements Serializable {
 
     private List<TableColConfig> tableColConfigs ;
     private List<Object[]> datas ;
+    private long totalNum;
 
     public List<TableColConfig> getTableColConfigs() {
         return tableColConfigs;
@@ -27,5 +28,13 @@ public class TableColVO implements Serializable {
 
     public void setDatas(List<Object[]> datas) {
         this.datas = datas;
+    }
+
+    public long getTotalNum() {
+        return totalNum;
+    }
+
+    public void setTotalNum(long totalNum) {
+        this.totalNum = totalNum;
     }
 }

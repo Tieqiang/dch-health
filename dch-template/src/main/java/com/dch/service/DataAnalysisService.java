@@ -57,8 +57,8 @@ public class DataAnalysisService {
      */
     @GET
     @Path("get-table-data")
-    public TableColVO getTableColVO(@QueryParam("tableId")String tableId){
-        return tableFacade.getTableColVO(tableId) ;
+    public TableColVO getTableColVO(@QueryParam("tableId")String tableId, @QueryParam("perPage")int perPage,@QueryParam("currentPage")int currentPage){
+        return tableFacade.getTableColVO(tableId, perPage, currentPage);
     }
 
 

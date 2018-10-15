@@ -20,6 +20,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -227,25 +228,35 @@ public class TableFacade extends BaseFacade {
         return createQuery(TableConfig.class, hql, new ArrayList<Object>()).getResultList();
     }
 
-    public TableColVO getTableColVO(String tableId) {
+    public TableColVO getTableColVO(String tableId, int perPage, int currentPage) {
         String hql = "from TableColConfig where tableId='" + tableId + "'";
         List<TableColConfig> resultList = createQuery(TableColConfig.class, hql, new ArrayList<Object>()).getResultList();
         TableConfig tableConfig = this.get(TableConfig.class, tableId);
         String tableName = tableConfig.getTableName();
+        String sqlCount = "select count(*) ";
         String sql = "select ";
         for (TableColConfig config : resultList) {
             sql += config.getColCode() + ",";
         }
         sql = sql.substring(0, sql.length() - 1);
         sql += " from " + tableConfig.getTableName();
+        sqlCount += " from " + tableConfig.getTableName();
         if (sql.contains("data_version")) {//sql.contains("data_version")
             sql += " where data_version = (select max(data_version) from " + tableName + ")";
+            sqlCount += " where data_version = (select max(data_version) from " + tableName + ")";
         }
+        perPage = perPage < 1?20:perPage;
+        currentPage = currentPage< 1?1:currentPage;
+        long limit_start = (currentPage -1) * perPage;
+        long limit_end = currentPage * perPage;
+        sql += " limit " + limit_start + ","+limit_end;
         logger.info(sql);
 
         List<Object[]> datas = this.createNativeQuery(sql).getResultList();
+        BigInteger totalNum = (BigInteger)this.createNativeQuery(sqlCount).getResultList().get(0);
         TableColVO tableColVO = new TableColVO();
         tableColVO.setDatas(datas);
+        tableColVO.setTotalNum(totalNum.longValue());
         tableColVO.setTableColConfigs(resultList);
 
         return tableColVO;
@@ -262,6 +273,7 @@ public class TableFacade extends BaseFacade {
 
         TableConfig tableConfig = createTableVO.getTableConfig();
         tableConfig.setCreateFrom("user");
+        tableConfig.setTableDesc(tableConfig.getTableName());
         String executeSQL = createExecuteSQL(createTableVO.getUserCustomTableVOs(), createTableVO.getOperationConditionVOS());
         List<TableColConfig> tableColConfigs = createTAbleColConfigs(createTableVO.getUserCustomTableVOs(), createTableVO.getOperationConditionVOS());
         String tableName = PinYin2Abbreviation.cn2py("user_custom_" + tableConfig.getTableName());
@@ -286,6 +298,9 @@ public class TableFacade extends BaseFacade {
             merge(config);
         }
         logger.info("保存自定义字段成功");
+        //将初始化用户自定义表数据
+        List queryList = createNativeQuery(executeSQL).getResultList();
+        saveResultToDb(tableName, executeSQL, queryList);
         return tableConfig;
     }
 
@@ -342,8 +357,8 @@ public class TableFacade extends BaseFacade {
 
         TableColConfig colConfig2 = new TableColConfig();
         colConfig2.setColCode("data_version");
-        colConfig.setColName("版本号");
-        colConfig.setColDescription("版本号");
+        colConfig2.setColName("版本号");
+        colConfig2.setColDescription("版本号");
         colConfigs.add(colConfig2);
 
         return colConfigs;
@@ -387,19 +402,19 @@ public class TableFacade extends BaseFacade {
                     condition += " ) " + conditionVO.getNextOperation();
                     break;
                 case EQUAL:
-                    condition += this.buildCondition("=", conditionVO);
+                    condition += this.buildCondition("=", conditionVO, tableInfo);
                     break;
                 case GRATER_THAN:
-                    condition += this.buildCondition(">", conditionVO);
+                    condition += this.buildCondition(">", conditionVO, tableInfo);
                     break;
                 case LESS_THAN:
-                    condition += this.buildCondition("<", conditionVO);
+                    condition += this.buildCondition("<", conditionVO, tableInfo);
                     break;
                 case LESS_OR_EQUAL_THAN:
-                    condition += this.buildCondition("<=", conditionVO);
+                    condition += this.buildCondition("<=", conditionVO, tableInfo);
                     break;
                 case GRATER_OR_EQUAL_THAN:
-                    condition += this.buildCondition(">=", conditionVO);
+                    condition += this.buildCondition(">=", conditionVO, tableInfo);
                     break;
                 default:
                     condition += " 1=1 " + conditionVO.getNextOperation();
@@ -417,14 +432,15 @@ public class TableFacade extends BaseFacade {
      * @param conditionVO
      * @return
      */
-    private String buildCondition(String operation, OperationConditionVO conditionVO) {
+    private String buildCondition(String operation, OperationConditionVO conditionVO, Map<String,String> tableInfo) {
         String condition = "";
         if (conditionVO.getThanValue() != null) {
             condition += operation + "'" + conditionVO.getThanValue() + "' " + conditionVO.getNextOperation();
         }
         if (conditionVO.getSecondTableColConfig() != null) {
-            condition += operation + conditionVO.getSecondTableColConfig().getColCode() + " " + conditionVO.getNextOperation();
+            condition += operation + tableInfo.get(conditionVO.getSecondTableColConfig().getTableId()) + "." + conditionVO.getSecondTableColConfig().getColCode() + " " + conditionVO.getNextOperation();
         }
+
         return condition;
     }
 
@@ -705,10 +721,10 @@ public class TableFacade extends BaseFacade {
             List queryList = createNativeQuery(execute_sql).getResultList();
             saveResultToDb(tableName, execute_sql, queryList);
         }
-        return getTableColVO(tableId);
+        return getTableColVO(tableId, 20, 1);
     }
 
-    public void saveResultToDb(String tableName, String sql, List queryList) throws Exception {
+    public void saveResultToDb(String tableName, String sql, List queryList){
         PreparedStatement statement = null;
         try {
             StringBuffer inserSqlBef = new StringBuffer("insert into ").append(tableName).append("(id,data_version,");
@@ -742,7 +758,11 @@ public class TableFacade extends BaseFacade {
             e.printStackTrace();
         } finally {
             if (statement != null) {
-                statement.close();
+                try {
+                    statement.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
@@ -775,6 +795,9 @@ public class TableFacade extends BaseFacade {
         String table_name = getTableNameById(tableName);
         StringBuffer sqlBuffer = new StringBuffer("SELECT ");
         try {
+            if("".equals(reportQueryParam.getChart())){//如果图像为表格类型则直接查询
+
+            }
             if(x_field.equals(y_field)){//如果所选的字段一致，则为统计计数
                 sqlBuffer.append(" count(*),").append(x_field).append(" FROM ").append(table_name)
                         .append(" GROUP BY ").append(x_field);
@@ -904,16 +927,19 @@ public class TableFacade extends BaseFacade {
         try {
             //删除table_config中定义的表
             TableConfig tableConfig = get(TableConfig.class,tableId);
-            remove(tableConfig);
-            //删除table_col_config中的表字段
-            String hql = "delete from TableColConfig where tableId = '"+tableId+"'";
-            excHql(hql);
-            //删除创建的表
-            String tableName = tableConfig.getTableName();
-            String sql = "drop table "+ tableName;
-            createNativeQuery(sql).executeUpdate();
+            if(tableConfig!=null){
+                remove(tableConfig);
+                //删除table_col_config中的表字段
+                String hql = "delete from TableColConfig where tableId = '"+tableId+"'";
+                excHql(hql);
+                //删除创建的表
+                String tableName = tableConfig.getTableName();
+                String sql = "DROP TABLE if EXISTS "+ tableName + ";";
+                createNativeQuery(sql).executeUpdate();
+            }
             returnInfo = new ReturnInfo("true","操作成功");
         }catch (Exception e){
+            e.printStackTrace();
             returnInfo = new ReturnInfo("false",e.getMessage());
         }
         return returnInfo;
