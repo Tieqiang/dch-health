@@ -1,6 +1,7 @@
 package com.dch.service;
 
 
+import com.dch.entity.ReportGroup;
 import com.dch.entity.TableConfig;
 import com.dch.facade.TableFacade;
 import com.dch.facade.common.VO.ReturnInfo;
@@ -40,13 +41,13 @@ public class DataAnalysisService {
     /**
      * 获取所有的表格
      * @param templateId
+     * @param type 报表类型，type为system 为系统初始化的表
      * @return
      */
     @GET
     @Path("get-tables")
-    public List<TableConfig> getTableConfig(@QueryParam("templateId") String templateId){
-
-        return tableFacade.getTableConfig(templateId) ;
+    public List<TableConfig> getTableConfig(@QueryParam("templateId") String templateId,@QueryParam("type")String type){
+        return tableFacade.getTableConfig(templateId,type) ;
     }
 
 
@@ -73,7 +74,27 @@ public class DataAnalysisService {
         return tableFacade.fetchTableFromMongo(tableId) ;
     }
 
+    /**
+     * 添加，修改，删除(逻辑删除，status置为-1)用户自定义报表分组
+     * @param reportGroup
+     * @return
+     */
+    @POST
+    @Path("merge-report-group")
+    public Response mergeCustomerReportGroup(ReportGroup reportGroup) throws Exception{
+        return tableFacade.mergeCustomerReportGroup(reportGroup);
+    }
 
+    /**
+     * 获取用户自定义报表分组
+     * @param reportName 报表名称 模糊查询
+     * @return
+     */
+    @GET
+    @Path("get-report-group-list")
+    public List<ReportGroupVo> getReportGroupVoList(@QueryParam("templateId")String templateId,@QueryParam("reportName")String reportName){
+        return tableFacade.getReportGroupVoList(templateId,reportName);
+    }
     /***
      * 创建用户自定义表
      * @param createTableVO
@@ -118,8 +139,7 @@ public class DataAnalysisService {
     @Path("get-report-statistics")
     public Response getReportStatistics(ReportQueryParam reportQueryParam) throws Exception{
         try {
-            List<UnitFunds> mongoResultVoList = tableFacade.getReportStatistics(reportQueryParam);
-            return Response.status(Response.Status.OK).entity(mongoResultVoList).build();
+            return Response.status(Response.Status.OK).entity(tableFacade.getReportStatistics(reportQueryParam,null)).build();
         }catch (Exception e){
             List<String> errorList = new ArrayList<>();
             errorList.add(e.getMessage());
@@ -137,5 +157,22 @@ public class DataAnalysisService {
     public Response delCustomerDefineTable(@QueryParam("tableId") String tableId){
         ReturnInfo returnInfo = tableFacade.delCustomerDefineTable(tableId);
         return Response.status(Response.Status.OK).entity(returnInfo).build();
+    }
+
+    /**
+     * 获取多报表统计结果
+     * @param reportParamList
+     * @return
+     */
+    @POST
+    @Path("get-many-report-statistics")
+    public Response getManyReportStatistics(List<ReportParam> reportParamList) throws Exception{
+        try {
+            return Response.status(Response.Status.OK).entity(tableFacade.getManyReportStatistics(reportParamList)).build();
+        }catch (Exception e){
+            List<String> errorList = new ArrayList<>();
+            errorList.add(e.getMessage());
+            return Response.status(Response.Status.OK).entity(errorList).build();
+        }
     }
 }

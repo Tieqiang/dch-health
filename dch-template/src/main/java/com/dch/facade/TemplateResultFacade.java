@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import static org.springframework.data.mongodb.core.query.Criteria.where;
 
@@ -123,13 +124,26 @@ public class TemplateResultFacade extends BaseFacade {
         return templateResultMasterPage;
     }
 
-    public Page<TemplateResultMasterVo> getTemplateResultMastersNew(String templateId, int perPage, int currentPage, String userId, String status) {
+    public Page<TemplateResultMasterVo> getTemplateResultMastersNew(String templateId, int perPage, int currentPage, String userId, String status,
+                                                                    String field,String fieldValue,MongoTemplate mongoTemplate) {
         long stime = System.currentTimeMillis();
         String hql="select new com.dch.vo.TemplateResultMasterVo(m.id,m.templateId,m.templateName,m.completeRate,''" +
-                   ",m.createDate,m.modifyDate,(select userName from User where id = m.createBy) as createBy,m.modifyBy,m.status,(select distinct status FROM TemplateResultSupport  " +
+                   ",m.createDate,m.modifyDate,(select userName from User where id = m.createBy) as createBy,m.createBy as modifyBy,m.status,(select distinct status FROM TemplateResultSupport  " +
                    "WHERE relatedMasterId = m.id) as flag) from TemplateResultMaster as m where templateId='"+templateId+"'";
 
         String hqlCount="select count(*) from TemplateResultMaster m where m.templateId='"+templateId+"'";
+        //如果不为空 则查询mongo中的数据先进行过滤
+        if(!StringUtils.isEmptyParam(field) && !StringUtils.isEmptyParam(fieldValue)){
+            List<String> masterIdList = getMasterIdsByQueryMongo(templateId,field,fieldValue,mongoTemplate);
+            String masterIds = StringUtils.getQueryIdsString(masterIdList);
+            if(!StringUtils.isEmptyParam(masterIds)){
+                hql += " and m.id in (" + masterIds + ")";
+                hqlCount += " and m.id in (" + masterIds + ")";
+            }else {
+                hql += " and 1=2 ";
+                hqlCount += " and 1=2 ";
+            }
+        }
         if(!StringUtils.isEmptyParam(status)){
             hql += " and m.status='"+status+"'";
             hqlCount += " and m.status='"+status+"'";
@@ -163,7 +177,7 @@ public class TemplateResultFacade extends BaseFacade {
         }
         List<TemplateResultMasterVo> templateResultMasterVoList = query.getResultList();
         long etime = System.currentTimeMillis();
-        System.out.println("===="+(etime-stime));
+        //System.out.println("===="+(etime-stime));
         Map<String,String> templatejsonMap = new HashMap<>();
         if(templateResultMasterVoList!=null && !templateResultMasterVoList.isEmpty()){
             for(TemplateResultMasterVo templateResultMaster:templateResultMasterVoList){
@@ -179,7 +193,7 @@ public class TemplateResultFacade extends BaseFacade {
         page.setCounts(counts);
         page.setData(templateResultMasterVoList);
         long ptime = System.currentTimeMillis();
-        System.out.println("===="+(ptime-etime));
+        //System.out.println("===="+(ptime-etime));
         return page;
     }
 
@@ -432,5 +446,56 @@ public class TemplateResultFacade extends BaseFacade {
         }catch (Exception e){
             e.printStackTrace();
         }
+    }
+
+    /**
+     * mongodb模糊查询指定字段 并返回结果
+     * @param templateId
+     * @param field
+     * @param fieldValue
+     * @param mongoTemplate
+     * @param <T>
+     * @return
+     */
+    public <T> List<T> getMasterIdsByQueryMongo(String templateId,String field,String fieldValue,MongoTemplate mongoTemplate){
+        List<T> returnList = new ArrayList<>();
+        try{
+            Query query = new Query();
+            query.addCriteria(Criteria.where("templateId").is(templateId));
+            Pattern pattern=Pattern.compile("^.*"+fieldValue+".*$", Pattern.CASE_INSENSITIVE);
+            Boolean isNumber = judgeFieldIsNumber(field,fieldValue);
+            if(!isNumber){
+                query.addCriteria(Criteria.where(field).regex(pattern));
+            }
+            query.fields().include("masterId");
+            query.fields().include(field);
+            List<Document> resultList = mongoTemplate.find(query,Document.class,"templateFilling");
+            for (Document result:resultList){
+                String masterId = result.get("masterId")+"";
+                if(isNumber){
+                    String mvalue = result.get(field) + "";
+                    if(mvalue.contains(fieldValue) && !returnList.contains(masterId)){
+                        returnList.add((T)masterId);
+                    }
+                }else{
+                    if(!returnList.contains(masterId)){
+                        returnList.add((T)masterId);
+                    }
+                }
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return returnList;
+    }
+
+    public Boolean judgeFieldIsNumber(String field,String fieldValue){
+        Boolean isNumber = true;
+        try {
+            Integer result = Integer.valueOf(fieldValue);
+        }catch (NumberFormatException e){
+            isNumber = false;
+        }
+        return isNumber;
     }
 }

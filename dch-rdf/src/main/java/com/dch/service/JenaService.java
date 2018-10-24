@@ -36,32 +36,53 @@ public class JenaService {
 
     @GET
     @Path("get-rdf-query-result")
-    public RdfDataVo getRdfResultVoByParam(@QueryParam("label")String label) throws Exception{
+    public RdfDataVo getRdfResultVoByParam(@QueryParam("label")String label,@QueryParam("dbType")String dbType) throws Exception{
 //        String directory = JenaUtil.getRdfdb();
 //        System.out.println(directory);
 //        Dataset dataset = TDBFactory.createDataset(directory);
 //        Model model = dataset.getDefaultModel();
         String queryString = "";
-        if(StringUtils.isEmptyParam(label)){
-            //什么也不输入查询的语句
-            queryString = "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>"
-                + "SELECT ?object ?predicate ?subject WHERE  "
-                + "{ ?object ?predicate ?subject. "
-                + "FILTER (?subject = <http://www.imicams.ac.cn/administrator/ontologies/2018/4/medical-ontologies#imicams_kg>)}";
+        String dbName = StringUtils.isEmptyParam(dbType)?"drugdb":JenaConst.DB_TYPE.getName(dbType);
+        if(JenaUtil.DEFAULT_DB.equals(dbName)){
+            if(StringUtils.isEmptyParam(label)){
+                //什么也不输入查询的语句
+                queryString = "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>"
+                        + "SELECT ?object ?predicate ?subject WHERE  "
+                        + "{ ?object ?predicate ?subject. ";
+                queryString += " FILTER (?subject = <http://www.imicams.ac.cn/administrator/ontologies/2018/4/medical-ontologies#imicams_kg>)}";
+            }else {
+                queryString = "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>"
+                        + "SELECT ?subject ?object ?predicate  WHERE  "
+                        + "{ {?subject ?predicate ?object." +
+                        " ?subject rdfs:label ?label. " +
+                        " FILTER (?label = '"+label+"')} union {"
+                        + "?subject ?predicate ?object." +
+                        " ?object rdfs:label ?label. " +
+                        " FILTER (?label = '"+label+"')}}";
+            }
         }else {
-            queryString = "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>"
-                    + "SELECT ?subject ?object ?predicate  WHERE  "
-                    + "{ {?subject ?predicate ?object." +
-                    " ?subject rdfs:label ?label. " +
-                    " FILTER (?label = '"+label+"')} union {"
-                    + "?subject ?predicate ?object." +
-                    " ?object rdfs:label ?label. " +
-                    " FILTER (?label = '"+label+"')}}";
+            if(StringUtils.isEmptyParam(label)){
+                //什么也不输入查询的语句
+                queryString = "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>"
+                        + "SELECT ?object ?predicate ?subject ?olabel ?slabel WHERE  "
+                        + "{ ?object ?predicate ?subject. " +
+                        " ?object rdfs:label ?olabel. " +
+                        " ?subject rdfs:label ?slabel. ";
+                queryString += " FILTER (?subject = <http://www.semanticweb.org/administrator/ontologies/2018/9/jkzg-ontology-42#OWLClass_00000000000000000000>)}";
+            }else {
+                queryString = "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>"
+                        + "SELECT ?object ?predicate ?subject ?olabel ?slabel  "
+                        + "WHERE { ?object ?predicate ?subject. " +
+                        " ?object rdfs:label ?olabel. " +
+                        " ?subject rdfs:label ?slabel. " +
+                        " FILTER (?olabel = '"+label+"'|| ?slabel = '"+label+"')}";
+            }
         }
+
 //        Query query = QueryFactory.create(queryString);
 //        QueryExecution qe = QueryExecutionFactory.create(query, model);
 //        ResultSet results = qe.execSelect();
-        Map<String,Map> resultMap = jenaFaccade.getQueryResultMap(queryString,label);
+        Map<String,Map> resultMap = jenaFaccade.getQueryResultMap(queryString,label,dbName);
         String middleKey = JenaUtil.getMiddleKey(resultMap);
         RdfDataVo rdfDataVo = new RdfDataVo();
         rdfDataVo.setCode("200");
@@ -71,7 +92,7 @@ public class JenaService {
         for(String key:resultMap.keySet()){
             if(!nameMap.containsKey(key)){
                 RdfEntity rdfEntity = new RdfEntity();
-                rdfEntity.setId(key);
+                rdfEntity.setId(JenaUtil.getIdByKey(key,dbName));
                 rdfEntity.setImage("");
                 if(key.equals(middleKey)){
                     rdfEntity.setKgType("0");
@@ -88,7 +109,7 @@ public class JenaService {
                 if(!nameMap.containsKey(inKey)){
                     nameMap.put(inKey,"");
                     RdfEntity rdfEntity1 = new RdfEntity();
-                    rdfEntity1.setId(inKey);
+                    rdfEntity1.setId(JenaUtil.getIdByKey(inKey,dbName));
                     rdfEntity1.setImage("");
                     if(key.equals(middleKey)){
                         rdfEntity1.setKgType("0");
@@ -104,20 +125,20 @@ public class JenaService {
                 rdfRelation.setAttId(value);
                 if(value.endsWith("#type")){
                     rdfRelation.setAttName("实体");
-                    rdfRelation.setFrom(inKey);
-                    rdfRelation.setTo(key);
+                    rdfRelation.setFrom(JenaUtil.getIdByKey(inKey,dbName));
+                    rdfRelation.setTo(JenaUtil.getIdByKey(key,dbName));
                     rdfRelation.setSource(JenaUtil.getNameByRdfId(inKey));
                     rdfRelation.setTarget(JenaUtil.getNameByRdfId(key));
                 }else if(value.endsWith("#subClassOf")){
                     rdfRelation.setAttName(JenaConst.RELATION_TYPE.getName(value));
-                    rdfRelation.setFrom(inKey);
-                    rdfRelation.setTo(key);
+                    rdfRelation.setFrom(JenaUtil.getIdByKey(inKey,dbName));
+                    rdfRelation.setTo(JenaUtil.getIdByKey(key,dbName));
                     rdfRelation.setSource(JenaUtil.getNameByRdfId(inKey));
                     rdfRelation.setTarget(JenaUtil.getNameByRdfId(key));
                 }else{
                     rdfRelation.setAttName(JenaConst.RELATION_TYPE.getName(value));
-                    rdfRelation.setFrom(key);
-                    rdfRelation.setTo(inKey);
+                    rdfRelation.setFrom(JenaUtil.getIdByKey(key,dbName));
+                    rdfRelation.setTo(JenaUtil.getIdByKey(inKey,dbName));
                     rdfRelation.setSource(JenaUtil.getNameByRdfId(key));
                     rdfRelation.setTarget(JenaUtil.getNameByRdfId(inKey));
                 }
@@ -212,8 +233,8 @@ public class JenaService {
 
     @GET
     @Path("get-rdf-entity-by-id")
-    public List<RdfElementVo> getRdfElementVoById(@QueryParam("id") String rdfId){
-        String directory = JenaUtil.getRdfdb();
+    public List<RdfElementVo> getRdfElementVoById(@QueryParam("id") String rdfId,@QueryParam("dbName")String dbName){
+        String directory = JenaUtil.getRdfdb(dbName);
         Dataset dataset = TDBFactory.createDataset(directory);
         Model model = dataset.getDefaultModel();
         List<RdfElementVo> rdfElementVos = new ArrayList<>();

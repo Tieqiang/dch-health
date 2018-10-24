@@ -1,5 +1,7 @@
 package com.dch.vo;
 
+import java.util.List;
+
 /**
  * Created by sunkqa on 2018/9/30.
  */
@@ -11,7 +13,8 @@ public class ReportQueryParam {
     private String type;//统计类型 1 sum ,2 average 求和和平均
     private String ifDuplicate;//统计是否去重 0：否 1:是
     private String sortType;//0 x轴由小到大 1 x轴由大到小
-    private String chart;//图形类型 柱状图 饼状图...
+    private String chart;//图形类型 柱状图 饼状图 折线图 表格...bar pie line table
+    private List<FieldChange> tableResults;
 
     public String getTableName() {
         return tableName;
@@ -75,5 +78,13 @@ public class ReportQueryParam {
 
     public void setChart(String chart) {
         this.chart = chart;
+    }
+
+    public List<FieldChange> getTableResults() {
+        return tableResults;
+    }
+
+    public void setTableResults(List<FieldChange> tableResults) {
+        this.tableResults = tableResults;
     }
 }

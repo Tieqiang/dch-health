@@ -1,16 +1,17 @@
 package com.dch.facade;
 
-import com.dch.entity.TableColConfig;
-import com.dch.entity.TableConfig;
-import com.dch.entity.TemplateDataElement;
-import com.dch.entity.TemplateMaster;
+import com.dch.entity.*;
 import com.dch.facade.common.BaseFacade;
 import com.dch.facade.common.VO.ReturnInfo;
+import com.dch.util.JSONUtil;
 import com.dch.util.PinYin2Abbreviation;
 import com.dch.util.StringUtils;
+import com.dch.util.UserUtils;
 import com.dch.vo.*;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
+import org.aspectj.lang.annotation.DeclareWarning;
 import org.bson.Document;
+import org.codehaus.jettison.json.JSONException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +21,8 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.ws.rs.core.Response;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -223,8 +226,12 @@ public class TableFacade extends BaseFacade {
     }
 
 
-    public List<TableConfig> getTableConfig(String templateId) {
-        String hql = "from TableConfig as t where t.formId='" + templateId + "' order by t.tableName asc";
+    public List<TableConfig> getTableConfig(String templateId,String type) {
+        String hql = "from TableConfig as t where t.formId='" + templateId + "'";
+        if(!StringUtils.isEmptyParam(type)){
+            hql += " and t.createFrom = '"+type+"'";
+        }
+        hql += " order by t.tableName asc";
         return createQuery(TableConfig.class, hql, new ArrayList<Object>()).getResultList();
     }
 
@@ -248,7 +255,7 @@ public class TableFacade extends BaseFacade {
         perPage = perPage < 1?20:perPage;
         currentPage = currentPage< 1?1:currentPage;
         long limit_start = (currentPage -1) * perPage;
-        long limit_end = currentPage * perPage;
+        long limit_end = perPage;
         sql += " limit " + limit_start + ","+limit_end;
         logger.info(sql);
 
@@ -301,6 +308,13 @@ public class TableFacade extends BaseFacade {
         //将初始化用户自定义表数据
         List queryList = createNativeQuery(executeSQL).getResultList();
         saveResultToDb(tableName, executeSQL, queryList);
+        //添加用户报表到自定义的报表分组下2018-10-19
+        ReportGroup reportGroup = new ReportGroup();
+        reportGroup.setParentId(createTableVO.getParentId());
+        reportGroup.setReportName(merge.getTableDesc());
+        reportGroup.setTableId(merge.getId());
+        reportGroup.setStatus("1");
+        merge(reportGroup);
         return tableConfig;
     }
 
@@ -785,8 +799,8 @@ public class TableFacade extends BaseFacade {
         return list;
     }
 
-    public List<UnitFunds> getReportStatistics(ReportQueryParam reportQueryParam) throws Exception{
-        List<UnitFunds> reportList = new ArrayList<>();
+    public <T> List<T> getReportStatistics(ReportQueryParam reportQueryParam, ReportData reportData) throws Exception{
+        List<T> reportList = new ArrayList<>();
         String tableName = reportQueryParam.getTableName();
         String x_field = reportQueryParam.getXaxis();
         String y_field = reportQueryParam.getYaxis();
@@ -795,10 +809,23 @@ public class TableFacade extends BaseFacade {
         String table_name = getTableNameById(tableName);
         StringBuffer sqlBuffer = new StringBuffer("SELECT ");
         try {
-            if("".equals(reportQueryParam.getChart())){//如果图像为表格类型则直接查询
-
+            //表格类型查询，查询字段表统并赋值，柱状图 也赋予字段值
+            setReportFieldValue(reportQueryParam);
+            //如果图像为表格类型则直接查询
+            if("table".equals(reportQueryParam.getChart())){
+                List<FieldChange> fieldChangeList = reportQueryParam.getTableResults();
+                fieldChangeList.stream().forEach(x -> sqlBuffer.append(x.getTitle()).append(","));
+                String sqlStr = sqlBuffer.toString().substring(0,sqlBuffer.length()-1) + " FROM " + table_name;
+                int perPage = reportData ==null?20:reportData.getPerPage();
+                int currentPage = reportData ==null?1:reportData.getCurrentPage();
+                long limit_start = (currentPage -1) * perPage;
+                long limit_end = perPage;
+                sqlStr += " limit " + limit_start + ","+limit_end;
+                List resultList = createNativeQuery(sqlStr).getResultList();
+                return resultList;
             }
-            if(x_field.equals(y_field)){//如果所选的字段一致，则为统计计数
+            //如果所选的字段一致，则为统计计数
+            if(x_field.equals(y_field)){
                 sqlBuffer.append(" count(*),").append(x_field).append(" FROM ").append(table_name)
                         .append(" GROUP BY ").append(x_field);
                 if("0".equals(sort)){//降序
@@ -814,17 +841,21 @@ public class TableFacade extends BaseFacade {
                     String fieldValue = innerParams[1].toString();
                     unitFunds.setUnit(fieldValue);
                     unitFunds.setFunds(countNum.doubleValue());
-                    reportList.add(unitFunds);
+                    reportList.add((T)unitFunds);
                 }
                 return reportList;
             }else{
-                sqlBuffer.append(x_field).append(",").append(y_field).append(" FROM ").append(table_name);
+                if(!StringUtils.isEmptyParam(x_field)){
+                    sqlBuffer.append(x_field).append(",");
+                }else{
+                    sqlBuffer.append("1").append(",");
+                }
+                sqlBuffer.append(y_field).append(" FROM ").append(table_name);
                 List resultList = createNativeQuery(sqlBuffer.toString()).getResultList();
                 Map<String,List<UnitFunds>> resultMap = new HashMap<>();
                 for(int i=0;i<resultList.size();i++){
                     Object[] innerParams = (Object[]) resultList.get(i);
                     String xValue = innerParams[0].toString();
-                    System.out.println(innerParams[1]);
                     String yValue = getRealYvalue(innerParams[1].toString());
                     Double yValueNum = Double.valueOf(yValue);
                     if(yValueNum>0){
@@ -849,7 +880,7 @@ public class TableFacade extends BaseFacade {
                     Double statValue = getStatisticsValue(resultMap.get(key),type);
                     unitFunds.setUnit(key);
                     unitFunds.setFunds(statValue);
-                    reportList.add(unitFunds);
+                    reportList.add((T)unitFunds);
                 }
             }
         }catch (NumberFormatException e){
@@ -894,6 +925,30 @@ public class TableFacade extends BaseFacade {
         return numStr;
     }
 
+    @Transactional
+    public ReturnInfo delCustomerDefineTable(String tableId) {
+        ReturnInfo returnInfo = null;
+        try {
+            //删除table_config中定义的表
+            TableConfig tableConfig = get(TableConfig.class,tableId);
+            if(tableConfig!=null){
+                remove(tableConfig);
+                //删除table_col_config中的表字段
+                String hql = "delete from TableColConfig where tableId = '"+tableId+"'";
+                excHql(hql);
+                //删除创建的表
+                String tableName = tableConfig.getTableName();
+                String sql = "DROP TABLE if EXISTS "+ tableName + ";";
+                createNativeQuery(sql).executeUpdate();
+            }
+            returnInfo = new ReturnInfo("true","操作成功");
+        }catch (Exception e){
+            e.printStackTrace();
+            returnInfo = new ReturnInfo("false",e.getMessage());
+        }
+        return returnInfo;
+    }
+
     public static void main(String args[]){
         List<MongoResultVo> list = new ArrayList<>();
         MongoResultVo mongoResultVo = new MongoResultVo();
@@ -919,29 +974,200 @@ public class TableFacade extends BaseFacade {
             unitFundsList.add(unitFunds1);
         }
         System.out.println(unitFundsList.stream().mapToDouble(UnitFunds::getFunds).sum());
+        ReportQueryParam reportQueryParam = new ReportQueryParam();
+        List<FieldChange> fieldChangeList = new ArrayList<>();
+        FieldChange fieldChange = new FieldChange();
+        fieldChange.setChangeTitle("姓名");
+        fieldChange.setTitle("name");
+        FieldChange fieldChange1 = new FieldChange();
+        fieldChange1.setChangeTitle("年龄");
+        fieldChange1.setTitle("age");
+        fieldChangeList.add(fieldChange);
+        fieldChangeList.add(fieldChange1);
+        reportQueryParam.setTableResults(fieldChangeList);
+        try {
+            System.out.println(JSONUtil.objectToJson(reportQueryParam));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
-    @Transactional
-    public ReturnInfo delCustomerDefineTable(String tableId) {
-        ReturnInfo returnInfo = null;
+    /**
+     * 多报表查询接口
+     * @param reportParamList
+     * @return
+     */
+    public Object getManyReportStatistics(List<ReportParam> reportParamList) {
         try {
-            //删除table_config中定义的表
-            TableConfig tableConfig = get(TableConfig.class,tableId);
-            if(tableConfig!=null){
-                remove(tableConfig);
-                //删除table_col_config中的表字段
-                String hql = "delete from TableColConfig where tableId = '"+tableId+"'";
-                excHql(hql);
-                //删除创建的表
-                String tableName = tableConfig.getTableName();
-                String sql = "DROP TABLE if EXISTS "+ tableName + ";";
-                createNativeQuery(sql).executeUpdate();
+            for(ReportParam reportParam:reportParamList){
+                ReportQueryParam reportQueryParam = reportParam.getConfig();
+                if(reportQueryParam==null){
+                    continue;
+                }
+                if(StringUtils.isEmptyParam(reportQueryParam.getChart())){
+                    reportQueryParam.setChart(reportParam.getChart());
+                }
+                ReportData reportData = reportParam.getReportData();
+                if(reportData==null){
+                    reportData = new ReportData();
+                }
+                reportData.setResult(getReportStatistics(reportQueryParam,reportData));
+                if("table".equals(reportQueryParam.getChart())){
+                    String table_name = getTableNameById(reportQueryParam.getTableName());
+                    BigInteger totalCount = getQueryResultFromTable(table_name);
+                    reportData.setTotalCount(totalCount.longValue());
+                    reportData.setCurrentPage(reportData.getCurrentPage());
+                    reportData.setPerPage(reportData.getPerPage());
+                }
+                reportParam.setReportData(reportData);
             }
-            returnInfo = new ReturnInfo("true","操作成功");
+//            reportParamList.stream().parallel().forEach(reportParam -> {
+//                ReportQueryParam reportQueryParam = reportParam.getConfig();
+//                if(reportQueryParam!=null){
+//                    if(StringUtils.isEmptyParam(reportQueryParam.getChart())){
+//                        reportQueryParam.setChart(reportParam.getChart());
+//                    }
+//                    ReportData reportData = new ReportData();
+//                    reportData.setResult(getReportStatistics(reportQueryParam));
+//                    reportParam.setReportData(reportData);
+//                }
+//            });
         }catch (Exception e){
             e.printStackTrace();
-            returnInfo = new ReturnInfo("false",e.getMessage());
         }
-        return returnInfo;
+        return reportParamList;
+    }
+
+    /**
+     * 根据前端传入参数设置字段表头中文名称
+     * @param reportQueryParam
+     */
+    public void setReportFieldValue(ReportQueryParam reportQueryParam){
+        List<String> fieldList = new ArrayList<>();
+        if("table".equals(reportQueryParam.getChart())){
+            reportQueryParam.getTableResults().stream().forEach(fc -> fieldList.add(fc.getTitle()));
+        }else{
+            if(!StringUtils.isEmptyParam(reportQueryParam.getXaxis()))
+                fieldList.add(reportQueryParam.getXaxis());
+            if(!StringUtils.isEmptyParam(reportQueryParam.getYaxis()))
+                fieldList.add(reportQueryParam.getYaxis());
+        }
+        String colCodes = StringUtils.getQueryIdsString(fieldList);
+        StringBuffer sb = new StringBuffer("SELECT ");
+        sb.append("COL_NAME,COL_CODE FROM table_col_config WHERE TABLE_ID = '").append(reportQueryParam.getTableName()).append("' AND COL_CODE IN (")
+                .append(colCodes).append(")");
+        String query_sql = sb.toString();
+        List list = createNativeQuery(query_sql).getResultList();
+        if("table".equals(reportQueryParam.getChart())){
+            List<FieldChange> fieldChangeList = reportQueryParam.getTableResults();
+            Map<String,String> reMap = new HashMap<>();
+            for(int i=0;i<list.size();i++) {
+                Object[] innerParams = (Object[]) list.get(i);
+                String colName = innerParams[0].toString();
+                String colCode = innerParams[1].toString();
+                reMap.put(colCode,colName);
+            }
+            fieldChangeList.stream().forEach(fieldChange -> {
+                if(StringUtils.isEmptyParam(fieldChange.getChangeTitle())){
+                    fieldChange.setChangeTitle(reMap.get(fieldChange.getTitle()));
+                }
+            });
+            reportQueryParam.setTableResults(fieldChangeList);
+        }else{
+            List<FieldChange> fieldChangeList = new ArrayList<>();
+            for(int i=0;i<list.size();i++) {
+                Object[] innerParams = (Object[]) list.get(i);
+                String colName = innerParams[0].toString();
+                String colCode = innerParams[1].toString();
+                FieldChange fieldChange = new FieldChange();
+                fieldChange.setTitle(colCode);
+                fieldChange.setChangeTitle(colName);
+                fieldChangeList.add(fieldChange);
+            }
+            reportQueryParam.setTableResults(fieldChangeList);
+        }
+    }
+
+    public <T> T getQueryResultFromTable(String tableName){
+        StringBuffer sb = new StringBuffer("SELECT COUNT(*) FROM ").append(tableName);
+        BigInteger total = (BigInteger)createNativeQuery(sb.toString()).getResultList().get(0);
+        return (T)total;
+    }
+
+    /**
+     * 新建，修改，删除用户自定义报表分组
+     * @param reportGroup
+     * @return
+     */
+    @Transactional
+    public Response mergeCustomerReportGroup(ReportGroup reportGroup) {
+        try {
+            ReportGroup merge = merge(reportGroup);
+            return Response.status(Response.Status.OK).entity(merge).build();
+        }catch (Exception e){
+            e.printStackTrace();
+            throw e;
+        }
+    }
+
+    /**
+     * 获取用户自定义报表分组
+     * @param reportName
+     * @return
+     */
+    public List<ReportGroupVo> getReportGroupVoList(String templateId,String reportName) {
+        String userId = UserUtils.getCurrentUser().getId();
+        String hql = " from ReportGroup as r where r.status <> '-1' and r.createBy = '" +userId+"'";
+        if(!StringUtils.isEmptyParam(reportName)){
+            hql += " and r.reportName like '%"+reportName+"%' or exists(select 1 from ReportGroup where parentId = r.id" +
+                    " and status<>'-1')";
+        }
+        List<ReportGroup> reportGroups = createQuery(ReportGroup.class,hql,new ArrayList<>()).getResultList();
+        List<ReportGroupVo> reportGroupVos = new ArrayList<>();
+        Map<String,List<ReportGroup>> secondGroups = new HashMap<>();
+        reportGroups.stream().parallel().forEach(reportGroup -> {
+            if(StringUtils.isEmptyParam(reportGroup.getParentId())){
+                ReportGroupVo reportGroupVo = new ReportGroupVo(reportGroup.getId(),reportGroup.getTableId(),reportGroup.getReportName());
+                reportGroupVos.add(reportGroupVo);
+            }else{
+                if(secondGroups.containsKey(reportGroup.getParentId())){
+                    List<ReportGroup> innerList = secondGroups.get(reportGroup.getParentId());
+                    innerList.add(reportGroup);
+                }else{
+                    List<ReportGroup> innerList = new ArrayList<>();
+                    innerList.add(reportGroup);
+                    secondGroups.put(reportGroup.getParentId(),innerList);
+                }
+            }
+        });
+        reportGroupVos.stream().parallel().forEach(reportGroupVo -> {
+            if(secondGroups.containsKey(reportGroupVo.getId())){
+                reportGroupVo.setReportGroupList(secondGroups.get(reportGroupVo.getId()));
+            }else{
+                reportGroupVo.setReportGroupList(new ArrayList<ReportGroup>());
+            }
+        });
+        //查询系统初始化报表
+        ReportGroupVo reportGroupVo = new ReportGroupVo();
+        reportGroupVo.setTableId("");
+        reportGroupVo.setReportName("系统初始化报表");
+        List<ReportGroup> systemReportList = new ArrayList<>();
+        List<TableConfig> tableConfigs = getTableConfig(templateId,"system");
+        tableConfigs.stream().parallel().forEach(tableConfig -> {
+            ReportGroup sysReport = new ReportGroup();
+            sysReport.setTableId(tableConfig.getId());
+            sysReport.setReportName(tableConfig.getTableDesc());
+            if(!StringUtils.isEmptyParam(reportName)){
+                if(tableConfig.getTableDesc().contains(reportName))
+                    systemReportList.add(sysReport);
+            }else{
+                systemReportList.add(sysReport);
+            }
+        });
+        reportGroupVo.setReportGroupList(systemReportList);
+        reportGroupVos.add(reportGroupVo);
+        return reportGroupVos;
     }
 }

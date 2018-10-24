@@ -355,8 +355,9 @@ public class TemplateResultService {
     @Path("get-template-result-masters")
     public Page<TemplateResultMasterVo> getTemplateResultMastersNew(@QueryParam("templateId")String templateId, @QueryParam("perPage")int perPage,
                                                                     @QueryParam("userId")String userId, @QueryParam("currentPage")int currentPage,
-                                                                    @QueryParam("status")String status){
-        return  templateResultFacade.getTemplateResultMastersNew(templateId,perPage,currentPage,userId,status);
+                                                                    @QueryParam("status")String status,@QueryParam("field")String field,
+                                                                    @QueryParam("fieldValue")String fieldValue){
+        return  templateResultFacade.getTemplateResultMastersNew(templateId,perPage,currentPage,userId,status,field,fieldValue,mongoTemplate);
     }
     /**
      * 驳回用户填写表单数据，状态重置改为1

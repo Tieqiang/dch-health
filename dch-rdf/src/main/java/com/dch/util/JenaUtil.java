@@ -12,11 +12,30 @@ import java.util.concurrent.ConcurrentMap;
  * Created by sunkqa on 2018/5/9.
  */
 public class JenaUtil {
-    private static String rdfdb = "";
+    public static final String DEFAULT_DB = "drugdb";
     private static final String DEFAULT_CONFIG_FILE = "rdfdb.properties";
     private static Properties prop = null;
     private static ResourceLoader loader = ResourceLoader.getInstance();
     private static ConcurrentMap<String, String> paramMap = new ConcurrentHashMap<String, String>();
+
+    public static String getIdByKey(String key,String dbName){
+        try{
+            if(JenaUtil.DEFAULT_DB.equals(dbName)){
+                return key;
+            }
+            if("".equals(key)||key==null){
+                return key;
+            }
+            if(!key.contains("#")){
+                return key;
+            }
+            int index = key.lastIndexOf("#");
+            return key.substring(0,index);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return key;
+    }
 
     public static String getNameByRdfId(String rdfId){
         try{
@@ -65,14 +84,23 @@ public class JenaUtil {
         return middleKey;
     }
 
-    public static String getRdfdb(){
+    public static String getRdfdb(String dbName){
+        String rdfdb = "";
         try {
             String os = System.getProperty("os.name");
             if(StringUtils.isEmptyParam(rdfdb)){
                 if(os.toLowerCase().startsWith("win")){
-                    rdfdb = getStringByKey("windowdb.loc");
+                    String key = "windowdb.loc";
+                    if(!StringUtils.isEmptyParam(dbName)){
+                        key = key + "." +dbName;
+                    }
+                    rdfdb = getStringByKey(key);
                 }else{
-                    rdfdb = getStringByKey("linuxdb.loc");
+                    String key = "linuxdb.loc";
+                    if(!StringUtils.isEmptyParam(dbName)){
+                        key = key + "." +dbName;
+                    }
+                    rdfdb = getStringByKey(key);
                 }
             }
         }catch (Exception e){
