@@ -1290,7 +1290,7 @@ public class TableFacade extends BaseFacade {
     /**
      * 查询字段去重后的值
      * @param fieldName
-     * @param tableName
+     * @param tableId
      * @return
      */
     public List getFieldValueList(String fieldName, String tableId) {
