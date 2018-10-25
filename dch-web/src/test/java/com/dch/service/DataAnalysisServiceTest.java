@@ -49,11 +49,11 @@ public class DataAnalysisServiceTest extends BaseTest {
     public void whenCreateUserCustomTableWithOneTable(){
 
         CreateTableVO createTableVO = new CreateTableVO();
-        List<TableConfig> tableConfigs = tableFacade.getTableConfig("5e5d857c628fe2940162a2e82bf000a9");
+        List<TableConfig> tableConfigs = tableFacade.getTableConfig("5e5d857c628fe2940162a2e82bf000a9","");
         System.out.println(tableConfigs.size());
         TableConfig tableConfig1 = tableConfigs.get(0);
 
-        TableColVO tableColVO = tableFacade.getTableColVO(tableConfig1.getId());
+        TableColVO tableColVO = tableFacade.getTableColVO(tableConfig1.getId(),20,1);
         List<TableColConfig> tableColConfigs = tableColVO.getTableColConfigs();
 
         TableConfig tableConfig = new TableConfig();
