@@ -314,6 +314,7 @@ public class TableFacade extends BaseFacade {
         reportGroup.setReportName(merge.getTableDesc());
         reportGroup.setTableId(merge.getId());
         reportGroup.setStatus("1");
+        reportGroup.setTemplateId(tableConfig.getFormId());
         merge(reportGroup);
         return tableConfig;
     }
@@ -707,9 +708,9 @@ public class TableFacade extends BaseFacade {
     public Integer getTableVersion(String tableName) {
         Integer version = null;
         String sql = "select max(data_version) as version from " + tableName + " where 1=1";
-        List<Integer> colList = createNativeQuery(sql).getResultList();
+        List colList = createNativeQuery(sql).getResultList();
         if (colList != null && !colList.isEmpty()) {
-            version = colList.get(0);
+            version = Integer.valueOf(colList.get(0).toString());
         }
         return version == null ? 0 : (version + 1);
     }
@@ -742,7 +743,7 @@ public class TableFacade extends BaseFacade {
         PreparedStatement statement = null;
         try {
             StringBuffer inserSqlBef = new StringBuffer("insert into ").append(tableName).append("(id,data_version,");
-            List<String> keyList = getTableColum(sql);
+            List<String> keyList = getTableColum(sql,tableName);
             for (String key : keyList) {
                 inserSqlBef.append(key).append(",");
             }
@@ -781,20 +782,26 @@ public class TableFacade extends BaseFacade {
         }
     }
 
-    public List<String> getTableColum(String sql) {
+    public List<String> getTableColum(String sql,String tableName) {
         List<String> list = new ArrayList<>();
-        String sqlUpper = sql.toUpperCase();
-        int table_index = sqlUpper.indexOf("FROM");
-        int select_indxe = sqlUpper.indexOf("SELECT");
-        String tableColums = sqlUpper.substring(select_indxe + "SELECT".length(), table_index);
-        String[] colums = tableColums.split(",");
-        for (String colum : colums) {
-            int lindex = colum.lastIndexOf(".");
-            if (lindex > 0) {
-                list.add(colum.substring(lindex + 1));
-            } else {
-                list.add(colum);
+        if(!StringUtils.isEmptyParam(sql)){
+            String sqlUpper = sql.toUpperCase();
+            int table_index = sqlUpper.indexOf("FROM");
+            int select_indxe = sqlUpper.indexOf("SELECT");
+            String tableColums = sqlUpper.substring(select_indxe + "SELECT".length(), table_index);
+            String[] colums = tableColums.split(",");
+            for (String colum : colums) {
+                int lindex = colum.lastIndexOf(".");
+                if (lindex > 0) {
+                    list.add(colum.substring(lindex + 1));
+                } else {
+                    list.add(colum);
+                }
             }
+        }else{
+            String querySql = "SELECT COLUMN_NAME from information_schema.COLUMNS where TABLE_NAME = '"+tableName+"'" +
+                    " and COLUMN_NAME NOT IN ('id','data_version')";
+            list = createNativeQuery(querySql).getResultList();
         }
         return list;
     }
@@ -825,7 +832,7 @@ public class TableFacade extends BaseFacade {
                 return resultList;
             }
             //如果所选的字段一致，则为统计计数
-            if(x_field.equals(y_field)){
+            if(x_field.equals(y_field) || StringUtils.isEmptyParam(y_field)){
                 sqlBuffer.append(" count(*),").append(x_field).append(" FROM ").append(table_name)
                         .append(" GROUP BY ").append(x_field);
                 if("0".equals(sort)){//降序
@@ -1119,7 +1126,7 @@ public class TableFacade extends BaseFacade {
      */
     public List<ReportGroupVo> getReportGroupVoList(String templateId,String reportName) {
         String userId = UserUtils.getCurrentUser().getId();
-        String hql = " from ReportGroup as r where r.status <> '-1' and r.createBy = '" +userId+"'";
+        String hql = " from ReportGroup as r where r.status <> '-1' and r.createBy = '" +userId+"' and r.templateId = '"+templateId+"'";
         if(!StringUtils.isEmptyParam(reportName)){
             hql += " and r.reportName like '%"+reportName+"%' or exists(select 1 from ReportGroup where parentId = r.id" +
                     " and status<>'-1')";
@@ -1169,5 +1176,132 @@ public class TableFacade extends BaseFacade {
         reportGroupVo.setReportGroupList(systemReportList);
         reportGroupVos.add(reportGroupVo);
         return reportGroupVos;
+    }
+
+    /**
+     * 清洗表数据，版本号+1
+     * @param tableUponFieldVo
+     * @return
+     */
+    @Transactional
+    public TableUponFieldVo cleanDataByTableField(TableUponFieldVo tableUponFieldVo) {
+        try {
+            String tableName = tableUponFieldVo.getTable();
+            String templateId = tableUponFieldVo.getTemplateId();
+            TableUpon tableUponDb = getTableUponDb(tableName,templateId);
+            if(!"-1".equals(tableUponFieldVo.getStatus())){
+                Integer dataVersion = tableUponDb==null?0:(tableUponDb.getDataVersion()+1);
+                List<String> columnList = getTableColum("",tableName);
+                List<FieldUponValue> fieldUponValueList = tableUponFieldVo.getFieldUponValueList();
+                Map<Integer,Map<String,Object>> fieldValueMapTo = new HashMap<>();
+                for(FieldUponValue fieldUponValue:fieldUponValueList){
+                    int index = columnList.indexOf(fieldUponValue.getField());
+                    Map<String,Object> innerMap = new HashMap<>();
+                    fieldUponValue.getUponValueList().stream().forEach(uponValue -> {
+                        uponValue.getNormalList().stream().forEach(x ->{
+                            innerMap.put(x==null?"":x.toString(),uponValue.getUponValue());
+                        });
+                    });
+                    fieldValueMapTo.put(index, innerMap);
+                }
+                StringBuffer sbSql = new StringBuffer("select ");
+                columnList.stream().forEach(f ->  sbSql.append(f).append(","));
+                String sql = sbSql.toString().substring(0,sbSql.toString().length()-1) + " from "+ tableName + " where data_version = '"+dataVersion+"'";
+                List<Object> queryList = createNativeQuery(sql).getResultList();
+                queryList.stream().parallel().forEach(Object ->{
+                    Object[] innerParams = (Object[])Object;
+                    fieldValueMapTo.forEach((k,v) -> {
+                        String normalValue = innerParams[k]==null?"":innerParams[k].toString();
+                        if(v.containsKey(normalValue)){
+                            innerParams[k] = v.get(normalValue);
+                        }
+                    });
+                });
+                saveResultToDb(tableName, "", queryList);
+                //保存 清洗记录
+                TableUpon tableUpon = tableUponDb==null?(new TableUpon()):tableUponDb;
+                tableUpon.setTableName(tableName);
+                tableUpon.setTemplateId(templateId);
+                tableUpon.setDataVersion(dataVersion+1);
+                tableUpon.setStatus("1");
+                TableUpon merge = merge(tableUpon);
+                List<FieldUponInfo> fieldUponInfos = new ArrayList<>();
+                tableUponFieldVo.getFieldUponValueList().stream().forEach(fuv ->{
+                    fuv.getUponValueList().stream().parallel().forEach(uponValue -> {
+                        FieldUponInfo fieldUponInfo = new FieldUponInfo();
+                        fieldUponInfo.setDataVersion(dataVersion+1);
+                        fieldUponInfo.setFieldEn(fuv.getField());
+                        fieldUponInfo.setFieldZn(fuv.getFieldZn());
+                        fieldUponInfo.setOriginalValue(uponValue.getNormalList().toString());
+                        fieldUponInfo.setUponValue(uponValue.getUponValue());
+                        fieldUponInfo.setRelatedTableUponId(merge.getId());
+                        fieldUponInfo.setStatus("1");
+                        fieldUponInfos.add(fieldUponInfo);
+                    });
+                });
+                batchInsert(fieldUponInfos);
+            }else{
+                //数据回退
+                if(tableUponDb!=null && tableUponDb.getDataVersion()> 0){
+                    Integer dataVersion = tableUponDb.getDataVersion();
+                    //删除表中的数据
+                    String delTableSql = " delete from " + tableName + " where data_version = '"+dataVersion+"'";
+                    createNativeQuery(delTableSql).executeUpdate();
+                    //删除映射的字段信息
+                    String delFieldHql = " delete from FieldUponInfo where relatedTableUponId = '"+tableUponDb.getId()+"' and dataVersion = "+ dataVersion;
+                    excHql(delFieldHql);
+                    //原始表判断dataVersion是否大于0大于则更新，否则删除
+                    if(dataVersion>1){
+                        tableUponDb.setDataVersion(dataVersion-1);
+                        merge(tableUponDb);
+                    }else{
+                        remove(tableUponDb);
+                    }
+                }
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+            throw e;
+        }
+        return tableUponFieldVo;
+    }
+
+    public TableUpon getTableUponDb(String tableName,String templateId){
+        String hql = " from TableUpon where tableName = '" + tableName + "' and templateId = '"+templateId+"'";
+        List<TableUpon> tableUponList = createQuery(TableUpon.class,hql,new ArrayList<>()).getResultList();
+        return tableUponList.isEmpty()?null:tableUponList.get(0);
+    }
+
+    /**
+     *根据tableId查询表所有的字段
+     * @param tableId
+     * @return
+     */
+    public List<TableColConfig> getTableColList(String tableId) {
+        String hql = " from TableColConfig where tableId = '"+tableId+"'";
+        List<TableColConfig> tableColConfigs = createQuery(TableColConfig.class,hql,new ArrayList<>()).getResultList();
+        List<TableColConfig> tableColConfigList = new ArrayList<>();
+        tableColConfigs.stream().parallel().forEach(tf ->{
+            if(!"id".equals(tf.getColCode()) && !"data_version".equals(tf.getColCode())){tableColConfigList.add(tf);}
+        });
+        return tableColConfigList;
+    }
+
+    /**
+     * 查询字段去重后的值
+     * @param fieldName
+     * @param tableName
+     * @return
+     */
+    public List getFieldValueList(String fieldName, String tableId) {
+        String tableName = getTableNameById(tableId);
+        StringBuffer sqlBf = new StringBuffer("select distinct ").append(fieldName).append(" from ").append(tableName);
+        sqlBf.append(" where data_version = ").append("(select max(data_version) from ").append(tableName).append(" )");
+        List list = createNativeQuery(sqlBf.toString()).getResultList();
+        if(list.contains(null)){
+            list.remove(null);
+            list.add("");
+        }
+        return list;
     }
 }

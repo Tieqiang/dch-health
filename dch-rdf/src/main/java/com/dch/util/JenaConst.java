@@ -7,6 +7,8 @@ import java.io.Serializable;
  */
 public class JenaConst implements Serializable{
 
+    public static final String DOMAIN = "http://www.w3.org/2000/01/rdf-schema#domain";
+
     public static final relationType RELATION_TYPE = new relationType();
 
     public static final dbType DB_TYPE = new dbType();
@@ -31,5 +33,9 @@ public class JenaConst implements Serializable{
             super.putEnum(DRUG_DB, "drugdb");
             super.putEnum(CHINA_HEALTH, "chinaHealth");
         }
+    }
+
+    public enum  Relation{
+        DOMAIN
     }
 }

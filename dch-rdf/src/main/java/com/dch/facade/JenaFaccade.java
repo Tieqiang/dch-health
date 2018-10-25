@@ -1,6 +1,7 @@
 package com.dch.facade;
 
 import com.dch.facade.common.BaseFacade;
+import com.dch.util.JenaConst;
 import com.dch.util.JenaUtil;
 import com.dch.util.StringUtils;
 import org.apache.jena.query.*;
@@ -27,6 +28,10 @@ public class JenaFaccade extends BaseFacade {
             String subject = lmap.get("subject")+"";
             String predicate = lmap.get("predicate")+"";
             String object = lmap.get("object")+"";
+            //说明是个指标值
+            if(JenaConst.Relation.DOMAIN.equals(predicate)){
+                Map<String,Object> relattionMap = getNextSubjectByRelationObj(object);
+            }
             if(object.contains("http") && !object.endsWith("Individual") && !object.endsWith("#Class")){
                 System.out.println(subject +" | "+predicate+" | "+object);
                 if(!JenaUtil.DEFAULT_DB.equals(dbName)){
@@ -82,5 +87,9 @@ public class JenaFaccade extends BaseFacade {
             e.printStackTrace();
         }
         return list;
+    }
+
+    public Map<String,Object> getNextSubjectByRelationObj(String obj){
+        return null;
     }
 }

@@ -14,6 +14,7 @@ public class ReportGroup extends BaseEntity {
     private String reportName;
     private String tableId;
     private String parentId;
+    private String templateId;
 
     @Basic
     @Column(name = "report_name")
@@ -43,5 +44,15 @@ public class ReportGroup extends BaseEntity {
 
     public void setParentId(String parentId) {
         this.parentId = parentId;
+    }
+
+    @Basic
+    @Column(name = "template_id")
+    public String getTemplateId() {
+        return templateId;
+    }
+
+    public void setTemplateId(String templateId) {
+        this.templateId = templateId;
     }
 }

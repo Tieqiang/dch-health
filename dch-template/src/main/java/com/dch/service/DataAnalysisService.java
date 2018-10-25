@@ -2,13 +2,16 @@ package com.dch.service;
 
 
 import com.dch.entity.ReportGroup;
+import com.dch.entity.TableColConfig;
 import com.dch.entity.TableConfig;
 import com.dch.facade.TableFacade;
 import com.dch.facade.common.VO.ReturnInfo;
+import com.dch.util.JSONUtil;
 import com.dch.vo.*;
 import org.apache.zookeeper.Op;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import sun.security.provider.certpath.OCSPResponse;
 
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -174,5 +177,45 @@ public class DataAnalysisService {
             errorList.add(e.getMessage());
             return Response.status(Response.Status.OK).entity(errorList).build();
         }
+    }
+
+    /**
+     *清洗表数据 按照字段映射值 清洗tableUponFieldVo
+     * @param tableUponFieldVo
+     * @return
+     */
+    @POST
+    @Path("clean-data-by-table-info")
+    public Response cleanDataByTableField(TableUponFieldVo tableUponFieldVo) throws Exception{
+        try {
+            return Response.status(Response.Status.OK).entity(tableFacade.cleanDataByTableField(tableUponFieldVo)).build();
+        }catch (Exception e){
+            List<String> errorList = new ArrayList<>();
+            errorList.add(e.getMessage());
+            return Response.status(Response.Status.OK).entity(errorList).build();
+        }
+    }
+
+    /**
+     * 根据tableId查询表所有的字段
+     * @param tableId
+     * @return
+     */
+    @GET
+    @Path("get-table-col-by-tableId")
+    public List<TableColConfig> getTableColList(@QueryParam("tableId")String tableId){
+        return tableFacade.getTableColList(tableId);
+    }
+
+    /**
+     * 查询字段去重后的值
+     * @param fieldName
+     * @param tableId
+     * @return
+     */
+    @GET
+    @Path("get-field-value-list")
+    public List getFieldValueList(@QueryParam("fieldName")String fieldName,@QueryParam("tableId")String tableId){
+        return tableFacade.getFieldValueList(fieldName,tableId);
     }
 }
