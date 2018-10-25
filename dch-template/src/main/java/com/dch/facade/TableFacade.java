@@ -474,7 +474,7 @@ public class TableFacade extends BaseFacade {
             String masterTable = getMasterTableByTemplateId(templateId);
             Map<String, List<String>> tableColMap = getAllTableColInfo(templateId);
             initInserSql(result, masterTable, inserSqlMap, tableColMap);
-            saveToDb(inserSqlMap);
+            //saveToDb(inserSqlMap);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -595,15 +595,20 @@ public class TableFacade extends BaseFacade {
                 }
             }
             for (String key : document.keySet()) {
+                if("dch_1540361798043".equals(key)){
+                    System.out.println(key);
+                }
                 Object value = document.get(key);
                 if (value.getClass().isArray()) {
-                    //System.out.println(key);
+                    System.out.println(key);
                 } else if (value instanceof List) {
                     if (!value.toString().contains("dch")) {
                     } else {
                         //System.out.println(key);
                         dealListToMap((List) value, key, "", "", document.get("masterId").toString(), inserSqlMap, tableColMap, sqlBefMap);
                     }
+                }else if (value instanceof Document) {
+                    System.out.println(key);
                 }
             }
         }
@@ -1188,7 +1193,8 @@ public class TableFacade extends BaseFacade {
     @Transactional
     public TableUponFieldVo cleanDataByTableField(TableUponFieldVo tableUponFieldVo) {
         try {
-            String tableName = tableUponFieldVo.getTable();
+            //后续优化
+            String tableName = getTableNameById(tableUponFieldVo.getTable());
             String templateId = tableUponFieldVo.getTemplateId();
             TableUpon tableUponDb = getTableUponDb(tableName,templateId);
             if(!"-1".equals(tableUponFieldVo.getStatus())){
