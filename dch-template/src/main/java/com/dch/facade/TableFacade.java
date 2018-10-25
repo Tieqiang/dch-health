@@ -595,9 +595,6 @@ public class TableFacade extends BaseFacade {
                 }
             }
             for (String key : document.keySet()) {
-                if("dch_1540361798043".equals(key)){
-                    System.out.println(key);
-                }
                 Object value = document.get(key);
                 if (value.getClass().isArray()) {
                     System.out.println(key);
@@ -608,7 +605,9 @@ public class TableFacade extends BaseFacade {
                         dealListToMap((List) value, key, "", "", document.get("masterId").toString(), inserSqlMap, tableColMap, sqlBefMap);
                     }
                 }else if (value instanceof Document) {
-                    System.out.println(key);
+                    Document doc = (Document)value;
+                    String one_key = doc.keySet().iterator().next();
+                    Object one_value = doc.get(one_key);
                 }
             }
         }
@@ -1194,7 +1193,7 @@ public class TableFacade extends BaseFacade {
     public TableUponFieldVo cleanDataByTableField(TableUponFieldVo tableUponFieldVo) {
         try {
             //后续优化
-            String tableName = getTableNameById(tableUponFieldVo.getTable());
+            String tableName = getTableNameById(tableUponFieldVo.getTableId());
             String templateId = tableUponFieldVo.getTemplateId();
             TableUpon tableUponDb = getTableUponDb(tableName,templateId);
             if(!"-1".equals(tableUponFieldVo.getStatus())){

@@ -9,7 +9,7 @@ import java.util.List;
 public class TableUponFieldVo implements Serializable{
     private String id;
     private String templateId;
-    private String table;
+    private String tableId;
     private String status;
     private List<FieldUponValue> fieldUponValueList;
 
@@ -29,8 +29,12 @@ public class TableUponFieldVo implements Serializable{
         this.templateId = templateId;
     }
 
-    public String getTable() {
-        return table;
+    public String getTableId() {
+        return tableId;
+    }
+
+    public void setTableId(String tableId) {
+        this.tableId = tableId;
     }
 
     public String getStatus() {
@@ -39,10 +43,6 @@ public class TableUponFieldVo implements Serializable{
 
     public void setStatus(String status) {
         this.status = status;
-    }
-
-    public void setTable(String table) {
-        this.table = table;
     }
 
     public List<FieldUponValue> getFieldUponValueList() {
