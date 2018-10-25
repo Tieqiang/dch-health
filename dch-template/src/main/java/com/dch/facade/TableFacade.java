@@ -474,7 +474,7 @@ public class TableFacade extends BaseFacade {
             String masterTable = getMasterTableByTemplateId(templateId);
             Map<String, List<String>> tableColMap = getAllTableColInfo(templateId);
             initInserSql(result, masterTable, inserSqlMap, tableColMap);
-            //saveToDb(inserSqlMap);
+            saveToDb(inserSqlMap);
         } catch (Exception e) {
             e.printStackTrace();
         }
