@@ -710,9 +710,11 @@ public class TableFacade extends BaseFacade {
         String sql = "select max(data_version) as version from " + tableName + " where 1=1";
         List colList = createNativeQuery(sql).getResultList();
         if (colList != null && !colList.isEmpty()) {
-            version = Integer.valueOf(colList.get(0).toString());
+            version = colList.get(0)==null?0:Integer.valueOf(colList.get(0).toString());
+        }else{
+            version = 0;
         }
-        return version == null ? 0 : (version + 1);
+        return version;
     }
 
     public String getUID() {
