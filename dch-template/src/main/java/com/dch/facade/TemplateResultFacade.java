@@ -134,7 +134,7 @@ public class TemplateResultFacade extends BaseFacade {
         String hqlCount="select count(*) from TemplateResultMaster m where m.templateId='"+templateId+"'";
         //如果不为空 则查询mongo中的数据先进行过滤
         if(!StringUtils.isEmptyParam(field) && !StringUtils.isEmptyParam(fieldValue)){
-            List<String> masterIdList = getMasterIdsByQueryMongo(templateId,field,fieldValue,mongoTemplate);
+            List<String> masterIdList = getMasterIdsByQueryMongo(templateId,field,fieldValue,status,mongoTemplate);
             String masterIds = StringUtils.getQueryIdsString(masterIdList);
             if(!StringUtils.isEmptyParam(masterIds)){
                 hql += " and m.id in (" + masterIds + ")";
@@ -457,29 +457,46 @@ public class TemplateResultFacade extends BaseFacade {
      * @param <T>
      * @return
      */
-    public <T> List<T> getMasterIdsByQueryMongo(String templateId,String field,String fieldValue,MongoTemplate mongoTemplate){
+    public <T> List<T> getMasterIdsByQueryMongo(String templateId,String field,String fieldValue,String status,MongoTemplate mongoTemplate){
         List<T> returnList = new ArrayList<>();
         try{
             Query query = new Query();
             query.addCriteria(Criteria.where("templateId").is(templateId));
             Pattern pattern=Pattern.compile("^.*"+fieldValue+".*$", Pattern.CASE_INSENSITIVE);
             Boolean isNumber = judgeFieldIsNumber(field,fieldValue);
-            if(!isNumber){
-                query.addCriteria(Criteria.where(field).regex(pattern));
+            List<Document> resultList = null;
+            List templateList = null;
+            if(!"2".equals(status)){//查询录入的数据
+                isNumber = false;
+                templateList = getTemplateResultList(templateId,field,status);
+            }else{
+                if(!isNumber){
+                    query.addCriteria(Criteria.where(field).regex(pattern));
+                }
+                query.fields().include("masterId");
+                query.fields().include(field);
+                resultList = mongoTemplate.find(query,Document.class,TemplateResultService.tempFillName);
             }
-            query.fields().include("masterId");
-            query.fields().include(field);
-            List<Document> resultList = mongoTemplate.find(query,Document.class,"templateFilling");
-            for (Document result:resultList){
-                String masterId = result.get("masterId")+"";
-                if(isNumber){
-                    String mvalue = result.get(field) + "";
-                    if(mvalue.contains(fieldValue) && !returnList.contains(masterId)){
-                        returnList.add((T)masterId);
-                    }
-                }else{
-                    if(!returnList.contains(masterId)){
-                        returnList.add((T)masterId);
+            if(!"2".equals(status)) {//查询录入的数据
+                templateList.stream().forEach(tl -> {
+                    Object[] innerParams = (Object[])tl;
+                    String masterId = innerParams[0].toString();
+                    String templateResult = innerParams[1].toString();
+                    Boolean isExist = judgeFieldValueExist(templateResult,field,fieldValue);
+                    if(isExist){returnList.add((T)masterId);}
+                });
+            }else{
+                for (Document result:resultList){
+                    String masterId = result.get("masterId")+"";
+                    if(isNumber){
+                        String mvalue = result.get(field) + "";
+                        if(mvalue.contains(fieldValue) && !returnList.contains(masterId)){
+                            returnList.add((T)masterId);
+                        }
+                    }else{
+                        if(!returnList.contains(masterId)){
+                            returnList.add((T)masterId);
+                        }
                     }
                 }
             }
@@ -497,5 +514,35 @@ public class TemplateResultFacade extends BaseFacade {
             isNumber = false;
         }
         return isNumber;
+    }
+
+    public List getTemplateResultList(String templateId,String field,String status){
+        StringBuffer sb = new StringBuffer("select m.id,t.template_result from template_result t," +
+                "template_result_master m where t.master_id = m.id");
+        if(!"2".equals(status)){
+            sb.append(" and m.status<>2 ");
+        }
+        sb.append("and t.template_id = '").append(templateId).append("' and t.template_result like '%").append(field).append("%'");
+        List list = createNativeQuery(sb.toString()).getResultList();
+        return list;
+    }
+
+    /**
+     * 判断字段的值模糊匹配
+     * @param templateResult
+     * @param field
+     * @param fieldValue
+     * @return
+     */
+    public Boolean judgeFieldValueExist(String templateResult,String field,String fieldValue){
+        Boolean isExist = false;
+        int index = templateResult.indexOf(field);
+        String subResult = templateResult.substring(index + field.length());
+        int index_dch = subResult.indexOf("dch_");
+        String result = index_dch<1?subResult:subResult.substring(0,index_dch);
+        if(result.contains(fieldValue)){
+            isExist = true;
+        }
+        return isExist;
     }
 }

@@ -60,14 +60,19 @@ public class TableFacade extends BaseFacade {
         List<TemplateDataElement> templateDataElements = templateDataElementFacade.getTemplateDataElements(templateId);
 
         //删除之前的表
-        String hql = "from TableConfig as t where t.formId='" + templateId + "'";
+        String hql = "from TableConfig as t where t.formId='" + templateId + "' and createFrom = 'system'";
         List<TableConfig> configs = createQuery(TableConfig.class, hql, new ArrayList<Object>()).getResultList();
+        List<String> tableIds = new ArrayList<>();
         for (TableConfig tableConfig : configs) {
-            String delHql = "delete TableColConfig where tableId='" + tableConfig.getId() + "'";
-            excHql(delHql);
+            tableIds.add(tableConfig.getId());
+            //excHql(delHql);
             remove(tableConfig);
         }
-
+        if(!tableIds.isEmpty()){
+            String tableIdIns = StringUtils.getQueryIdsString(tableIds);
+            String delHql = "delete TableColConfig where tableId in (" + tableIdIns + ")";
+            excHql(delHql);
+        }
         //创建表结构
         List<TableCreateVo> vos = new ArrayList<>();
         List<TemplateDataElement> firstLevelDataElement = new ArrayList<>();
@@ -103,6 +108,7 @@ public class TableFacade extends BaseFacade {
                 logger.info("执行sql：" + sql);
                 PreparedStatement preparedStatement = connection.prepareStatement(sql);
                 preparedStatement.execute();
+                preparedStatement.close();
             }
 
 
@@ -113,7 +119,7 @@ public class TableFacade extends BaseFacade {
                 this.merge(config);
             }
         }
-
+        connection.close();
         return tableConfigs;
     }
 
@@ -235,9 +241,12 @@ public class TableFacade extends BaseFacade {
         return createQuery(TableConfig.class, hql, new ArrayList<Object>()).getResultList();
     }
 
-    public TableColVO getTableColVO(String tableId, int perPage, int currentPage) {
+    public TableColVO getTableColVO(String tableId, int perPage, int currentPage) throws Exception{
         String hql = "from TableColConfig where tableId='" + tableId + "'";
         List<TableColConfig> resultList = createQuery(TableColConfig.class, hql, new ArrayList<Object>()).getResultList();
+        if(resultList == null || resultList.isEmpty()){
+            throw new Exception("表不存在，获取数据失败");
+        }
         TableConfig tableConfig = this.get(TableConfig.class, tableId);
         String tableName = tableConfig.getTableName();
         String sqlCount = "select count(*) ";
@@ -281,41 +290,49 @@ public class TableFacade extends BaseFacade {
         TableConfig tableConfig = createTableVO.getTableConfig();
         tableConfig.setCreateFrom("user");
         tableConfig.setTableDesc(tableConfig.getTableName());
-        String executeSQL = createExecuteSQL(createTableVO.getUserCustomTableVOs(), createTableVO.getOperationConditionVOS());
-        List<TableColConfig> tableColConfigs = createTAbleColConfigs(createTableVO.getUserCustomTableVOs(), createTableVO.getOperationConditionVOS());
-        String tableName = PinYin2Abbreviation.cn2py("user_custom_" + tableConfig.getTableName());
-        String createTableSql = createCreateCustomTableSQL(tableColConfigs, tableName);
-        Connection connection = this.dataSource.getConnection();
+        try {
+            String executeSQL = createExecuteSQL(createTableVO.getUserCustomTableVOs(), createTableVO.getOperationConditionVOS());
+            List<TableColConfig> tableColConfigs = createTAbleColConfigs(createTableVO.getUserCustomTableVOs(), createTableVO.getOperationConditionVOS());
+            String tableName = PinYin2Abbreviation.cn2py("user_custom_" + tableConfig.getTableName());
+            String createTableSql = createCreateCustomTableSQL(tableColConfigs, tableName);
+            Connection connection = this.dataSource.getConnection();
 
-        String[] split = createTableSql.split(";");
-        for (String sql : split) {
-            PreparedStatement preparedStatement = connection.prepareStatement(sql);
-            logger.info("开始执行SQL：" + sql);
-            preparedStatement.execute();
-        }
+            String[] split = createTableSql.split(";");
+            for (String sql : split) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql);
+                logger.info("开始执行SQL：" + sql);
+                preparedStatement.execute();
+                preparedStatement.close();
+            }
+            //关闭链接
+            connection.close();
 
-        tableConfig.setTableName(tableName);
-        tableConfig.setExecuteSql(executeSQL);
-        tableConfig.setCreateDate(new Timestamp(new Date().getTime()));
-        tableConfig.setModifyDate(new Timestamp(new Date().getTime()));
-        TableConfig merge = merge(tableConfig);
-        logger.info("保存自定义表信息成功！");
-        for (TableColConfig config : tableColConfigs) {
-            config.setTableId(merge.getId());
-            merge(config);
+            tableConfig.setTableName(tableName);
+            tableConfig.setExecuteSql(executeSQL);
+            tableConfig.setCreateDate(new Timestamp(new Date().getTime()));
+            tableConfig.setModifyDate(new Timestamp(new Date().getTime()));
+            TableConfig merge = merge(tableConfig);
+            logger.info("保存自定义表信息成功！");
+            for (TableColConfig config : tableColConfigs) {
+                config.setTableId(merge.getId());
+                merge(config);
+            }
+            logger.info("保存自定义字段成功");
+            //将初始化用户自定义表数据
+            List queryList = createNativeQuery(executeSQL).getResultList();
+            Integer version = getTableVersion(tableName);
+            saveResultToDb(tableName,version, executeSQL, queryList);
+            //添加用户报表到自定义的报表分组下2018-10-19
+            ReportGroup reportGroup = new ReportGroup();
+            reportGroup.setParentId(createTableVO.getParentId());
+            reportGroup.setReportName(merge.getTableDesc());
+            reportGroup.setTableId(merge.getId());
+            reportGroup.setStatus("1");
+            reportGroup.setTemplateId(tableConfig.getFormId());
+            merge(reportGroup);
+        }catch (Exception e){
+            e.printStackTrace();
         }
-        logger.info("保存自定义字段成功");
-        //将初始化用户自定义表数据
-        List queryList = createNativeQuery(executeSQL).getResultList();
-        saveResultToDb(tableName, executeSQL, queryList);
-        //添加用户报表到自定义的报表分组下2018-10-19
-        ReportGroup reportGroup = new ReportGroup();
-        reportGroup.setParentId(createTableVO.getParentId());
-        reportGroup.setReportName(merge.getTableDesc());
-        reportGroup.setTableId(merge.getId());
-        reportGroup.setStatus("1");
-        reportGroup.setTemplateId(tableConfig.getFormId());
-        merge(reportGroup);
         return tableConfig;
     }
 
@@ -549,8 +566,9 @@ public class TableFacade extends BaseFacade {
      */
     public void saveToDb(Map<String, List<String>> inserSqlMap) throws Exception {
         PreparedStatement statement = null;
+        Connection connection = dataSource.getConnection();
         try {
-            statement = dataSource.getConnection().prepareStatement("");
+            statement = connection.prepareStatement("");
             for (String key : inserSqlMap.keySet()) {
                 List<String> insertSqlList = inserSqlMap.get(key);
                 String insert_sql = insertSqlList.get(0);
@@ -564,6 +582,7 @@ public class TableFacade extends BaseFacade {
             if (statement != null) {
                 statement.close();
             }
+            connection.close();
         }
     }
 
@@ -572,54 +591,65 @@ public class TableFacade extends BaseFacade {
         StringBuffer valueSqlBuf = new StringBuffer(insertSqlBef);
         List<String> keyList = tableColMap.get(tableName);
         Map<String, String> sqlBefMap = new HashMap<>();
-        for (Document document : documentList) {
-            valueSqlBuf.append("(");
-            for (int i = 0; i < keyList.size(); i++) {
-                String ckey = keyList.get(i);
-                if (i != keyList.size() - 1) {
-                    if ("id".equals(ckey)) {
-                        valueSqlBuf.append("'").append(document.get("masterId")).append("',");
+        try {
+            for (Document document : documentList) {
+                valueSqlBuf.append("(");
+                for (int i = 0; i < keyList.size(); i++) {
+                    String ckey = keyList.get(i);
+                    if (i != keyList.size() - 1) {
+                        if ("id".equals(ckey)) {
+                            valueSqlBuf.append("'").append(document.get("masterId")).append("',");
+                        } else {
+                            String valueStr = document.get(ckey) == null ? "" : document.get(ckey).toString();
+                            valueStr = valueStr.replace("'", "");
+                            valueSqlBuf.append("'").append(valueStr).append("',");
+                        }
                     } else {
-                        String valueStr = document.get(ckey) == null ? "" : document.get(ckey).toString();
-                        valueStr = valueStr.replace("'", "");
-                        valueSqlBuf.append("'").append(valueStr).append("',");
+                        if ("id".equals(ckey)) {
+                            valueSqlBuf.append("'").append(document.get("masterId")).append("'),");
+                        } else {
+                            String valueStr = document.get(ckey) == null ? "" : document.get(ckey).toString();
+                            valueStr = valueStr.replace("'", "");
+                            valueSqlBuf.append("'").append(valueStr).append("'),");
+                        }
                     }
-                } else {
-                    if ("id".equals(ckey)) {
-                        valueSqlBuf.append("'").append(document.get("masterId")).append("'),");
-                    } else {
-                        String valueStr = document.get(ckey) == null ? "" : document.get(ckey).toString();
-                        valueStr = valueStr.replace("'", "");
-                        valueSqlBuf.append("'").append(valueStr).append("'),");
+                }
+                for (String key : document.keySet()) {
+                    Object value = document.get(key);
+                    if (value.getClass().isArray()) {
+                        System.out.println(key);
+                    } else if (value instanceof List) {
+                        if (!value.toString().contains("dch")) {
+                        } else {
+                            //System.out.println(key);
+                            dealListToMap((List) value, key, "", "", document.get("masterId").toString(), inserSqlMap, tableColMap, sqlBefMap);
+                        }
+                    }else if (value instanceof Document) {
+                        List<Document> dlist = new ArrayList<>();
+                        Document doc = (Document)value;
+                        String one_key = doc.keySet().iterator().next();
+                        Object one_value = doc.get(one_key);
+                        Document indoc = new Document();
+                        if(!one_value.toString().contains("dch") && "dch_1540366812205".equals(key)){
+                            doc.forEach((k,v) -> {indoc.put(k,v);});
+                            dlist.add(indoc);
+                            dealListToMap(dlist, key, "", "", document.get("masterId").toString(), inserSqlMap, tableColMap, sqlBefMap);
+                        }
                     }
                 }
             }
-            for (String key : document.keySet()) {
-                Object value = document.get(key);
-                if (value.getClass().isArray()) {
-                    System.out.println(key);
-                } else if (value instanceof List) {
-                    if (!value.toString().contains("dch")) {
-                    } else {
-                        //System.out.println(key);
-                        dealListToMap((List) value, key, "", "", document.get("masterId").toString(), inserSqlMap, tableColMap, sqlBefMap);
-                    }
-                }else if (value instanceof Document) {
-                    Document doc = (Document)value;
-                    String one_key = doc.keySet().iterator().next();
-                    Object one_value = doc.get(one_key);
-                }
+            String inserSqlFinal = valueSqlBuf.toString();
+            inserSqlFinal = inserSqlFinal.substring(0, inserSqlFinal.length() - 1);
+            if (inserSqlMap.containsKey(tableName)) {
+                List<String> insertList = inserSqlMap.get(tableName);
+                insertList.add(inserSqlFinal);
+            } else {
+                List<String> insertList = new ArrayList<>();
+                insertList.add(inserSqlFinal);
+                inserSqlMap.put(tableName, insertList);
             }
-        }
-        String inserSqlFinal = valueSqlBuf.toString();
-        inserSqlFinal = inserSqlFinal.substring(0, inserSqlFinal.length() - 1);
-        if (inserSqlMap.containsKey(tableName)) {
-            List<String> insertList = inserSqlMap.get(tableName);
-            insertList.add(inserSqlFinal);
-        } else {
-            List<String> insertList = new ArrayList<>();
-            insertList.add(inserSqlFinal);
-            inserSqlMap.put(tableName, insertList);
+        }catch (Exception e){
+            e.printStackTrace();
         }
         return inserSqlMap;
     }
@@ -740,14 +770,19 @@ public class TableFacade extends BaseFacade {
             String tableName = innerParams[0].toString();
             String execute_sql = innerParams[2].toString();
             List queryList = createNativeQuery(execute_sql).getResultList();
-            saveResultToDb(tableName, execute_sql, queryList);
+            Integer version = getTableVersion(tableName);
+            saveResultToDb(tableName,version, execute_sql, queryList);
         }
         return getTableColVO(tableId, 20, 1);
     }
 
-    public void saveResultToDb(String tableName, String sql, List queryList){
+    public void saveResultToDb(String tableName,Integer dataVersion, String sql, List queryList){
         PreparedStatement statement = null;
+        Connection connection = null;
         try {
+            if(queryList==null || queryList.isEmpty()){
+                return;
+            }
             StringBuffer inserSqlBef = new StringBuffer("insert into ").append(tableName).append("(id,data_version,");
             List<String> keyList = getTableColum(sql,tableName);
             for (String key : keyList) {
@@ -756,10 +791,9 @@ public class TableFacade extends BaseFacade {
             String insertSqlBefStr = inserSqlBef.toString();
             insertSqlBefStr = insertSqlBefStr.substring(0, insertSqlBefStr.length() - 1) + ") VALUES";
             StringBuffer valueSqlBuf = new StringBuffer(insertSqlBefStr);
-            Integer version = getTableVersion(tableName);
             for (int i = 0; i < queryList.size(); i++) {
                 String uid = getUID();
-                valueSqlBuf.append("('").append(uid).append("',").append(version).append(",");
+                valueSqlBuf.append("('").append(uid).append("',").append(dataVersion).append(",");
                 Object[] innerParams = (Object[]) queryList.get(i);
                 for (int k = 0; k < innerParams.length; k++) {
                     if (k != innerParams.length - 1) {
@@ -771,7 +805,8 @@ public class TableFacade extends BaseFacade {
             }
             String valueSqlStr = valueSqlBuf.toString();
             valueSqlStr = valueSqlStr.substring(0, valueSqlStr.length() - 1);
-            statement = dataSource.getConnection().prepareStatement("");
+            connection = dataSource.getConnection();
+            statement = connection.prepareStatement("");
             statement.addBatch(valueSqlStr);
             // 执行操作
             statement.executeBatch();
@@ -781,6 +816,13 @@ public class TableFacade extends BaseFacade {
             if (statement != null) {
                 try {
                     statement.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+            if(connection!=null){
+                try {
+                    connection.close();
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
@@ -1131,56 +1173,60 @@ public class TableFacade extends BaseFacade {
      * @return
      */
     public List<ReportGroupVo> getReportGroupVoList(String templateId,String reportName) {
-        String userId = UserUtils.getCurrentUser().getId();
-        String hql = " from ReportGroup as r where r.status <> '-1' and r.createBy = '" +userId+"' and r.templateId = '"+templateId+"'";
-        if(!StringUtils.isEmptyParam(reportName)){
-            hql += " and r.reportName like '%"+reportName+"%' or exists(select 1 from ReportGroup where parentId = r.id" +
-                    " and status<>'-1')";
-        }
-        List<ReportGroup> reportGroups = createQuery(ReportGroup.class,hql,new ArrayList<>()).getResultList();
         List<ReportGroupVo> reportGroupVos = new ArrayList<>();
-        Map<String,List<ReportGroup>> secondGroups = new HashMap<>();
-        reportGroups.stream().parallel().forEach(reportGroup -> {
-            if(StringUtils.isEmptyParam(reportGroup.getParentId())){
-                ReportGroupVo reportGroupVo = new ReportGroupVo(reportGroup.getId(),reportGroup.getTableId(),reportGroup.getReportName());
-                reportGroupVos.add(reportGroupVo);
-            }else{
-                if(secondGroups.containsKey(reportGroup.getParentId())){
-                    List<ReportGroup> innerList = secondGroups.get(reportGroup.getParentId());
-                    innerList.add(reportGroup);
-                }else{
-                    List<ReportGroup> innerList = new ArrayList<>();
-                    innerList.add(reportGroup);
-                    secondGroups.put(reportGroup.getParentId(),innerList);
-                }
-            }
-        });
-        reportGroupVos.stream().parallel().forEach(reportGroupVo -> {
-            if(secondGroups.containsKey(reportGroupVo.getId())){
-                reportGroupVo.setReportGroupList(secondGroups.get(reportGroupVo.getId()));
-            }else{
-                reportGroupVo.setReportGroupList(new ArrayList<ReportGroup>());
-            }
-        });
-        //查询系统初始化报表
-        ReportGroupVo reportGroupVo = new ReportGroupVo();
-        reportGroupVo.setTableId("");
-        reportGroupVo.setReportName("系统初始化报表");
-        List<ReportGroup> systemReportList = new ArrayList<>();
-        List<TableConfig> tableConfigs = getTableConfig(templateId,"system");
-        tableConfigs.stream().parallel().forEach(tableConfig -> {
-            ReportGroup sysReport = new ReportGroup();
-            sysReport.setTableId(tableConfig.getId());
-            sysReport.setReportName(tableConfig.getTableDesc());
+        try{
+            String userId = UserUtils.getCurrentUser().getId();
+            String hql = " from ReportGroup as r where r.status <> '-1' and r.createBy = '" +userId+"' and r.templateId = '"+templateId+"'";
             if(!StringUtils.isEmptyParam(reportName)){
-                if(tableConfig.getTableDesc().contains(reportName))
-                    systemReportList.add(sysReport);
-            }else{
-                systemReportList.add(sysReport);
+                hql += " and r.reportName like '%"+reportName+"%' or exists(select 1 from ReportGroup where parentId = r.id" +
+                        " and status<>'-1')";
             }
-        });
-        reportGroupVo.setReportGroupList(systemReportList);
-        reportGroupVos.add(reportGroupVo);
+            List<ReportGroup> reportGroups = createQuery(ReportGroup.class,hql,new ArrayList<>()).getResultList();
+            Map<String,List<ReportGroup>> secondGroups = new HashMap<>();
+            reportGroups.stream().parallel().forEach(reportGroup -> {
+                if(StringUtils.isEmptyParam(reportGroup.getParentId())){
+                    ReportGroupVo reportGroupVo = new ReportGroupVo(reportGroup.getId(),reportGroup.getTableId(),reportGroup.getReportName());
+                    reportGroupVos.add(reportGroupVo);
+                }else{
+                    if(secondGroups.containsKey(reportGroup.getParentId())){
+                        List<ReportGroup> innerList = secondGroups.get(reportGroup.getParentId());
+                        innerList.add(reportGroup);
+                    }else{
+                        List<ReportGroup> innerList = new ArrayList<>();
+                        innerList.add(reportGroup);
+                        secondGroups.put(reportGroup.getParentId(),innerList);
+                    }
+                }
+            });
+            reportGroupVos.stream().parallel().forEach(reportGroupVo -> {
+                if(secondGroups.containsKey(reportGroupVo.getId())){
+                    reportGroupVo.setReportGroupList(secondGroups.get(reportGroupVo.getId()));
+                }else{
+                    reportGroupVo.setReportGroupList(new ArrayList<ReportGroup>());
+                }
+            });
+            //查询系统初始化报表
+            ReportGroupVo reportGroupVo = new ReportGroupVo();
+            reportGroupVo.setTableId("");
+            reportGroupVo.setReportName("系统初始化报表");
+            List<ReportGroup> systemReportList = new ArrayList<>();
+            List<TableConfig> tableConfigs = getTableConfig(templateId,"system");
+            tableConfigs.stream().parallel().forEach(tableConfig -> {
+                ReportGroup sysReport = new ReportGroup();
+                sysReport.setTableId(tableConfig.getId());
+                sysReport.setReportName(tableConfig.getTableDesc());
+                if(!StringUtils.isEmptyParam(reportName)){
+                    if(tableConfig.getTableDesc().contains(reportName))
+                        systemReportList.add(sysReport);
+                }else{
+                    systemReportList.add(sysReport);
+                }
+            });
+            reportGroupVo.setReportGroupList(systemReportList);
+            reportGroupVos.add(reportGroupVo);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
         return reportGroupVos;
     }
 
@@ -1197,7 +1243,7 @@ public class TableFacade extends BaseFacade {
             String templateId = tableUponFieldVo.getTemplateId();
             TableUpon tableUponDb = getTableUponDb(tableName,templateId);
             if(!"-1".equals(tableUponFieldVo.getStatus())){
-                Integer dataVersion = tableUponDb==null?0:(tableUponDb.getDataVersion()+1);
+                Integer dataVersion = tableUponDb==null?0:tableUponDb.getDataVersion();
                 List<String> columnList = getTableColum("",tableName);
                 List<FieldUponValue> fieldUponValueList = tableUponFieldVo.getFieldUponValueList();
                 Map<Integer,Map<String,Object>> fieldValueMapTo = new HashMap<>();
@@ -1209,7 +1255,11 @@ public class TableFacade extends BaseFacade {
                             innerMap.put(x==null?"":x.toString(),uponValue.getUponValue());
                         });
                     });
-                    fieldValueMapTo.put(index, innerMap);
+                    if(fieldValueMapTo.containsKey(index)){
+                        fieldValueMapTo.get(index).putAll(innerMap);
+                    }else {
+                        fieldValueMapTo.put(index, innerMap);
+                    }
                 }
                 StringBuffer sbSql = new StringBuffer("select ");
                 columnList.stream().forEach(f ->  sbSql.append(f).append(","));
@@ -1224,7 +1274,7 @@ public class TableFacade extends BaseFacade {
                         }
                     });
                 });
-                saveResultToDb(tableName, "", queryList);
+                saveResultToDb(tableName,dataVersion+1, "", queryList);
                 //保存 清洗记录
                 TableUpon tableUpon = tableUponDb==null?(new TableUpon()):tableUponDb;
                 tableUpon.setTableName(tableName);

@@ -61,7 +61,7 @@ public class DataAnalysisService {
      */
     @GET
     @Path("get-table-data")
-    public TableColVO getTableColVO(@QueryParam("tableId")String tableId, @QueryParam("perPage")int perPage,@QueryParam("currentPage")int currentPage){
+    public TableColVO getTableColVO(@QueryParam("tableId")String tableId, @QueryParam("perPage")int perPage,@QueryParam("currentPage")int currentPage) throws Exception{
         return tableFacade.getTableColVO(tableId, perPage, currentPage);
     }
 

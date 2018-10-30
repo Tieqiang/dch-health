@@ -46,7 +46,7 @@ public class DataAnalysisServiceTest extends BaseTest {
     }
 
     @Test
-    public void whenCreateUserCustomTableWithOneTable(){
+    public void whenCreateUserCustomTableWithOneTable() throws Exception{
 
         CreateTableVO createTableVO = new CreateTableVO();
         List<TableConfig> tableConfigs = tableFacade.getTableConfig("5e5d857c628fe2940162a2e82bf000a9","");
