@@ -218,4 +218,15 @@ public class DataAnalysisService {
     public List getFieldValueList(@QueryParam("fieldName")String fieldName,@QueryParam("tableId")String tableId){
         return tableFacade.getFieldValueList(fieldName,tableId);
     }
+
+    /**
+     * 根据templateId判断用户是否填写表单数据
+     * @param templateId
+     * @return
+     */
+    @GET
+    @Path("get-template-fill-info")
+    public List<String> getTemplateMasterFillInfo(@QueryParam("templateId")String templateId){
+        return tableFacade.getTemplateMasterFillInfo(templateId);
+    }
 }

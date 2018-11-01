@@ -12,6 +12,7 @@ import com.mchange.v2.c3p0.ComboPooledDataSource;
 import org.aspectj.lang.annotation.DeclareWarning;
 import org.bson.Document;
 import org.codehaus.jettison.json.JSONException;
+import org.hibernate.annotations.Synchronize;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,7 +61,7 @@ public class TableFacade extends BaseFacade {
         List<TemplateDataElement> templateDataElements = templateDataElementFacade.getTemplateDataElements(templateId);
 
         //删除之前的表
-        String hql = "from TableConfig as t where t.formId='" + templateId + "' and createFrom = 'system'";
+        String hql = "from TableConfig as t where t.formId='" + templateId + "'";
         List<TableConfig> configs = createQuery(TableConfig.class, hql, new ArrayList<Object>()).getResultList();
         List<String> tableIds = new ArrayList<>();
         for (TableConfig tableConfig : configs) {
@@ -73,6 +74,14 @@ public class TableFacade extends BaseFacade {
             String delHql = "delete TableColConfig where tableId in (" + tableIdIns + ")";
             excHql(delHql);
         }
+
+        //删除用户自定义表
+        String upHql = "update ReportGroup set status = '-1' where parentId is not null and templateId = '"+templateId+"'";
+        excHql(upHql);
+        //删除用户自定义统计分析表
+        String temHql = "update TemplateQueryRule set status = '-1' where parentId is not null and templateId = '"+templateId+"'";
+        excHql(temHql);
+
         //创建表结构
         List<TableCreateVo> vos = new ArrayList<>();
         List<TemplateDataElement> firstLevelDataElement = new ArrayList<>();
@@ -290,12 +299,13 @@ public class TableFacade extends BaseFacade {
         TableConfig tableConfig = createTableVO.getTableConfig();
         tableConfig.setCreateFrom("user");
         tableConfig.setTableDesc(tableConfig.getTableName());
+
+        Connection connection = this.dataSource.getConnection();
         try {
             String executeSQL = createExecuteSQL(createTableVO.getUserCustomTableVOs(), createTableVO.getOperationConditionVOS());
             List<TableColConfig> tableColConfigs = createTAbleColConfigs(createTableVO.getUserCustomTableVOs(), createTableVO.getOperationConditionVOS());
-            String tableName = PinYin2Abbreviation.cn2py("user_custom_" + tableConfig.getTableName());
+            String tableName =  createUserDefineTable(tableConfig.getTableName());
             String createTableSql = createCreateCustomTableSQL(tableColConfigs, tableName);
-            Connection connection = this.dataSource.getConnection();
 
             String[] split = createTableSql.split(";");
             for (String sql : split) {
@@ -304,8 +314,6 @@ public class TableFacade extends BaseFacade {
                 preparedStatement.execute();
                 preparedStatement.close();
             }
-            //关闭链接
-            connection.close();
 
             tableConfig.setTableName(tableName);
             tableConfig.setExecuteSql(executeSQL);
@@ -320,8 +328,7 @@ public class TableFacade extends BaseFacade {
             logger.info("保存自定义字段成功");
             //将初始化用户自定义表数据
             List queryList = createNativeQuery(executeSQL).getResultList();
-            Integer version = getTableVersion(tableName);
-            saveResultToDb(tableName,version, executeSQL, queryList);
+            saveResultToDb(tableName,0, executeSQL, queryList);
             //添加用户报表到自定义的报表分组下2018-10-19
             ReportGroup reportGroup = new ReportGroup();
             reportGroup.setParentId(createTableVO.getParentId());
@@ -332,10 +339,56 @@ public class TableFacade extends BaseFacade {
             merge(reportGroup);
         }catch (Exception e){
             e.printStackTrace();
+        }finally {
+            //关闭链接
+            connection.close();
         }
         return tableConfig;
     }
 
+    /**
+     * 查询表是否存在
+     * @param tableName
+     * @return
+     */
+    public List<String> queryTableExist(String tableName){
+        String sql = "select table_name from table_config where table_desc = '"+tableName+"'";
+        List list = createNativeQuery(sql).getResultList();
+        return list;
+    }
+
+    /**
+     * 生成表名
+     * @param tableName
+     * @return
+     */
+    public synchronized String createUserDefineTable(String tableName){
+        String table = "USER_CUSTOM_";
+        List list = queryTableExist(tableName);
+        if(!list.isEmpty()){
+            if(list.size()>1){
+                String orignTable = table+PinYin2Abbreviation.cn2py(tableName);
+                list.remove(orignTable);
+                Map<String,Integer> map = new HashMap();
+                list.stream().forEach(o -> {
+                    String tindex = o.toString().replace(orignTable+"_","");
+                    Integer index = Integer.valueOf(tindex);
+                    if(map.containsKey(orignTable) && map.get(orignTable)<index){
+                        map.put(orignTable,index);
+                    }
+                    if(map.isEmpty()){
+                        map.put(orignTable,index);
+                    }
+                });
+                table += PinYin2Abbreviation.cn2py(tableName) + "_" + (map.get(orignTable)+1);
+            }else{
+                table += PinYin2Abbreviation.cn2py(tableName)+ "_1";
+            }
+        }else{
+            table += PinYin2Abbreviation.cn2py(tableName);
+        }
+        return table;
+    }
     /**
      * 生成建表语句
      *
@@ -741,7 +794,7 @@ public class TableFacade extends BaseFacade {
 
     public Integer getTableVersion(String tableName) {
         Integer version = null;
-        String sql = "select max(data_version) as version from " + tableName + " where 1=1";
+        String sql = "select max(data_version) from " + tableName + " where 1=1";
         List colList = createNativeQuery(sql).getResultList();
         if (colList != null && !colList.isEmpty()) {
             version = colList.get(0)==null?0:Integer.valueOf(colList.get(0).toString());
@@ -854,6 +907,14 @@ public class TableFacade extends BaseFacade {
         return list;
     }
 
+    /**
+     * 获取统计结果
+     * @param reportQueryParam
+     * @param reportData
+     * @param <T>
+     * @return
+     * @throws Exception
+     */
     public <T> List<T> getReportStatistics(ReportQueryParam reportQueryParam, ReportData reportData) throws Exception{
         List<T> reportList = new ArrayList<>();
         String tableName = reportQueryParam.getTableName();
@@ -868,9 +929,14 @@ public class TableFacade extends BaseFacade {
             setReportFieldValue(reportQueryParam);
             //如果图像为表格类型则直接查询
             if("table".equals(reportQueryParam.getChart())){
+                if(StringUtils.isEmptyParam(table_name)){
+                    return new ArrayList<>();
+                }
                 List<FieldChange> fieldChangeList = reportQueryParam.getTableResults();
                 fieldChangeList.stream().forEach(x -> sqlBuffer.append(x.getTitle()).append(","));
-                String sqlStr = sqlBuffer.toString().substring(0,sqlBuffer.length()-1) + " FROM " + table_name;
+                String sqlStr = sqlBuffer.toString().substring(0,sqlBuffer.length()-1);
+                sqlStr += new StringBuffer(" FROM ").append(table_name).
+                          append(" where data_version = (select max(data_version) from ").append(table_name).append(")").toString();
                 int perPage = reportData ==null?20:reportData.getPerPage();
                 int currentPage = reportData ==null?1:reportData.getCurrentPage();
                 long limit_start = (currentPage -1) * perPage;
@@ -879,10 +945,32 @@ public class TableFacade extends BaseFacade {
                 List resultList = createNativeQuery(sqlStr).getResultList();
                 return resultList;
             }
+            if(StringUtils.isEmptyParam(table_name)){
+                return reportList;
+            }
+            if("2".equals(reportQueryParam.getIfDuplicate())){//不统计的话则查询x轴y轴
+                if(!StringUtils.isEmptyParam(x_field) && !StringUtils.isEmptyParam(y_field)){
+                    sqlBuffer.append(x_field).append(",").append(y_field);
+                }else if(!StringUtils.isEmptyParam(x_field)){
+                    sqlBuffer.append(x_field);
+                }else{
+                    sqlBuffer.append(y_field);
+                }
+                sqlBuffer.append(" from ").append(table_name).append(" where data_version = (select max(data_version) from ")
+                         .append(table_name).append(")");
+                int perPage = reportData ==null?20:reportData.getPerPage();
+                int currentPage = reportData ==null?1:reportData.getCurrentPage();
+                long limit_start = (currentPage -1) * perPage;
+                long limit_end = perPage;
+                sqlBuffer.append(" limit ").append(limit_start).append(",").append(limit_end);
+                List resultList = createNativeQuery(sqlBuffer.toString()).getResultList();
+                return resultList;
+            }
             //如果所选的字段一致，则为统计计数
             if(x_field.equals(y_field) || StringUtils.isEmptyParam(y_field)){
                 sqlBuffer.append(" count(*),").append(x_field).append(" FROM ").append(table_name)
-                        .append(" GROUP BY ").append(x_field);
+                        .append(" WHERE data_version = (select max(data_version) from ").append(table_name)
+                        .append(")  GROUP BY ").append(x_field);
                 if("0".equals(sort)){//降序
                     sqlBuffer.append(" ORDER BY ").append(x_field).append(" DESC");
                 }else{
@@ -905,7 +993,8 @@ public class TableFacade extends BaseFacade {
                 }else{
                     sqlBuffer.append("1").append(",");
                 }
-                sqlBuffer.append(y_field).append(" FROM ").append(table_name);
+                sqlBuffer.append(y_field).append(" FROM ").append(table_name).append(" where data_version = (select max(data_version) from ")
+                                                           .append(table_name).append(")");
                 List resultList = createNativeQuery(sqlBuffer.toString()).getResultList();
                 Map<String,List<UnitFunds>> resultMap = new HashMap<>();
                 for(int i=0;i<resultList.size();i++){
@@ -949,7 +1038,7 @@ public class TableFacade extends BaseFacade {
     public String getTableNameById(String tableId){
         String sql = "select table_name from table_config where id = '"+tableId+"'";
         List<String> list = createNativeQuery(sql).getResultList();
-        return list.get(0);
+        return list.isEmpty()?"":list.get(0);
     }
     public Double getStatisticsValue(List<UnitFunds> unitFundsList,String type){
         Double result = 0D;
@@ -1000,6 +1089,7 @@ public class TableFacade extends BaseFacade {
         }catch (Exception e){
             e.printStackTrace();
             returnInfo = new ReturnInfo("false",e.getMessage());
+            throw e;
         }
         return returnInfo;
     }
@@ -1160,6 +1250,12 @@ public class TableFacade extends BaseFacade {
     public Response mergeCustomerReportGroup(ReportGroup reportGroup) {
         try {
             ReportGroup merge = merge(reportGroup);
+            if("-1".equals(reportGroup.getStatus()) && !StringUtils.isEmptyParam(reportGroup.getParentId())){
+                delCustomerDefineTable(reportGroup.getTableId());
+                //删除自定义表所关联的数据分析表
+                String hql = "update TemplateQueryRule set status = '-1' where content like '%"+reportGroup.getTableId()+"%'";
+                excHql(hql);
+            }
             return Response.status(Response.Status.OK).entity(merge).build();
         }catch (Exception e){
             e.printStackTrace();
@@ -1179,11 +1275,12 @@ public class TableFacade extends BaseFacade {
             String hql = " from ReportGroup as r where r.status <> '-1' and r.createBy = '" +userId+"' and r.templateId = '"+templateId+"'";
             if(!StringUtils.isEmptyParam(reportName)){
                 hql += " and r.reportName like '%"+reportName+"%' or exists(select 1 from ReportGroup where parentId = r.id" +
-                        " and status<>'-1')";
+                        " and status<>'-1') ";
             }
+            hql += " order by createDate desc";
             List<ReportGroup> reportGroups = createQuery(ReportGroup.class,hql,new ArrayList<>()).getResultList();
             Map<String,List<ReportGroup>> secondGroups = new HashMap<>();
-            reportGroups.stream().parallel().forEach(reportGroup -> {
+            reportGroups.stream().forEach(reportGroup -> {
                 if(StringUtils.isEmptyParam(reportGroup.getParentId())){
                     ReportGroupVo reportGroupVo = new ReportGroupVo(reportGroup.getId(),reportGroup.getTableId(),reportGroup.getReportName());
                     reportGroupVos.add(reportGroupVo);
@@ -1211,7 +1308,7 @@ public class TableFacade extends BaseFacade {
             reportGroupVo.setReportName("系统初始化报表");
             List<ReportGroup> systemReportList = new ArrayList<>();
             List<TableConfig> tableConfigs = getTableConfig(templateId,"system");
-            tableConfigs.stream().parallel().forEach(tableConfig -> {
+            tableConfigs.stream().forEach(tableConfig -> {
                 ReportGroup sysReport = new ReportGroup();
                 sysReport.setTableId(tableConfig.getId());
                 sysReport.setReportName(tableConfig.getTableDesc());
@@ -1360,5 +1457,22 @@ public class TableFacade extends BaseFacade {
             list.add("");
         }
         return list;
+    }
+
+    /**
+     * 根据templateId判断用户是否填写表单数据
+     * @param templateId
+     * @return
+     */
+    public List<String> getTemplateMasterFillInfo(String templateId) {
+        List<String> info = new ArrayList<>();
+        String sql = "select id from template_result_master where status <>'-1' and template_id = '"+templateId+"'";
+        List list = createNativeQuery(sql).getResultList();
+        if(list!=null && !list.isEmpty()){
+            info.add("true");
+        }else{
+            info.add("false");
+        }
+        return info;
     }
 }

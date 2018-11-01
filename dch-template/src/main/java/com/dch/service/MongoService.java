@@ -22,6 +22,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 
+
 import javax.ws.rs.*;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
@@ -40,7 +41,6 @@ import static org.springframework.data.mongodb.core.query.Criteria.where;
 public class MongoService {
    final private static String collectionName = "templateResult";
     //public static final Logger logger = LogManager.getLogger(MongoService.class);
-
     @Autowired
     private MongoTemplate mongoTemplate ;
 

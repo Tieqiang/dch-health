@@ -135,8 +135,8 @@ public class TemplateResultFacade extends BaseFacade {
         //如果不为空 则查询mongo中的数据先进行过滤
         if(!StringUtils.isEmptyParam(field) && !StringUtils.isEmptyParam(fieldValue)){
             List<String> masterIdList = getMasterIdsByQueryMongo(templateId,field,fieldValue,status,mongoTemplate);
-            String masterIds = StringUtils.getQueryIdsString(masterIdList);
-            if(!StringUtils.isEmptyParam(masterIds)){
+            if(!masterIdList.isEmpty()){
+                String masterIds = StringUtils.getQueryIdsString(masterIdList);
                 hql += " and m.id in (" + masterIds + ")";
                 hqlCount += " and m.id in (" + masterIds + ")";
             }else {
@@ -204,7 +204,7 @@ public class TemplateResultFacade extends BaseFacade {
             sb.append("'").append(key).append("',");
         }
         String ids = sb.toString();
-        ids = ids.length()>1?ids.substring(0,ids.length()-1):"";
+        ids = ids.length()>1?ids.substring(0,ids.length()-1):"''";
         try{
             String hql = "from TemplateResult a where a.masterId in ("+ids+")" ;
             List<TemplateResult> templateResults= createQuery(TemplateResult.class,hql,new ArrayList<Object>()).getResultList();
@@ -520,7 +520,7 @@ public class TemplateResultFacade extends BaseFacade {
         StringBuffer sb = new StringBuffer("select m.id,t.template_result from template_result t," +
                 "template_result_master m where t.master_id = m.id");
         if(!"2".equals(status)){
-            sb.append(" and m.status<>2 ");
+            sb.append(" and m.status<>'-1' ");
         }
         sb.append("and t.template_id = '").append(templateId).append("' and t.template_result like '%").append(field).append("%'");
         List list = createNativeQuery(sb.toString()).getResultList();

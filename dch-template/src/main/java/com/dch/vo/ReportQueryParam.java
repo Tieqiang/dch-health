@@ -11,9 +11,10 @@ public class ReportQueryParam {
     private String xaxis;//x轴字段名
     private String yaxis;//y轴字段名
     private String type;//统计类型 1 sum ,2 average 求和和平均
-    private String ifDuplicate;//统计是否去重 0：否 1:是
+    private String ifDuplicate;//统计是否去重 0：否 1:是 2:不统计
     private String sortType;//0 x轴由小到大 1 x轴由大到小
     private String chart;//图形类型 柱状图 饼状图 折线图 表格...bar pie line table
+    private String desc;
     private List<FieldChange> tableResults;
 
     public String getTableName() {
@@ -78,6 +79,14 @@ public class ReportQueryParam {
 
     public void setChart(String chart) {
         this.chart = chart;
+    }
+
+    public String getDesc() {
+        return desc;
+    }
+
+    public void setDesc(String desc) {
+        this.desc = desc;
     }
 
     public List<FieldChange> getTableResults() {
