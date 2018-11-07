@@ -8,6 +8,8 @@ import com.dch.util.StringUtils;
 import com.dch.util.UserUtils;
 import com.dch.vo.*;
 import com.mongodb.BasicDBObject;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -41,6 +43,11 @@ import static org.springframework.data.mongodb.core.query.Criteria.where;
 public class MongoService {
    final private static String collectionName = "templateResult";
     //public static final Logger logger = LogManager.getLogger(MongoService.class);
+    static {
+        //去除mongo链接日志
+        Logger log = Logger.getLogger("org.mongodb.driver");
+        log.setLevel(Level.OFF);
+    }
     @Autowired
     private MongoTemplate mongoTemplate ;
 

@@ -233,7 +233,6 @@ public class TemplateResultService {
                             throw new Exception("表单录入数超过表单填报限制次数，不允许录入数据");
                         }
                     }
-                    String masterIdHql = "select id from TemplateResultMaster where templateId = '"+templateId+"' and createBy = '"+userId+"'";
                     TemplateResultMaster master = new TemplateResultMaster();
                     master.setTemplateId(templateId);
                     master.setTemplateName(templateMaster.getTemplateName());
@@ -243,6 +242,7 @@ public class TemplateResultService {
                     masterId = merge.getId();
                 }
             }else{
+                System.out.println(templateResult.getMasterId());
                 if(StringUtils.isEmptyParam(templateResult.getMasterId())){
                     throw new Exception("masterId不能为空");
                 }

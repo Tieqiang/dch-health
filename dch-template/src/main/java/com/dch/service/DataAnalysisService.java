@@ -229,4 +229,15 @@ public class DataAnalysisService {
     public List<String> getTemplateMasterFillInfo(@QueryParam("templateId")String templateId){
         return tableFacade.getTemplateMasterFillInfo(templateId);
     }
+
+    /**
+     * 根据templateId获取用户填报的表单信息
+     * @param templateId
+     * @return
+     */
+    @GET
+    @Path("get-template-result-text")
+    public List<String> getTemplateResultMasterText(@QueryParam("templateId")String templateId){
+        return tableFacade.getTemplateResultMasterText(templateId);
+    }
 }

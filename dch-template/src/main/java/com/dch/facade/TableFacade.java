@@ -3,11 +3,9 @@ package com.dch.facade;
 import com.dch.entity.*;
 import com.dch.facade.common.BaseFacade;
 import com.dch.facade.common.VO.ReturnInfo;
-import com.dch.util.JSONUtil;
-import com.dch.util.PinYin2Abbreviation;
-import com.dch.util.StringUtils;
-import com.dch.util.UserUtils;
+import com.dch.util.*;
 import com.dch.vo.*;
+import com.dch.vo.OperationEnum;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 import org.aspectj.lang.annotation.DeclareWarning;
 import org.bson.Document;
@@ -32,6 +30,7 @@ import java.sql.Timestamp;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service
 public class TableFacade extends BaseFacade {
@@ -57,78 +56,83 @@ public class TableFacade extends BaseFacade {
      */
     @Transactional
     public List<TableConfig> createTableConfig(String templateId) throws Exception {
-
-        List<TemplateDataElement> templateDataElements = templateDataElementFacade.getTemplateDataElements(templateId);
-
-        //删除之前的表
-        String hql = "from TableConfig as t where t.formId='" + templateId + "'";
-        List<TableConfig> configs = createQuery(TableConfig.class, hql, new ArrayList<Object>()).getResultList();
-        List<String> tableIds = new ArrayList<>();
-        for (TableConfig tableConfig : configs) {
-            tableIds.add(tableConfig.getId());
-            //excHql(delHql);
-            remove(tableConfig);
-        }
-        if(!tableIds.isEmpty()){
-            String tableIdIns = StringUtils.getQueryIdsString(tableIds);
-            String delHql = "delete TableColConfig where tableId in (" + tableIdIns + ")";
-            excHql(delHql);
-        }
-
-        //删除用户自定义表
-        String upHql = "update ReportGroup set status = '-1' where parentId is not null and templateId = '"+templateId+"'";
-        excHql(upHql);
-        //删除用户自定义统计分析表
-        String temHql = "update TemplateQueryRule set status = '-1' where parentId is not null and templateId = '"+templateId+"'";
-        excHql(temHql);
-
-        //创建表结构
-        List<TableCreateVo> vos = new ArrayList<>();
-        List<TemplateDataElement> firstLevelDataElement = new ArrayList<>();
-        List<TableCreateVo> tableCreateVos = null;
-        TableCreateVo masterTableCreateVo = null;
-        int i = 0;
-        for (TemplateDataElement vo : templateDataElements) {
-            logger.info("循环1：" + i + ":" + vo.getDataElementName());
-            if (StringUtils.isEmptyParam(vo.getParentDataId())) {
-//                firstLevelDataElement.add(vo);
-                String dataElementType = vo.getDataElementType();
-                if (dataElementType.contains("table")) {
-                    tableCreateVos = createNextTable(vo, templateDataElements, templateId, "master");
-                    vos.addAll(tableCreateVos);
-                } else {
-                    firstLevelDataElement.add(vo);
-                }
-
-            }
-            i++;
-        }
-        masterTableCreateVo = createMasterTAble(firstLevelDataElement, templateId);
-        vos.add(masterTableCreateVo);
-
         List<TableConfig> tableConfigs = new ArrayList<>();
-        Connection connection = dataSource.getConnection();
-        for (TableCreateVo vo : vos) {
-            String insertSql = vo.getInsertSql();
+        Connection connection = null;
+        try {
+            List<TemplateDataElement> templateDataElements = templateDataElementFacade.getTemplateDataElements(templateId);
+            //删除之前的表
+            String hql = "from TableConfig as t where t.formId='" + templateId + "'";
+            List<TableConfig> configs = createQuery(TableConfig.class, hql, new ArrayList<Object>()).getResultList();
+            List<String> tableIds = new ArrayList<>();
+            for (TableConfig tableConfig : configs) {
+                tableIds.add(tableConfig.getId());
+                //excHql(delHql);
+                remove(tableConfig);
+            }
+            if(!tableIds.isEmpty()){
+                String tableIdIns = StringUtils.getQueryIdsString(tableIds);
+                String delHql = "delete TableColConfig where tableId in (" + tableIdIns + ")";
+                excHql(delHql);
+            }
+            //删除用户自定义表
+            String upHql = "update ReportGroup set status = '-1' where parentId is not null and templateId = '"+templateId+"'";
+            excHql(upHql);
+            //删除用户自定义统计分析表
+            String temHql = "update TemplateQueryRule set status = '-1' where parentId is not null and templateId = '"+templateId+"'";
+            excHql(temHql);
+
+            //创建表结构
+            List<TableCreateVo> vos = new ArrayList<>();
+            List<TemplateDataElement> firstLevelDataElement = new ArrayList<>();
+            List<TableCreateVo> tableCreateVos = null;
+            TableCreateVo masterTableCreateVo = null;
+            int i = 0;
+            for (TemplateDataElement vo : templateDataElements) {
+                logger.info("循环1：" + i + ":" + vo.getDataElementName());
+                if (StringUtils.isEmptyParam(vo.getParentDataId())) {
+//                firstLevelDataElement.add(vo);
+                    String dataElementType = vo.getDataElementType();
+                    if (dataElementType.contains("table")) {
+                        tableCreateVos = createNextTable(vo, templateDataElements, templateId, "master");
+                        vos.addAll(tableCreateVos);
+                    } else {
+                        firstLevelDataElement.add(vo);
+                    }
+
+                }
+                i++;
+            }
+            masterTableCreateVo = createMasterTAble(firstLevelDataElement, templateId);
+            vos.add(masterTableCreateVo);
+
+            connection = dataSource.getConnection();
+            for (TableCreateVo vo : vos) {
+                String insertSql = vo.getInsertSql();
 //            Statement statement = dataSource.getConnection().createStatement();
 //            statement.execute(insertSql);
-            String[] sqls = insertSql.split(";");
-            for (String sql : sqls) {
-                logger.info("执行sql：" + sql);
-                PreparedStatement preparedStatement = connection.prepareStatement(sql);
-                preparedStatement.execute();
-                preparedStatement.close();
+                String[] sqls = insertSql.split(";");
+                for (String sql : sqls) {
+                    logger.info("执行sql：" + sql);
+                    PreparedStatement preparedStatement = connection.prepareStatement(sql);
+                    preparedStatement.execute();
+                    preparedStatement.close();
+                }
+
+                TableConfig merge = this.merge(vo.getTableConfig());
+                tableConfigs.add(merge);
+                for (TableColConfig config : vo.getTableColConfigList()) {
+                    config.setTableId(merge.getId());
+                    this.merge(config);
+                }
             }
-
-
-            TableConfig merge = this.merge(vo.getTableConfig());
-            tableConfigs.add(merge);
-            for (TableColConfig config : vo.getTableColConfigList()) {
-                config.setTableId(merge.getId());
-                this.merge(config);
+        }catch (Exception e){
+            e.printStackTrace();
+            throw e;
+        }finally {
+            if(connection!=null){
+                connection.close();
             }
         }
-        connection.close();
         return tableConfigs;
     }
 
@@ -222,7 +226,7 @@ public class TableFacade extends BaseFacade {
                     tableCol.setColDescription(elementVo.getDataElementName());
                     tableCol.setDataVersion(0);
                     tableColConfigs.add(tableCol);
-                    sql += "" + elementVo.getDataElementCode() + " varchar(1600) comment '" + elementVo.getDataElementName() + "',";
+                    sql += "" + elementVo.getDataElementCode() + " varchar(1700) comment '" + elementVo.getDataElementName() + "',";
                 }
             }
         }
@@ -260,8 +264,12 @@ public class TableFacade extends BaseFacade {
         String tableName = tableConfig.getTableName();
         String sqlCount = "select count(*) ";
         String sql = "select ";
-        for (TableColConfig config : resultList) {
-            sql += config.getColCode() + ",";
+        if(resultList.isEmpty()){
+            throw new Exception("表字段为空，获取数据失败");
+        }else{
+            for (TableColConfig config : resultList) {
+                sql += config.getColCode() + ",";
+            }
         }
         sql = sql.substring(0, sql.length() - 1);
         sql += " from " + tableConfig.getTableName();
@@ -277,16 +285,24 @@ public class TableFacade extends BaseFacade {
         sql += " limit " + limit_start + ","+limit_end;
         logger.info(sql);
 
-        List<Object[]> datas = this.createNativeQuery(sql).getResultList();
+        List<Object[]> datas = null;
+        if(resultList.size() < 2){
+            datas = new ArrayList<>();
+            List list = this.createNativeQuery(sql).getResultList();
+            for(Object k:list){
+                Object[] obj = new Object[]{k};
+                datas.add(obj);
+            };
+        }else{
+            datas = this.createNativeQuery(sql).getResultList();
+        }
         BigInteger totalNum = (BigInteger)this.createNativeQuery(sqlCount).getResultList().get(0);
         TableColVO tableColVO = new TableColVO();
         tableColVO.setDatas(datas);
         tableColVO.setTotalNum(totalNum.longValue());
         tableColVO.setTableColConfigs(resultList);
-
         return tableColVO;
     }
-
 
     /***
      * 创建用户临时表
@@ -544,6 +560,7 @@ public class TableFacade extends BaseFacade {
             String masterTable = getMasterTableByTemplateId(templateId);
             Map<String, List<String>> tableColMap = getAllTableColInfo(templateId);
             initInserSql(result, masterTable, inserSqlMap, tableColMap);
+            System.out.println("to save db");
             saveToDb(inserSqlMap);
         } catch (Exception e) {
             e.printStackTrace();
@@ -655,6 +672,9 @@ public class TableFacade extends BaseFacade {
                         } else {
                             String valueStr = document.get(ckey) == null ? "" : document.get(ckey).toString();
                             valueStr = valueStr.replace("'", "");
+                            if(valueStr.contains(TemplateConst.UPLOAD_FILE_KEY_WORD)){
+                                valueStr = (String)(((List<Document>)document.get(ckey)).get(0).get("name"));
+                            }
                             valueSqlBuf.append("'").append(valueStr).append("',");
                         }
                     } else {
@@ -663,6 +683,9 @@ public class TableFacade extends BaseFacade {
                         } else {
                             String valueStr = document.get(ckey) == null ? "" : document.get(ckey).toString();
                             valueStr = valueStr.replace("'", "");
+                            if(valueStr.contains(TemplateConst.UPLOAD_FILE_KEY_WORD)){
+                                valueStr = (String)(((List<Document>)document.get(ckey)).get(0).get("name"));
+                            }
                             valueSqlBuf.append("'").append(valueStr).append("'),");
                         }
                     }
@@ -673,8 +696,8 @@ public class TableFacade extends BaseFacade {
                         System.out.println(key);
                     } else if (value instanceof List) {
                         if (!value.toString().contains("dch")) {
+                            System.out.println("value=="+value);
                         } else {
-                            //System.out.println(key);
                             dealListToMap((List) value, key, "", "", document.get("masterId").toString(), inserSqlMap, tableColMap, sqlBefMap);
                         }
                     }else if (value instanceof Document) {
@@ -683,7 +706,7 @@ public class TableFacade extends BaseFacade {
                         String one_key = doc.keySet().iterator().next();
                         Object one_value = doc.get(one_key);
                         Document indoc = new Document();
-                        if(!one_value.toString().contains("dch") && "dch_1540366812205".equals(key)){
+                        if(!one_value.toString().contains("dch")){
                             doc.forEach((k,v) -> {indoc.put(k,v);});
                             dlist.add(indoc);
                             dealListToMap(dlist, key, "", "", document.get("masterId").toString(), inserSqlMap, tableColMap, sqlBefMap);
@@ -739,6 +762,9 @@ public class TableFacade extends BaseFacade {
                             valueSqlBuf.append("'").append(parentId).append("',");
                         } else {
                             String valueStr = document.get(ckey) == null ? "" : document.get(ckey).toString();
+                            if(valueStr.length()>1600){
+                                valueStr = valueStr.substring(0,1600);
+                            }
                             valueStr = valueStr.replace("'", "");
                             valueSqlBuf.append("'").append(valueStr).append("',");
                         }
@@ -935,8 +961,11 @@ public class TableFacade extends BaseFacade {
                 List<FieldChange> fieldChangeList = reportQueryParam.getTableResults();
                 fieldChangeList.stream().forEach(x -> sqlBuffer.append(x.getTitle()).append(","));
                 String sqlStr = sqlBuffer.toString().substring(0,sqlBuffer.length()-1);
-                sqlStr += new StringBuffer(" FROM ").append(table_name).
-                          append(" where data_version = (select max(data_version) from ").append(table_name).append(")").toString();
+                StringBuffer dvBuffer = new StringBuffer(" FROM ").append(table_name);
+                if(!table_name.startsWith("data_master")){
+                    dvBuffer.append(" where data_version = (select max(data_version) from ").append(table_name).append(")");
+                }
+                sqlStr += dvBuffer.toString();
                 int perPage = reportData ==null?20:reportData.getPerPage();
                 int currentPage = reportData ==null?1:reportData.getCurrentPage();
                 long limit_start = (currentPage -1) * perPage;
@@ -949,28 +978,58 @@ public class TableFacade extends BaseFacade {
                 return reportList;
             }
             if("2".equals(reportQueryParam.getIfDuplicate())){//不统计的话则查询x轴y轴
+                String isDouble = "2";
                 if(!StringUtils.isEmptyParam(x_field) && !StringUtils.isEmptyParam(y_field)){
                     sqlBuffer.append(x_field).append(",").append(y_field);
                 }else if(!StringUtils.isEmptyParam(x_field)){
                     sqlBuffer.append(x_field);
+                    isDouble = "1";
                 }else{
                     sqlBuffer.append(y_field);
+                    isDouble = "0";
                 }
-                sqlBuffer.append(" from ").append(table_name).append(" where data_version = (select max(data_version) from ")
-                         .append(table_name).append(")");
-                int perPage = reportData ==null?20:reportData.getPerPage();
-                int currentPage = reportData ==null?1:reportData.getCurrentPage();
-                long limit_start = (currentPage -1) * perPage;
-                long limit_end = perPage;
-                sqlBuffer.append(" limit ").append(limit_start).append(",").append(limit_end);
+                sqlBuffer.append(" from ").append(table_name);
+                if(!table_name.startsWith("data_master")){
+                    sqlBuffer.append(" where data_version = (select max(data_version) from ")
+                            .append(table_name).append(")");
+                }
+//                int perPage = reportData ==null?20:reportData.getPerPage();
+//                int currentPage = reportData ==null?1:reportData.getCurrentPage();
+//                long limit_start = (currentPage -1) * perPage;
+//                long limit_end = perPage;
+//                sqlBuffer.append(" limit ").append(limit_start).append(",").append(limit_end);
+                final String isDb = isDouble;
                 List resultList = createNativeQuery(sqlBuffer.toString()).getResultList();
-                return resultList;
+                resultList.stream().forEach(rt->{
+                    Object[] innerParams = (Object[])rt;
+                    if(isDb.equals("2")){
+                        String xvalue = innerParams[0].toString();
+                        String yvalue = innerParams[1].toString();
+                        UnitFunds unitFunds = new UnitFunds();
+                        unitFunds.setUnit(xvalue);
+                        unitFunds.setFunds(Double.valueOf(yvalue));
+                        reportList.add((T)unitFunds);
+                    }else if(isDb.equals("1")){
+                        String xvalue = innerParams[0].toString();
+                        UnitFunds unitFunds = new UnitFunds();
+                        unitFunds.setUnit(xvalue);
+                        reportList.add((T)unitFunds);
+                    }else if(isDb.equals("0")){
+                        String yvalue = innerParams[0].toString();
+                        UnitFunds unitFunds = new UnitFunds();
+                        unitFunds.setFunds(Double.valueOf(yvalue));
+                        reportList.add((T)unitFunds);
+                    }
+                });
+                return reportList;
             }
             //如果所选的字段一致，则为统计计数
             if(x_field.equals(y_field) || StringUtils.isEmptyParam(y_field)){
-                sqlBuffer.append(" count(*),").append(x_field).append(" FROM ").append(table_name)
-                        .append(" WHERE data_version = (select max(data_version) from ").append(table_name)
-                        .append(")  GROUP BY ").append(x_field);
+                sqlBuffer.append(" count(*),").append(x_field).append(" FROM ").append(table_name);
+                if(!table_name.startsWith("data_master")){
+                    sqlBuffer.append(" WHERE data_version = (select max(data_version) from ").append(table_name).append(")");
+                }
+                sqlBuffer.append(" GROUP BY ").append(x_field);
                 if("0".equals(sort)){//降序
                     sqlBuffer.append(" ORDER BY ").append(x_field).append(" DESC");
                 }else{
@@ -993,8 +1052,10 @@ public class TableFacade extends BaseFacade {
                 }else{
                     sqlBuffer.append("1").append(",");
                 }
-                sqlBuffer.append(y_field).append(" FROM ").append(table_name).append(" where data_version = (select max(data_version) from ")
-                                                           .append(table_name).append(")");
+                sqlBuffer.append(y_field).append(" FROM ").append(table_name);
+                if(!table_name.startsWith("data_master")){
+                    sqlBuffer.append(" where data_version = (select max(data_version) from ").append(table_name).append(")");
+                }
                 List resultList = createNativeQuery(sqlBuffer.toString()).getResultList();
                 Map<String,List<UnitFunds>> resultMap = new HashMap<>();
                 for(int i=0;i<resultList.size();i++){
@@ -1474,5 +1535,31 @@ public class TableFacade extends BaseFacade {
             info.add("false");
         }
         return info;
+    }
+
+    public List<String> getTemplateResultMasterText(String templateId) {
+        Query query = new Query();
+        query.addCriteria(Criteria.where("templateId").is(templateId));
+        try {
+            List<Document> result = mongoTemplate.find(query, Document.class, "templateFilling");
+            String jsonStr = JSONUtil.objectToJson(result.get(0)).toString();
+            String sql = "select data_element_code,data_element_name from template_data_element where " +
+                    " page_id in (select id from template_page where status<>'-1' and template_id = '"+templateId+"') order by data_element_code desc";
+            List list = createNativeQuery(sql).getResultList();
+            Map<String,String> codeMap = new HashMap<>();
+            list.stream().forEach(cd->{
+                Object[] params = (Object[])cd;
+                String code = params[0].toString();
+                code = code.replace("$","@");
+                codeMap.put(code,params[1].toString());
+            });
+            for(String key:codeMap.keySet()){
+                jsonStr = jsonStr.replace(key,codeMap.get(key));
+            }
+            System.out.println(jsonStr);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return null;
     }
 }

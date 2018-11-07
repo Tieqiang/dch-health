@@ -537,10 +537,17 @@ public class TemplateResultFacade extends BaseFacade {
     public Boolean judgeFieldValueExist(String templateResult,String field,String fieldValue){
         Boolean isExist = false;
         int index = templateResult.indexOf(field);
-        String subResult = templateResult.substring(index + field.length());
-        int index_dch = subResult.indexOf("dch_");
-        String result = index_dch<1?subResult:subResult.substring(0,index_dch);
-        if(result.contains(fieldValue)){
+//        String subResult = templateResult.substring(index + field.length());
+//        int index_dch = subResult.indexOf("dch_");
+//        String result = index_dch<1?subResult:subResult.substring(0,index_dch);
+        String replaceResult = templateResult.replace(field,"");
+        String subReplaceResult = replaceResult.substring(index+1);
+        int index_real = subReplaceResult.indexOf("dch_");
+        String real_result = index_real<1?subReplaceResult:subReplaceResult.substring(0,index_real);
+        if(real_result.contains("$")){
+            real_result = real_result.replaceAll(".{1,3}^?[$][\\d]$?","");
+        }
+        if(real_result.contains(fieldValue)){
             isExist = true;
         }
         return isExist;
