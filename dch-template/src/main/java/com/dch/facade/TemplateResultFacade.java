@@ -460,43 +460,34 @@ public class TemplateResultFacade extends BaseFacade {
     public <T> List<T> getMasterIdsByQueryMongo(String templateId,String field,String fieldValue,String status,MongoTemplate mongoTemplate){
         List<T> returnList = new ArrayList<>();
         try{
+            if(StringUtils.isEmptyParam(field) && !StringUtils.isEmptyParam(fieldValue)){//全文检索
+               List templateList = getTemplateResultList(templateId,fieldValue,status);
+                return getResultListByJudege(templateList,field,fieldValue,true);
+            }
             Query query = new Query();
             query.addCriteria(Criteria.where("templateId").is(templateId));
             Pattern pattern=Pattern.compile("^.*"+fieldValue+".*$", Pattern.CASE_INSENSITIVE);
             Boolean isNumber = judgeFieldIsNumber(field,fieldValue);
-            List<Document> resultList = null;
-            List templateList = null;
             if(!"2".equals(status)){//查询录入的数据
-                isNumber = false;
-                templateList = getTemplateResultList(templateId,field,status);
-            }else{
-                if(!isNumber){
-                    query.addCriteria(Criteria.where(field).regex(pattern));
-                }
-                query.fields().include("masterId");
-                query.fields().include(field);
-                resultList = mongoTemplate.find(query,Document.class,TemplateResultService.tempFillName);
+                List templateList = getTemplateResultList(templateId,field,status);
+                return getResultListByJudege(templateList,field,fieldValue,false);
             }
-            if(!"2".equals(status)) {//查询录入的数据
-                templateList.stream().forEach(tl -> {
-                    Object[] innerParams = (Object[])tl;
-                    String masterId = innerParams[0].toString();
-                    String templateResult = innerParams[1].toString();
-                    Boolean isExist = judgeFieldValueExist(templateResult,field,fieldValue);
-                    if(isExist){returnList.add((T)masterId);}
-                });
-            }else{
-                for (Document result:resultList){
-                    String masterId = result.get("masterId")+"";
-                    if(isNumber){
-                        String mvalue = result.get(field) + "";
-                        if(mvalue.contains(fieldValue) && !returnList.contains(masterId)){
-                            returnList.add((T)masterId);
-                        }
-                    }else{
-                        if(!returnList.contains(masterId)){
-                            returnList.add((T)masterId);
-                        }
+            if(!isNumber){
+                query.addCriteria(Criteria.where(field).regex(pattern));
+            }
+            query.fields().include("masterId");
+            query.fields().include(field);
+            List<Document> resultList = mongoTemplate.find(query,Document.class,TemplateResultService.tempFillName);
+            for (Document result:resultList){
+                String masterId = result.get("masterId")+"";
+                if(isNumber){
+                    String mvalue = result.get(field) + "";
+                    if(mvalue.contains(fieldValue) && !returnList.contains(masterId)){
+                        returnList.add((T)masterId);
+                    }
+                }else{
+                    if(!returnList.contains(masterId)){
+                        returnList.add((T)masterId);
                     }
                 }
             }
@@ -521,6 +512,8 @@ public class TemplateResultFacade extends BaseFacade {
                 "template_result_master m where t.master_id = m.id");
         if(!"2".equals(status)){
             sb.append(" and m.status<>'-1' ");
+        }else{
+            sb.append(" and m.status ='2' ");
         }
         sb.append("and t.template_id = '").append(templateId).append("' and t.template_result like '%").append(field).append("%'");
         List list = createNativeQuery(sb.toString()).getResultList();
@@ -534,12 +527,15 @@ public class TemplateResultFacade extends BaseFacade {
      * @param fieldValue
      * @return
      */
-    public Boolean judgeFieldValueExist(String templateResult,String field,String fieldValue){
+    public Boolean judgeFieldValueExist(String templateResult,String field,String fieldValue,Boolean matchAll){
         Boolean isExist = false;
+        if(matchAll){//全文匹配
+            String templateNewResult = templateResult.replaceAll(".{1,3}^?dch_[\\d]*.[\\d]$?","");
+            if(templateNewResult.contains(fieldValue)){
+                return true;
+            }
+        }
         int index = templateResult.indexOf(field);
-//        String subResult = templateResult.substring(index + field.length());
-//        int index_dch = subResult.indexOf("dch_");
-//        String result = index_dch<1?subResult:subResult.substring(0,index_dch);
         String replaceResult = templateResult.replace(field,"");
         String subReplaceResult = replaceResult.substring(index+1);
         int index_real = subReplaceResult.indexOf("dch_");
@@ -551,5 +547,19 @@ public class TemplateResultFacade extends BaseFacade {
             isExist = true;
         }
         return isExist;
+    }
+
+    public <T> List<T> getResultListByJudege(List templateList,String field,String fieldValue,Boolean matchAll){
+        List<T> returnList = new ArrayList<>();
+        if(templateList!=null && !templateList.isEmpty()){
+            templateList.stream().forEach(tl -> {
+                Object[] innerParams = (Object[])tl;
+                String masterId = innerParams[0].toString();
+                String templateResult = innerParams[1].toString();
+                Boolean isExist = judgeFieldValueExist(templateResult,field,fieldValue,matchAll);
+                if(isExist){returnList.add((T)masterId);}
+            });
+        }
+        return returnList;
     }
 }
