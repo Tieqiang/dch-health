@@ -79,26 +79,12 @@ public class RoleFacade extends BaseFacade {
      */
     @Transactional
     public void setRoleUsers(String roleId,List<User> users) throws Exception {
-        //String delHql = "delete from UserVsRole where roleId='"+roleId+"'";
-        //baseFacade.getEntityManager().createQuery(delHql).executeUpdate();
-        //skq begin
-        List<String> userIds = new ArrayList<String>();
+        String delHql = "delete from UserVsRole where roleId='"+roleId+"'";
+        this.entityManager.createQuery(delHql).executeUpdate();
         for(User user:users){
-            userIds.add(user.getId());
-        }
-        String queryHql = "select uv.userId from UserVsRole uv  where  uv.roleId='"+roleId+"'";
-        List<String> dbUserIds  = createQuery(String.class,queryHql,new ArrayList<Object>()).getResultList();
-        for(String userId:dbUserIds){
-            userIds.remove(userId);
-        }
-        //skq end
-        if(roleId==null||"".equals(roleId)){
-            throw new Exception("传递的角色信息不能为空");
-        }
-        for(String userId:userIds){
             UserVsRole userVsRole = new UserVsRole();
             userVsRole.setRoleId(roleId);
-            userVsRole.setUserId(userId);
+            userVsRole.setUserId(user.getId());
             merge(userVsRole);
         }
     }
