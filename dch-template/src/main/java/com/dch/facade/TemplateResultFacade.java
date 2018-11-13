@@ -133,7 +133,7 @@ public class TemplateResultFacade extends BaseFacade {
 
         String hqlCount="select count(*) from TemplateResultMaster m where m.templateId='"+templateId+"'";
         //如果不为空 则查询mongo中的数据先进行过滤
-        if(!StringUtils.isEmptyParam(field) && !StringUtils.isEmptyParam(fieldValue)){
+        if(!StringUtils.isEmptyParam(fieldValue)){
             List<String> masterIdList = getMasterIdsByQueryMongo(templateId,field,fieldValue,status,mongoTemplate);
             if(!masterIdList.isEmpty()){
                 String masterIds = StringUtils.getQueryIdsString(masterIdList);
@@ -462,7 +462,10 @@ public class TemplateResultFacade extends BaseFacade {
         try{
             if(StringUtils.isEmptyParam(field) && !StringUtils.isEmptyParam(fieldValue)){//全文检索
                List templateList = getTemplateResultList(templateId,fieldValue,status);
-                return getResultListByJudege(templateList,field,fieldValue,true);
+                returnList = getResultListByJudege(templateList,field,fieldValue,true);
+                List<T> userList = getTemplateListByUser(fieldValue);
+                returnList.addAll(userList);
+               return returnList;
             }
             Query query = new Query();
             query.addCriteria(Criteria.where("templateId").is(templateId));
@@ -560,6 +563,17 @@ public class TemplateResultFacade extends BaseFacade {
                 if(isExist){returnList.add((T)masterId);}
             });
         }
+        return returnList;
+    }
+
+    public <T> List<T> getTemplateListByUser(String userName){
+        List<T> returnList = new ArrayList<>();
+        StringBuffer sb = new StringBuffer("select m.id from " +
+                "template_result_master m,user u where m.create_by = u.id and u.user_name like '%").append(userName).append("%'");
+        List<String> resultList = createNativeQuery(sb.toString()).getResultList();
+        resultList.parallelStream().forEach(o->{
+            returnList.add((T)o);
+        });
         return returnList;
     }
 }

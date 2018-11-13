@@ -23,11 +23,10 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Timestamp;
+import java.sql.*;
 import java.util.*;
+import java.util.Date;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -60,8 +59,8 @@ public class TableFacade extends BaseFacade {
         Connection connection = null;
         try {
             List<TemplateDataElement> templateDataElements = templateDataElementFacade.getTemplateDataElements(templateId);
-            //删除之前的表
-            String hql = "from TableConfig as t where t.formId='" + templateId + "'";
+            //删除之前的表(原始表)
+            String hql = "from TableConfig as t where t.formId='" + templateId + "' and t.createFrom = 'system'";
             List<TableConfig> configs = createQuery(TableConfig.class, hql, new ArrayList<Object>()).getResultList();
             List<String> tableIds = new ArrayList<>();
             for (TableConfig tableConfig : configs) {
@@ -74,12 +73,12 @@ public class TableFacade extends BaseFacade {
                 String delHql = "delete TableColConfig where tableId in (" + tableIdIns + ")";
                 excHql(delHql);
             }
-            //删除用户自定义表
-            String upHql = "update ReportGroup set status = '-1' where parentId is not null and templateId = '"+templateId+"'";
-            excHql(upHql);
-            //删除用户自定义统计分析表
-            String temHql = "update TemplateQueryRule set status = '-1' where parentId is not null and templateId = '"+templateId+"'";
-            excHql(temHql);
+//            //删除用户自定义表
+//            String upHql = "update ReportGroup set status = '-1' where parentId is not null and templateId = '"+templateId+"'";
+//            excHql(upHql);
+//            //删除用户自定义统计分析表
+//            String temHql = "update TemplateQueryRule set status = '-1' where parentId is not null and templateId = '"+templateId+"'";
+//            excHql(temHql);
 
             //创建表结构
             List<TableCreateVo> vos = new ArrayList<>();
@@ -108,8 +107,6 @@ public class TableFacade extends BaseFacade {
             connection = dataSource.getConnection();
             for (TableCreateVo vo : vos) {
                 String insertSql = vo.getInsertSql();
-//            Statement statement = dataSource.getConnection().createStatement();
-//            statement.execute(insertSql);
                 String[] sqls = insertSql.split(";");
                 for (String sql : sqls) {
                     logger.info("执行sql：" + sql);
@@ -117,7 +114,6 @@ public class TableFacade extends BaseFacade {
                     preparedStatement.execute();
                     preparedStatement.close();
                 }
-
                 TableConfig merge = this.merge(vo.getTableConfig());
                 tableConfigs.add(merge);
                 for (TableColConfig config : vo.getTableColConfigList()) {
@@ -344,7 +340,7 @@ public class TableFacade extends BaseFacade {
             logger.info("保存自定义字段成功");
             //将初始化用户自定义表数据
             List queryList = createNativeQuery(executeSQL).getResultList();
-            saveResultToDb(tableName,0, executeSQL, queryList);
+            saveResultToDb(tableName,0, executeSQL, queryList,connection);
             //添加用户报表到自定义的报表分组下2018-10-19
             ReportGroup reportGroup = new ReportGroup();
             reportGroup.setParentId(createTableVO.getParentId());
@@ -551,7 +547,8 @@ public class TableFacade extends BaseFacade {
      * @param templateId
      * @return
      */
-    public String fetchMongoToTable(String templateId) {
+    @Transactional
+    public String fetchMongoToTable(String templateId) throws Exception{
         Query query = new Query();
         query.addCriteria(Criteria.where("templateId").is(templateId));
         try {
@@ -560,10 +557,12 @@ public class TableFacade extends BaseFacade {
             String masterTable = getMasterTableByTemplateId(templateId);
             Map<String, List<String>> tableColMap = getAllTableColInfo(templateId);
             initInserSql(result, masterTable, inserSqlMap, tableColMap);
-            System.out.println("to save db");
             saveToDb(inserSqlMap);
+            //初始化用户自定义的表
+            initCustomerDefineTables(templateId);
         } catch (Exception e) {
             e.printStackTrace();
+            throw e;
         }
         return "SUCESS";
     }
@@ -842,6 +841,7 @@ public class TableFacade extends BaseFacade {
      * @return
      */
     public TableColVO fetchTableFromMongo(String tableId) throws Exception {
+        Connection connection = dataSource.getConnection();
         String sql = "select table_name,form_id,execute_sql from table_config where id = '" + tableId + "'";
         List resultList = createNativeQuery(sql).getResultList();
         if (resultList != null && !resultList.isEmpty()) {
@@ -850,14 +850,13 @@ public class TableFacade extends BaseFacade {
             String execute_sql = innerParams[2].toString();
             List queryList = createNativeQuery(execute_sql).getResultList();
             Integer version = getTableVersion(tableName);
-            saveResultToDb(tableName,version, execute_sql, queryList);
+            saveResultToDb(tableName,version, execute_sql, queryList,connection);
         }
         return getTableColVO(tableId, 20, 1);
     }
 
-    public void saveResultToDb(String tableName,Integer dataVersion, String sql, List queryList){
+    public void saveResultToDb(String tableName,Integer dataVersion, String sql, List queryList,Connection connection){
         PreparedStatement statement = null;
-        Connection connection = null;
         try {
             if(queryList==null || queryList.isEmpty()){
                 return;
@@ -884,7 +883,6 @@ public class TableFacade extends BaseFacade {
             }
             String valueSqlStr = valueSqlBuf.toString();
             valueSqlStr = valueSqlStr.substring(0, valueSqlStr.length() - 1);
-            connection = dataSource.getConnection();
             statement = connection.prepareStatement("");
             statement.addBatch(valueSqlStr);
             // 执行操作
@@ -895,13 +893,6 @@ public class TableFacade extends BaseFacade {
             if (statement != null) {
                 try {
                     statement.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
-            if(connection!=null){
-                try {
-                    connection.close();
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
@@ -980,7 +971,11 @@ public class TableFacade extends BaseFacade {
             if("2".equals(reportQueryParam.getIfDuplicate())){//不统计的话则查询x轴y轴
                 String isDouble = "2";
                 if(!StringUtils.isEmptyParam(x_field) && !StringUtils.isEmptyParam(y_field)){
-                    sqlBuffer.append(x_field).append(",").append(y_field);
+                    if(x_field.equals(y_field)){
+                        sqlBuffer.append(x_field).append(",").append(y_field).append(" as ").append(y_field).append("_");
+                    }else{
+                        sqlBuffer.append(x_field).append(",").append(y_field);
+                    }
                 }else if(!StringUtils.isEmptyParam(x_field)){
                     sqlBuffer.append(x_field);
                     isDouble = "1";
@@ -993,11 +988,6 @@ public class TableFacade extends BaseFacade {
                     sqlBuffer.append(" where data_version = (select max(data_version) from ")
                             .append(table_name).append(")");
                 }
-//                int perPage = reportData ==null?20:reportData.getPerPage();
-//                int currentPage = reportData ==null?1:reportData.getCurrentPage();
-//                long limit_start = (currentPage -1) * perPage;
-//                long limit_end = perPage;
-//                sqlBuffer.append(" limit ").append(limit_start).append(",").append(limit_end);
                 final String isDb = isDouble;
                 List resultList = createNativeQuery(sqlBuffer.toString()).getResultList();
                 resultList.stream().forEach(rt->{
@@ -1394,9 +1384,11 @@ public class TableFacade extends BaseFacade {
      * @return
      */
     @Transactional
-    public TableUponFieldVo cleanDataByTableField(TableUponFieldVo tableUponFieldVo) {
+    public TableUponFieldVo cleanDataByTableField(TableUponFieldVo tableUponFieldVo) throws Exception{
+        Connection connection = null;
         try {
             //后续优化
+            connection = dataSource.getConnection();
             String tableName = getTableNameById(tableUponFieldVo.getTableId());
             String templateId = tableUponFieldVo.getTemplateId();
             TableUpon tableUponDb = getTableUponDb(tableName,templateId);
@@ -1432,7 +1424,7 @@ public class TableFacade extends BaseFacade {
                         }
                     });
                 });
-                saveResultToDb(tableName,dataVersion+1, "", queryList);
+                saveResultToDb(tableName,dataVersion+1, "", queryList,connection);
                 //保存 清洗记录
                 TableUpon tableUpon = tableUponDb==null?(new TableUpon()):tableUponDb;
                 tableUpon.setTableName(tableName);
@@ -1477,6 +1469,14 @@ public class TableFacade extends BaseFacade {
         }catch (Exception e){
             e.printStackTrace();
             throw e;
+        }finally {
+            if(connection!=null){
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
         }
         return tableUponFieldVo;
     }
@@ -1561,5 +1561,165 @@ public class TableFacade extends BaseFacade {
             e.printStackTrace();
         }
         return null;
+    }
+
+    /**
+     * 初始化用户自定义的表
+     * @param templateId
+     */
+    public void initCustomerDefineTables(String templateId) throws Exception{
+        Connection connection = dataSource.getConnection();
+        try {
+            connection.setAutoCommit(false);
+            StringBuffer sb = new StringBuffer("select create_by,table_name,execute_sql from table_config where create_from = 'user'");
+            sb.append("and create_by is not null and form_id = '").append(templateId).append("' order by create_by desc, create_date asc");
+            List list = createNativeQuery(sb.toString()).getResultList();
+            Map<String,List> tableList = new HashMap<>();
+            Map<String,TreeMap<String,String>> tableMap = new HashMap<>();
+            list.parallelStream().forEach(s->{
+                Object[] params = (Object[])s;
+                String user = params[0].toString();
+                if(tableMap.containsKey(user)){
+                    tableMap.get(user).put(params[1].toString(),params[2].toString());
+                }else{
+                    TreeMap<String,String> sqlMap = new TreeMap();
+                    sqlMap.put(params[1].toString(),params[2].toString());
+                    tableMap.put(user,sqlMap);
+                }
+            });
+            PreparedStatement ps = connection.prepareStatement("");
+            tableMap.forEach((k,v)-> v.forEach((ik,iv)->{
+                String delSql = "delete FROM " + ik;
+                try {
+                    ps.execute(delSql);
+                    ResultSet resultSet = ps.executeQuery(iv);
+                    List queryList = getConnectionQueryResult(resultSet,iv);
+                    saveResultToDb(ik,0, iv, queryList,connection);
+                    tableList.put(ik,queryList);
+                } catch (SQLException e) {
+                    new RuntimeException(e);
+                }
+            }));
+            Map<String,Integer> tableVersion = new HashMap<>();
+            StringBuffer cusBuf = new StringBuffer("select tu.table_name,ff.field_en,ff.original_value,ff.upon_value,tu.data_version from");
+            cusBuf.append(" table_upon tu,field_upon_info ff where ff.related_table_upon_id = tu.id and tu.templateId = '")
+                    .append(templateId).append("'").append(" ORDER BY tu.table_name asc, ff.data_version asc");
+            List dataList = createNativeQuery(cusBuf.toString()).getResultList();
+            Map<String,TreeMap<String,List<UponValue>>> dataMap = new HashMap<>();
+            dataList.parallelStream().forEach(r->{
+                Object[] params = (Object[])r;
+                String tableName = params[0].toString();
+                String field = params[1].toString();
+                String oirginaValue = params[2].toString();
+                String uponValue = params[3].toString();
+                String data_version = params[4].toString();
+                tableVersion.put(tableName,Integer.valueOf(data_version));
+                List normalList = getNormalList(oirginaValue);
+                if(dataMap.containsKey(tableName)){
+                    TreeMap<String,List<UponValue>> treeMap = dataMap.get(tableName);
+                    List<UponValue> newUponList = new ArrayList<>();
+                    if(treeMap.containsKey(field)){
+                        List<UponValue> uponList = treeMap.get(field);
+                        uponList.parallelStream().forEach(up->{
+                            if(normalList.contains(up.getUponValue())){
+                                up.setUponValue(uponValue);
+                            }else{
+                                UponValue upon = new UponValue();
+                                upon.setNormalList(normalList);
+                                upon.setUponValue(uponValue);
+                                newUponList.add(upon);
+                            }
+                        });
+                        uponList.addAll(newUponList);
+                    }else{
+                        UponValue upon = new UponValue();
+                        upon.setNormalList(normalList);
+                        upon.setUponValue(uponValue);
+                        newUponList.add(upon);
+                        treeMap.put(field,newUponList);
+                    }
+                }else{
+                    TreeMap<String,List<UponValue>> treeMap = new TreeMap<>();
+                    List<UponValue> uponValues = new ArrayList<>();
+                    UponValue upon = new UponValue();
+                    upon.setNormalList(normalList);
+                    upon.setUponValue(uponValue);
+                    uponValues.add(upon);
+                    treeMap.put(field,uponValues);
+                    dataMap.put(tableName,treeMap);
+                }
+            });
+            dataMap.forEach((tk,tv)->{
+                List<String> columnList = getTableColum("",tk);
+                Map<Integer,Map<String,Object>> fieldValueMapTo = new HashMap<>();
+                tv.forEach((ik,iv)->{
+                    int index = columnList.indexOf(ik);
+                    Map<String,Object> innerMap = new HashMap<>();
+                    iv.stream().forEach(uponValue -> {
+                        uponValue.getNormalList().stream().forEach(x ->{
+                            innerMap.put(x==null?"":x.toString(),uponValue.getUponValue());
+                        });
+                    });
+                    if(fieldValueMapTo.containsKey(index)){
+                        fieldValueMapTo.get(index).putAll(innerMap);
+                    }else {
+                        fieldValueMapTo.put(index, innerMap);
+                    }
+                });
+                StringBuffer sbSql = new StringBuffer("select ");
+                columnList.stream().forEach(f ->  sbSql.append(f).append(","));
+                List<Object> queryList = tableList.get(tk);
+                queryList.stream().parallel().forEach(Object ->{
+                    Object[] innerParams = (Object[])Object;
+                    fieldValueMapTo.forEach((k,v) -> {
+                        String normalValue = innerParams[k]==null?"":innerParams[k].toString();
+                        if(v.containsKey(normalValue)){
+                            innerParams[k] = v.get(normalValue);
+                        }
+                    });
+                });
+                saveResultToDb(tk,tableVersion.get(tk), "", queryList,connection);
+            });
+        }catch (Exception e){
+            if(connection!=null){
+                connection.rollback();
+            }
+            throw e;
+        }finally {
+            connection.commit();
+            if(connection!=null){
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    public List getNormalList(String listValue){
+        List list = null;
+        if(!StringUtils.isEmptyParam(listValue)){
+            listValue = listValue.replace("[","");
+            listValue = listValue.replace("]","");
+            listValue = listValue.replace(" ","");
+            String[] strs = listValue.split(",");
+            list = Arrays.asList(strs);
+        }
+        return list;
+    }
+
+    public List getConnectionQueryResult(ResultSet reset,String sql) throws SQLException{
+        List queryList = new ArrayList();
+        List<String> columnList = getTableColum(sql,"");
+        int size = columnList.size();
+        while(reset.next()){
+            Object[] params = new Object[size];
+            for(int i=1;i<=size;i++){
+                params[i-1] = reset.getString(i);
+            }
+            queryList.add(params);
+        }
+        return queryList;
     }
 }
