@@ -197,7 +197,7 @@ public class DataAnalysisService {
     }
 
     /**
-     * 根据tableId查询表所有的字段
+     * 根据tableName查询表所有的字段（如果系统初始化表结构会发生变化 改用tableName）
      * @param tableId
      * @return
      */

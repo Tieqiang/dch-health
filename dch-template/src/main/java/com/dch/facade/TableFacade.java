@@ -251,7 +251,8 @@ public class TableFacade extends BaseFacade {
     }
 
     public TableColVO getTableColVO(String tableId, int perPage, int currentPage) throws Exception{
-        String hql = "from TableColConfig where tableId='" + tableId + "'";
+        tableId = getTableIdByName(tableId);//由于id会随系统初始化发生变化，现传表名
+        String hql = "from TableColConfig where tableId='" + tableId + "' order by colCode asc";
         List<TableColConfig> resultList = createQuery(TableColConfig.class, hql, new ArrayList<Object>()).getResultList();
         if(resultList == null || resultList.isEmpty()){
             throw new Exception("表不存在，获取数据失败");
@@ -260,11 +261,15 @@ public class TableFacade extends BaseFacade {
         String tableName = tableConfig.getTableName();
         String sqlCount = "select count(*) ";
         String sql = "select ";
+        List<String> orderList = new ArrayList<>();
         if(resultList.isEmpty()){
             throw new Exception("表字段为空，获取数据失败");
         }else{
             for (TableColConfig config : resultList) {
                 sql += config.getColCode() + ",";
+                if(orderList.isEmpty() && config.getColCode().contains("dch")){
+                    orderList.add(config.getColCode());
+                }
             }
         }
         sql = sql.substring(0, sql.length() - 1);
@@ -273,6 +278,9 @@ public class TableFacade extends BaseFacade {
         if (sql.contains("data_version")) {//sql.contains("data_version")
             sql += " where data_version = (select max(data_version) from " + tableName + ")";
             sqlCount += " where data_version = (select max(data_version) from " + tableName + ")";
+        }
+        if(!orderList.isEmpty()){
+            sql += " order by " + orderList.get(0) + " asc ";
         }
         perPage = perPage < 1?20:perPage;
         currentPage = currentPage< 1?1:currentPage;
@@ -939,22 +947,22 @@ public class TableFacade extends BaseFacade {
         String y_field = reportQueryParam.getYaxis();
         String sort = reportQueryParam.getSortType();
         String type = reportQueryParam.getType();
-        String table_name = getTableNameById(tableName);
+        //String table_name = getTableNameById(tableName);
         StringBuffer sqlBuffer = new StringBuffer("SELECT ");
         try {
             //表格类型查询，查询字段表统并赋值，柱状图 也赋予字段值
             setReportFieldValue(reportQueryParam);
             //如果图像为表格类型则直接查询
             if("table".equals(reportQueryParam.getChart())){
-                if(StringUtils.isEmptyParam(table_name)){
+                if(StringUtils.isEmptyParam(tableName)){
                     return new ArrayList<>();
                 }
                 List<FieldChange> fieldChangeList = reportQueryParam.getTableResults();
                 fieldChangeList.stream().forEach(x -> sqlBuffer.append(x.getTitle()).append(","));
                 String sqlStr = sqlBuffer.toString().substring(0,sqlBuffer.length()-1);
-                StringBuffer dvBuffer = new StringBuffer(" FROM ").append(table_name);
-                if(!table_name.startsWith("data_master")){
-                    dvBuffer.append(" where data_version = (select max(data_version) from ").append(table_name).append(")");
+                StringBuffer dvBuffer = new StringBuffer(" FROM ").append(tableName);
+                if(!tableName.startsWith("data_master")){
+                    dvBuffer.append(" where data_version = (select max(data_version) from ").append(tableName).append(")");
                 }
                 sqlStr += dvBuffer.toString();
                 int perPage = reportData ==null?20:reportData.getPerPage();
@@ -965,59 +973,14 @@ public class TableFacade extends BaseFacade {
                 List resultList = createNativeQuery(sqlStr).getResultList();
                 return resultList;
             }
-            if(StringUtils.isEmptyParam(table_name)){
-                return reportList;
-            }
-            if("2".equals(reportQueryParam.getIfDuplicate())){//不统计的话则查询x轴y轴
-                String isDouble = "2";
-                if(!StringUtils.isEmptyParam(x_field) && !StringUtils.isEmptyParam(y_field)){
-                    if(x_field.equals(y_field)){
-                        sqlBuffer.append(x_field).append(",").append(y_field).append(" as ").append(y_field).append("_");
-                    }else{
-                        sqlBuffer.append(x_field).append(",").append(y_field);
-                    }
-                }else if(!StringUtils.isEmptyParam(x_field)){
-                    sqlBuffer.append(x_field);
-                    isDouble = "1";
-                }else{
-                    sqlBuffer.append(y_field);
-                    isDouble = "0";
-                }
-                sqlBuffer.append(" from ").append(table_name);
-                if(!table_name.startsWith("data_master")){
-                    sqlBuffer.append(" where data_version = (select max(data_version) from ")
-                            .append(table_name).append(")");
-                }
-                final String isDb = isDouble;
-                List resultList = createNativeQuery(sqlBuffer.toString()).getResultList();
-                resultList.stream().forEach(rt->{
-                    Object[] innerParams = (Object[])rt;
-                    if(isDb.equals("2")){
-                        String xvalue = innerParams[0].toString();
-                        String yvalue = innerParams[1].toString();
-                        UnitFunds unitFunds = new UnitFunds();
-                        unitFunds.setUnit(xvalue);
-                        unitFunds.setFunds(Double.valueOf(yvalue));
-                        reportList.add((T)unitFunds);
-                    }else if(isDb.equals("1")){
-                        String xvalue = innerParams[0].toString();
-                        UnitFunds unitFunds = new UnitFunds();
-                        unitFunds.setUnit(xvalue);
-                        reportList.add((T)unitFunds);
-                    }else if(isDb.equals("0")){
-                        String yvalue = innerParams[0].toString();
-                        UnitFunds unitFunds = new UnitFunds();
-                        unitFunds.setFunds(Double.valueOf(yvalue));
-                        reportList.add((T)unitFunds);
-                    }
-                });
+            if(StringUtils.isEmptyParam(tableName)){
                 return reportList;
             }
             //如果所选的字段一致，则为统计计数
             if(x_field.equals(y_field) || StringUtils.isEmptyParam(y_field)){
-                sqlBuffer.append(" count(*),").append(x_field).append(" FROM ").append(table_name);
-                if(!table_name.startsWith("data_master")){
-                    sqlBuffer.append(" WHERE data_version = (select max(data_version) from ").append(table_name).append(")");
+                sqlBuffer.append(" count(*),").append(x_field).append(" FROM ").append(tableName);
+                if(!tableName.startsWith("data_master")){
+                    sqlBuffer.append(" WHERE data_version = (select max(data_version) from ").append(tableName).append(")");
                 }
                 sqlBuffer.append(" GROUP BY ").append(x_field);
                 if("0".equals(sort)){//降序
@@ -1042,9 +1005,9 @@ public class TableFacade extends BaseFacade {
                 }else{
                     sqlBuffer.append("1").append(",");
                 }
-                sqlBuffer.append(y_field).append(" FROM ").append(table_name);
-                if(!table_name.startsWith("data_master")){
-                    sqlBuffer.append(" where data_version = (select max(data_version) from ").append(table_name).append(")");
+                sqlBuffer.append(y_field).append(" FROM ").append(tableName);
+                if(!tableName.startsWith("data_master")){
+                    sqlBuffer.append(" where data_version = (select max(data_version) from ").append(tableName).append(")");
                 }
                 List resultList = createNativeQuery(sqlBuffer.toString()).getResultList();
                 Map<String,List<UnitFunds>> resultMap = new HashMap<>();
@@ -1078,6 +1041,51 @@ public class TableFacade extends BaseFacade {
                     reportList.add((T)unitFunds);
                 }
             }
+            if("2".equals(reportQueryParam.getIfDuplicate())){//不统计的话则查询x轴y轴
+                String isDouble = "2";
+                if(!StringUtils.isEmptyParam(x_field) && !StringUtils.isEmptyParam(y_field)){
+                    if(x_field.equals(y_field)){
+                        sqlBuffer.append(x_field).append(",").append(y_field).append(" as ").append(y_field).append("_");
+                    }else{
+                        sqlBuffer.append(x_field).append(",").append(y_field);
+                    }
+                }else if(!StringUtils.isEmptyParam(x_field)){
+                    sqlBuffer.append(x_field);
+                    isDouble = "1";
+                }else{
+                    sqlBuffer.append(y_field);
+                    isDouble = "0";
+                }
+                sqlBuffer.append(" from ").append(tableName);
+                if(!tableName.startsWith("data_master")){
+                    sqlBuffer.append(" where data_version = (select max(data_version) from ")
+                            .append(tableName).append(")");
+                }
+                final String isDb = isDouble;
+                List resultList = createNativeQuery(sqlBuffer.toString()).getResultList();
+                resultList.stream().forEach(rt->{
+                    Object[] innerParams = (Object[])rt;
+                    if(isDb.equals("2")){
+                        String xvalue = innerParams[0].toString();
+                        String yvalue = innerParams[1].toString();
+                        UnitFunds unitFunds = new UnitFunds();
+                        unitFunds.setUnit(xvalue);
+                        unitFunds.setFunds(Double.valueOf(yvalue));
+                        reportList.add((T)unitFunds);
+                    }else if(isDb.equals("1")){
+                        String xvalue = innerParams[0].toString();
+                        UnitFunds unitFunds = new UnitFunds();
+                        unitFunds.setUnit(xvalue);
+                        reportList.add((T)unitFunds);
+                    }else if(isDb.equals("0")){
+                        String yvalue = innerParams[0].toString();
+                        UnitFunds unitFunds = new UnitFunds();
+                        unitFunds.setFunds(Double.valueOf(yvalue));
+                        reportList.add((T)unitFunds);
+                    }
+                });
+                return reportList;
+            }
         }catch (NumberFormatException e){
             throw new Exception("所选y轴字段非数字类型，无法进行统计");
         }catch (Exception e){
@@ -1091,6 +1099,13 @@ public class TableFacade extends BaseFacade {
         List<String> list = createNativeQuery(sql).getResultList();
         return list.isEmpty()?"":list.get(0);
     }
+
+    public String getTableIdByName(String tableName){
+        String sql = "select id from table_config where table_name = '"+tableName+"'";
+        List<String> list = createNativeQuery(sql).getResultList();
+        return list.isEmpty()?tableName:list.get(0);
+    }
+
     public Double getStatisticsValue(List<UnitFunds> unitFundsList,String type){
         Double result = 0D;
         if(unitFundsList!=null && !unitFundsList.isEmpty()){
@@ -1211,7 +1226,7 @@ public class TableFacade extends BaseFacade {
                 }
                 reportData.setResult(getReportStatistics(reportQueryParam,reportData));
                 if("table".equals(reportQueryParam.getChart())){
-                    String table_name = getTableNameById(reportQueryParam.getTableName());
+                    String table_name = reportQueryParam.getTableName();
                     BigInteger totalCount = getQueryResultFromTable(table_name);
                     reportData.setTotalCount(totalCount.longValue());
                     reportData.setCurrentPage(reportData.getCurrentPage());
@@ -1252,7 +1267,7 @@ public class TableFacade extends BaseFacade {
         }
         String colCodes = StringUtils.getQueryIdsString(fieldList);
         StringBuffer sb = new StringBuffer("SELECT ");
-        sb.append("COL_NAME,COL_CODE FROM table_col_config WHERE TABLE_ID = '").append(reportQueryParam.getTableName()).append("' AND COL_CODE IN (")
+        sb.append("f.COL_NAME,f.COL_CODE FROM table_col_config f,table_config t WHERE f.TABLE_ID = t.id and t.table_name = '").append(reportQueryParam.getTableName()).append("' AND f.COL_CODE IN (")
                 .append(colCodes).append(")");
         String query_sql = sb.toString();
         List list = createNativeQuery(query_sql).getResultList();
