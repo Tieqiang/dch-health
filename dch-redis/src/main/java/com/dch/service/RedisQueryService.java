@@ -50,7 +50,7 @@ public class RedisQueryService {
                 "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> " +
                 "SELECT DISTINCT ?subject  WHERE { ?subject ?predicate ?object . " +
                 "?subject rdf:type ?type FILTER (?type = <http://www.w3.org/2002/07/owl#NamedIndividual>) } ";
-        List<Map<String,Object>> list = jenaFaccade.getRdfQuerySetToMap(sparql);
+        List<Map<String,Object>> list = jenaFaccade.getRdfQuerySetToMap(sparql,JenaUtil.DEFAULT_DB);
         for(Map map:list){
             String name = map.get("subject")==null?"":map.get("subject").toString();
             name = JenaUtil.getNameByRdfId(name);
