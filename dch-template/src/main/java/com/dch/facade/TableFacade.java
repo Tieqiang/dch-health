@@ -6,6 +6,7 @@ import com.dch.facade.common.VO.ReturnInfo;
 import com.dch.util.*;
 import com.dch.vo.*;
 import com.dch.vo.OperationEnum;
+import com.google.common.collect.Maps;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 import org.aspectj.lang.annotation.DeclareWarning;
 import org.bson.Document;
@@ -136,7 +137,7 @@ public class TableFacade extends BaseFacade {
 
         TemplateMaster templateMaster = templateMasterFacade.getTemplateMaster(templateId);
         String templateName = templateMaster.getTemplateName();
-        String tableName = "data_master_" + PinYin2Abbreviation.cn2py(templateName);
+        String tableName = getMasterTableName(templateName);
         List<TableColConfig> tableColConfigs = new ArrayList<>();
         TableCreateVo tableCreateVo = new TableCreateVo();
         String createSql = "drop table if EXISTS   " + tableName + ";" +
@@ -230,7 +231,7 @@ public class TableFacade extends BaseFacade {
         sql = sql + "  PRIMARY KEY (id) ) ENGINE=InnoDB DEFAULT CHARSET=utf8 comment '" +
                 vo.getDataElementName() + "';";
 
-        logger.info("创年SQL：" + sql);
+        logger.info("创建SQL：" + sql);
         TableCreateVo tableCreateVo = new TableCreateVo();
         tableCreateVo = new TableCreateVo();
         tableCreateVo.setInsertSql(sql);
@@ -347,6 +348,7 @@ public class TableFacade extends BaseFacade {
             }
             logger.info("保存自定义字段成功");
             //将初始化用户自定义表数据
+            connection.prepareStatement(executeSQL).getResultSet();
             List queryList = createNativeQuery(executeSQL).getResultList();
             saveResultToDb(tableName,0, executeSQL, queryList,connection);
             //添加用户报表到自定义的报表分组下2018-10-19
@@ -359,6 +361,7 @@ public class TableFacade extends BaseFacade {
             merge(reportGroup);
         }catch (Exception e){
             e.printStackTrace();
+            throw new SQLException(e.getMessage());
         }finally {
             //关闭链接
             connection.close();
@@ -367,12 +370,30 @@ public class TableFacade extends BaseFacade {
     }
 
     /**
+     * 生成主表进行判断，如果存在的话 添加下标
+     * @param templateName
+     * @return
+     */
+    public String getMasterTableName(String templateName){
+       String tableName = "data_master_" + PinYin2Abbreviation.cn2py(templateName);
+       String sql = "select table_name from table_config where table_name = '"+tableName+"'";
+       List list = createNativeQuery(sql).getResultList();
+       if(list!=null && !list.isEmpty()){
+           sql = "select nextval('s_master_count') from dual";
+           List clist = createNativeQuery(sql).getResultList();
+           String mindex = clist.get(0).toString();
+           tableName = tableName + "_" + mindex;
+       }
+       return tableName;
+    }
+
+    /**
      * 查询表是否存在
      * @param tableName
      * @return
      */
     public List<String> queryTableExist(String tableName){
-        String sql = "select table_name from table_config where table_desc = '"+tableName+"'";
+        String sql = "select table_name from table_config where table_name like '"+tableName+"%' ";
         List list = createNativeQuery(sql).getResultList();
         return list;
     }
@@ -383,29 +404,34 @@ public class TableFacade extends BaseFacade {
      * @return
      */
     public synchronized String createUserDefineTable(String tableName){
-        String table = "USER_CUSTOM_";
-        List list = queryTableExist(tableName);
+        String table = "USER_CUSTOM_" + PinYin2Abbreviation.cn2py(tableName);
+        List list = queryTableExist(table);
         if(!list.isEmpty()){
-            if(list.size()>1){
-                String orignTable = table+PinYin2Abbreviation.cn2py(tableName);
-                list.remove(orignTable);
+            list.remove(table);
+            if(!list.isEmpty()){
+                final String orignTable = table;
                 Map<String,Integer> map = new HashMap();
                 list.stream().forEach(o -> {
-                    String tindex = o.toString().replace(orignTable+"_","");
-                    Integer index = Integer.valueOf(tindex);
-                    if(map.containsKey(orignTable) && map.get(orignTable)<index){
-                        map.put(orignTable,index);
-                    }
-                    if(map.isEmpty()){
-                        map.put(orignTable,index);
+                    String oStr = o.toString();
+                    if(oStr.contains(orignTable+"_")){
+                        String tindex = oStr.replace(orignTable+"_","");
+                        if(TemplateConst.isNumeric(tindex)){
+                            Integer index = Integer.valueOf(tindex);
+                            if(map.containsKey(orignTable) && map.get(orignTable)<index){
+                                map.put(orignTable,index);
+                            }
+                            if(map.isEmpty()){
+                                map.put(orignTable,index);
+                            }
+                        }
                     }
                 });
-                table += PinYin2Abbreviation.cn2py(tableName) + "_" + (map.get(orignTable)+1);
+                if(!map.isEmpty()){
+                    table = table + "_" + (map.get(orignTable)+1);
+                }
             }else{
-                table += PinYin2Abbreviation.cn2py(tableName)+ "_1";
+                table = table+ "_1";
             }
-        }else{
-            table += PinYin2Abbreviation.cn2py(tableName);
         }
         return table;
     }
@@ -417,20 +443,19 @@ public class TableFacade extends BaseFacade {
      * @return
      */
     private String createCreateCustomTableSQL(List<TableColConfig> tableColConfigs, String tableName) {
-
-        String SQL = "drop table if EXISTS " + tableName + ";";
-        SQL = SQL + " create table " + tableName + " (";
+        StringBuffer sb = new StringBuffer("drop table if EXISTS ");
+        sb.append(tableName).append(";").append(" create table ").append(tableName).append(" (");
         for (TableColConfig config : tableColConfigs) {
             if ("id".equals(config.getColCode())) {
-                SQL += "" + config.getColCode() + " varchar(64) comment '" + config.getColName() + "',";
+                sb.append(config.getColCode()).append(" varchar(64) comment '").append(config.getColName()).append("',");
+            }else if("data_version".equals(config.getColCode())){
+                sb.append(config.getColCode()).append(" varchar(4) comment '").append(config.getColName()).append("',");
             } else {
-                SQL += "" + config.getColCode() + " varchar(1600) comment '" + config.getColName() + "',";
+                sb.append(config.getColCode()).append(" text comment '").append(config.getColName()).append("',");//varchar(1600)
             }
-
         }
-//        SQL = SQL + " data_version int DEFAULT 0  comment '版本',";
-        SQL = SQL + "  PRIMARY KEY (id) ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-        return SQL;
+        sb.append("  PRIMARY KEY (id) ) ENGINE=InnoDB DEFAULT CHARSET=utf8");
+        return sb.toString();
     }
 
     /**
@@ -481,14 +506,26 @@ public class TableFacade extends BaseFacade {
         String from = " from ";
         String condition = "  where 1=1 and ";
         Map<String,String> tableInfo = new HashMap<>();
+        Map<String,Integer> colCodeMap = new HashMap<>();
+        int k=1;
         for (UserCustomTableVO vo : userCustomTableVOs) {
             List<TableColConfig> tableColConfigs = vo.getTableColConfigs();
             TableConfig tableConfig = vo.getTableConfig();
-            from += tableConfig.getTableName() + ",";
+            String tableAs = "t"+k;
+            from += tableConfig.getTableName() + " as "+tableAs+",";
             for (TableColConfig colConfig : tableColConfigs) {
-                sql += " " + tableConfig.getTableName() + "." + colConfig.getColCode() + ",";
+                if(colCodeMap.containsKey(colConfig.getColCode())){//创建的表列名一致的话 加下标 否则建表失败
+                    String colCodeAs = getColCodeAs(colConfig.getColCode(),colCodeMap);
+                    sql += " " + tableAs + "." + colConfig.getColCode() + " as " + colCodeAs +",";
+                    colConfig.setColCode(colCodeAs);
+                    colCodeMap.put(colCodeAs,1);
+                }else{
+                    sql += " " + tableAs + "." + colConfig.getColCode() + ",";
+                    colCodeMap.put(colConfig.getColCode(),1);
+                }
             }
-            tableInfo.put(tableConfig.getId(),tableConfig.getTableName());
+            tableInfo.put(tableConfig.getId(),tableAs);
+            k++;
         }
         sql = sql.substring(0, sql.length() - 1);
         from = from.substring(0, from.length() - 1);
@@ -540,7 +577,7 @@ public class TableFacade extends BaseFacade {
     private String buildCondition(String operation, OperationConditionVO conditionVO, Map<String,String> tableInfo) {
         String condition = "";
         if (conditionVO.getThanValue() != null) {
-            condition += operation + "'" + conditionVO.getThanValue() + "' " + conditionVO.getNextOperation();
+            condition += operation  + getRealValue(conditionVO.getThanValue()) + " " + conditionVO.getNextOperation();
         }
         if (conditionVO.getSecondTableColConfig() != null) {
             condition += operation + tableInfo.get(conditionVO.getSecondTableColConfig().getTableId()) + "." + conditionVO.getSecondTableColConfig().getColCode() + " " + conditionVO.getNextOperation();
@@ -603,13 +640,10 @@ public class TableFacade extends BaseFacade {
     }
 
     public String getMasterTableByTemplateId(String templateId) {
-        String sql = "select template_name from template_master where id = '" + templateId + "'";
+        String sql = "select table_name from table_config where create_from = 'system' and form_id = '" + templateId + "'" +
+                " and table_name like 'data_master%'";
         List<String> colList = createNativeQuery(sql).getResultList();
-        String table = "data_master";
-        if (colList != null && !colList.isEmpty()) {
-            table = table + "_" + PinYin2Abbreviation.cn2py(colList.get(0));
-        }
-        return table;
+        return colList.isEmpty()?"":colList.get(0);
     }
 
     public String getInsertSqlBef(List<String> colList, String tableName) {
@@ -917,11 +951,16 @@ public class TableFacade extends BaseFacade {
             String tableColums = sqlUpper.substring(select_indxe + "SELECT".length(), table_index);
             String[] colums = tableColums.split(",");
             for (String colum : colums) {
-                int lindex = colum.lastIndexOf(".");
-                if (lindex > 0) {
-                    list.add(colum.substring(lindex + 1));
-                } else {
-                    list.add(colum);
+                if(colum.contains(" AS ")){
+                    int lindex = colum.indexOf(" AS ");
+                    list.add(colum.substring(lindex + 4).trim());
+                }else{
+                    int lindex = colum.lastIndexOf(".");
+                    if (lindex > 0) {
+                        list.add(colum.substring(lindex + 1));
+                    } else {
+                        list.add(colum);
+                    }
                 }
             }
         }else{
@@ -958,11 +997,17 @@ public class TableFacade extends BaseFacade {
                     return new ArrayList<>();
                 }
                 List<FieldChange> fieldChangeList = reportQueryParam.getTableResults();
+                x_field = fieldChangeList.get(0).getTitle();
                 fieldChangeList.stream().forEach(x -> sqlBuffer.append(x.getTitle()).append(","));
                 String sqlStr = sqlBuffer.toString().substring(0,sqlBuffer.length()-1);
                 StringBuffer dvBuffer = new StringBuffer(" FROM ").append(tableName);
                 if(!tableName.startsWith("data_master")){
                     dvBuffer.append(" where data_version = (select max(data_version) from ").append(tableName).append(")");
+                }
+                if("0".equals(sort)){//降序
+                    sqlBuffer.append(" ORDER BY ").append(x_field).append(" DESC");
+                }else if("1".equals(sort)){
+                    sqlBuffer.append(" ORDER BY ").append(x_field).append(" ASC");
                 }
                 sqlStr += dvBuffer.toString();
                 int perPage = reportData ==null?20:reportData.getPerPage();
@@ -985,7 +1030,7 @@ public class TableFacade extends BaseFacade {
                 sqlBuffer.append(" GROUP BY ").append(x_field);
                 if("0".equals(sort)){//降序
                     sqlBuffer.append(" ORDER BY ").append(x_field).append(" DESC");
-                }else{
+                }else if("1".equals(sort)){
                     sqlBuffer.append(" ORDER BY ").append(x_field).append(" ASC");
                 }
                 List resultList = createNativeQuery(sqlBuffer.toString()).getResultList();
@@ -1009,8 +1054,13 @@ public class TableFacade extends BaseFacade {
                 if(!tableName.startsWith("data_master")){
                     sqlBuffer.append(" where data_version = (select max(data_version) from ").append(tableName).append(")");
                 }
+                if("0".equals(sort)) {//降序
+                    sqlBuffer.append(" order by ").append(x_field).append(" desc");
+                }else if("1".equals(sort)){
+                    sqlBuffer.append(" order by ").append(x_field).append(" asc");
+                }
                 List resultList = createNativeQuery(sqlBuffer.toString()).getResultList();
-                Map<String,List<UnitFunds>> resultMap = new HashMap<>();
+                Map<String,List<UnitFunds>> resultMap = Maps.newLinkedHashMap();
                 for(int i=0;i<resultList.size();i++){
                     Object[] innerParams = (Object[]) resultList.get(i);
                     String xValue = innerParams[0].toString();
@@ -1043,6 +1093,7 @@ public class TableFacade extends BaseFacade {
             }
             if("2".equals(reportQueryParam.getIfDuplicate())){//不统计的话则查询x轴y轴
                 String isDouble = "2";
+                String oderField = x_field;
                 if(!StringUtils.isEmptyParam(x_field) && !StringUtils.isEmptyParam(y_field)){
                     if(x_field.equals(y_field)){
                         sqlBuffer.append(x_field).append(",").append(y_field).append(" as ").append(y_field).append("_");
@@ -1055,11 +1106,17 @@ public class TableFacade extends BaseFacade {
                 }else{
                     sqlBuffer.append(y_field);
                     isDouble = "0";
+                    oderField = y_field;
                 }
                 sqlBuffer.append(" from ").append(tableName);
                 if(!tableName.startsWith("data_master")){
                     sqlBuffer.append(" where data_version = (select max(data_version) from ")
                             .append(tableName).append(")");
+                }
+                if("0".equals(sort)) {//降序
+                    sqlBuffer.append(" order by ").append(oderField).append(" desc");
+                }else if("1".equals(sort)){
+                    sqlBuffer.append(" order by ").append(oderField).append(" asc");
                 }
                 final String isDb = isDouble;
                 List resultList = createNativeQuery(sqlBuffer.toString()).getResultList();
@@ -1511,9 +1568,9 @@ public class TableFacade extends BaseFacade {
         String hql = " from TableColConfig where tableId = '"+tableId+"'";
         List<TableColConfig> tableColConfigs = createQuery(TableColConfig.class,hql,new ArrayList<>()).getResultList();
         List<TableColConfig> tableColConfigList = new ArrayList<>();
-        tableColConfigs.stream().parallel().forEach(tf ->{
+        for(TableColConfig tf:tableColConfigs){
             if(!"id".equals(tf.getColCode()) && !"data_version".equals(tf.getColCode())){tableColConfigList.add(tf);}
-        });
+        }
         return tableColConfigList;
     }
 
@@ -1555,27 +1612,50 @@ public class TableFacade extends BaseFacade {
     public List<String> getTemplateResultMasterText(String templateId) {
         Query query = new Query();
         query.addCriteria(Criteria.where("templateId").is(templateId));
+        List<String> relist = new ArrayList<>();
         try {
             List<Document> result = mongoTemplate.find(query, Document.class, "templateFilling");
-            String jsonStr = JSONUtil.objectToJson(result.get(0)).toString();
-            String sql = "select data_element_code,data_element_name from template_data_element where " +
-                    " page_id in (select id from template_page where status<>'-1' and template_id = '"+templateId+"') order by data_element_code desc";
-            List list = createNativeQuery(sql).getResultList();
-            Map<String,String> codeMap = new HashMap<>();
-            list.stream().forEach(cd->{
-                Object[] params = (Object[])cd;
-                String code = params[0].toString();
-                code = code.replace("$","@");
-                codeMap.put(code,params[1].toString());
-            });
-            for(String key:codeMap.keySet()){
-                jsonStr = jsonStr.replace(key,codeMap.get(key));
+            for(int i=1;i<result.size();i++){
+                Document doc = result.get(i);
+                List<Document> zzdoc = (List<Document>)doc.get("dch_1523184137019");
+                List<Document> zzdocNew = new ArrayList<>();
+                for(Document zc:zzdoc){
+                    if(!zc.isEmpty() && !zc.containsKey("dch_1523184137019@2")){
+                        zc.put("dch_1523184137019@2","");
+                    }
+                    if(!zc.isEmpty()){
+                        zzdocNew.add(zc);
+                    }
+                }
+                doc.put("dch_1523184137019", zzdocNew);
+                String jsonStr = JSONUtil.objectToJson(doc).toString();
+                String sql = "select data_element_code,data_element_name from template_data_element where " +
+                        " page_id in (select id from template_page where status<>'-1' and template_id = '"+templateId+"') order by data_element_code desc";
+                List list = createNativeQuery(sql).getResultList();
+                Map<String,String> codeMap = new HashMap<>();
+                Map<String,String> codeMapAll = new LinkedHashMap<>();
+                list.stream().forEach(cd->{
+                    Object[] params = (Object[])cd;
+                    String code = params[0].toString();
+                    if(code.contains("$")){
+                        code = code.replace("$","@");
+                        codeMapAll.put(code,params[1].toString());
+                    }else{
+                        codeMap.put(code, params[1].toString());
+                    }
+                });
+                for(String key:codeMap.keySet()){
+                    codeMapAll.put(key,codeMap.get(key));
+                }
+                for(String key:codeMapAll.keySet()){
+                    jsonStr = jsonStr.replace(key,codeMapAll.get(key));
+                }
+                TemplateConst.createJsonFile(jsonStr,"D:/dch","project"+i);
             }
-            System.out.println(jsonStr);
         }catch (Exception e){
             e.printStackTrace();
         }
-        return null;
+        return relist;
     }
 
     /**
@@ -1736,5 +1816,32 @@ public class TableFacade extends BaseFacade {
             queryList.add(params);
         }
         return queryList;
+    }
+
+    /**
+     * 前端传入的值有问题，后端去除特殊符号
+     * @param value
+     * @return
+     */
+    public String getRealValue(Object value){
+        String valueStr = value.toString();
+        valueStr = valueStr.replace("[","");
+        valueStr = valueStr.replace("]","");
+        valueStr = valueStr.replace(",","");
+        valueStr = valueStr.replace("，","");
+        if(TemplateConst.isNumeric(valueStr)){
+            return valueStr;
+        }
+        return "'"+valueStr+"'";
+    }
+
+    public String getColCodeAs(String code,Map<String,Integer> map){
+        Integer index = map.get(code);
+        String colCodeAs = code + "_" + index;
+        if(map.containsKey(colCodeAs)){
+            map.put(code,index + 1);
+            colCodeAs = getColCodeAs(code,map);
+        }
+        return colCodeAs;
     }
 }

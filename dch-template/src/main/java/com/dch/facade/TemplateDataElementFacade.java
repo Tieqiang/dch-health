@@ -14,10 +14,7 @@ import org.springframework.stereotype.Component;
 import javax.persistence.TypedQuery;
 import javax.transaction.Transactional;
 import javax.ws.rs.core.Response;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -279,11 +276,20 @@ public class TemplateDataElementFacade extends BaseFacade {
     }
 
     public List<TemplateDataElement> getTemplateDataElements(String templateId) {
-
-
+        Map<String,String> tableMap = new HashMap<>();
         String hql = " select a from TemplateDataElement as a  ,TemplatePage b where  a.pageId=b.id and b.templateId= '"+templateId+"'";
         List<TemplateDataElement> resultList = createQuery(TemplateDataElement.class, hql, new ArrayList<Object>()).getResultList();
-
-        return resultList;
+        List<TemplateDataElement> returnList = new LinkedList<>();
+        for(TemplateDataElement templateDataElement:resultList){
+            if(templateDataElement.getDataElementType().contains("table")){
+                if(!tableMap.containsKey(templateDataElement.getDataElementCode())){
+                    returnList.add(templateDataElement);
+                    tableMap.put(templateDataElement.getDataElementCode(),templateDataElement.getDataElementName());
+                }
+            }else{
+                returnList.add(templateDataElement);
+            }
+        }
+        return returnList;
     }
 }
