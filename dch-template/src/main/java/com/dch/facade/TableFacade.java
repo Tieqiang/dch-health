@@ -69,7 +69,7 @@ public class TableFacade extends BaseFacade {
                 //excHql(delHql);
                 remove(tableConfig);
             }
-            if(!tableIds.isEmpty()){
+            if (!tableIds.isEmpty()) {
                 String tableIdIns = StringUtils.getQueryIdsString(tableIds);
                 String delHql = "delete TableColConfig where tableId in (" + tableIdIns + ")";
                 excHql(delHql);
@@ -122,11 +122,11 @@ public class TableFacade extends BaseFacade {
                     this.merge(config);
                 }
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             throw e;
-        }finally {
-            if(connection!=null){
+        } finally {
+            if (connection != null) {
                 connection.close();
             }
         }
@@ -242,20 +242,20 @@ public class TableFacade extends BaseFacade {
     }
 
 
-    public List<TableConfig> getTableConfig(String templateId,String type) {
+    public List<TableConfig> getTableConfig(String templateId, String type) {
         String hql = "from TableConfig as t where t.formId='" + templateId + "'";
-        if(!StringUtils.isEmptyParam(type)){
-            hql += " and t.createFrom = '"+type+"'";
+        if (!StringUtils.isEmptyParam(type)) {
+            hql += " and t.createFrom = '" + type + "'";
         }
         hql += " order by t.tableName asc";
         return createQuery(TableConfig.class, hql, new ArrayList<Object>()).getResultList();
     }
 
-    public TableColVO getTableColVO(String tableId, int perPage, int currentPage) throws Exception{
+    public TableColVO getTableColVO(String tableId, int perPage, int currentPage) throws Exception {
         tableId = getTableIdByName(tableId);//由于id会随系统初始化发生变化，现传表名
         String hql = "from TableColConfig where tableId='" + tableId + "' order by colCode asc";
         List<TableColConfig> resultList = createQuery(TableColConfig.class, hql, new ArrayList<Object>()).getResultList();
-        if(resultList == null || resultList.isEmpty()){
+        if (resultList == null || resultList.isEmpty()) {
             throw new Exception("表不存在，获取数据失败");
         }
         TableConfig tableConfig = this.get(TableConfig.class, tableId);
@@ -263,12 +263,12 @@ public class TableFacade extends BaseFacade {
         String sqlCount = "select count(*) ";
         String sql = "select ";
         List<String> orderList = new ArrayList<>();
-        if(resultList.isEmpty()){
+        if (resultList.isEmpty()) {
             throw new Exception("表字段为空，获取数据失败");
-        }else{
+        } else {
             for (TableColConfig config : resultList) {
                 sql += config.getColCode() + ",";
-                if(orderList.isEmpty() && config.getColCode().contains("dch")){
+                if (orderList.isEmpty() && config.getColCode().contains("dch")) {
                     orderList.add(config.getColCode());
                 }
             }
@@ -280,28 +280,29 @@ public class TableFacade extends BaseFacade {
             sql += " where data_version = (select max(data_version) from " + tableName + ")";
             sqlCount += " where data_version = (select max(data_version) from " + tableName + ")";
         }
-        if(!orderList.isEmpty()){
+        if (!orderList.isEmpty()) {
             sql += " order by " + orderList.get(0) + " asc ";
         }
-        perPage = perPage < 1?20:perPage;
-        currentPage = currentPage< 1?1:currentPage;
-        long limit_start = (currentPage -1) * perPage;
+        perPage = perPage < 1 ? 20 : perPage;
+        currentPage = currentPage < 1 ? 1 : currentPage;
+        long limit_start = (currentPage - 1) * perPage;
         long limit_end = perPage;
-        sql += " limit " + limit_start + ","+limit_end;
+        sql += " limit " + limit_start + "," + limit_end;
         logger.info(sql);
 
         List<Object[]> datas = null;
-        if(resultList.size() < 2){
+        if (resultList.size() < 2) {
             datas = new ArrayList<>();
             List list = this.createNativeQuery(sql).getResultList();
-            for(Object k:list){
+            for (Object k : list) {
                 Object[] obj = new Object[]{k};
                 datas.add(obj);
-            };
-        }else{
+            }
+            ;
+        } else {
             datas = this.createNativeQuery(sql).getResultList();
         }
-        BigInteger totalNum = (BigInteger)this.createNativeQuery(sqlCount).getResultList().get(0);
+        BigInteger totalNum = (BigInteger) this.createNativeQuery(sqlCount).getResultList().get(0);
         TableColVO tableColVO = new TableColVO();
         tableColVO.setDatas(datas);
         tableColVO.setTotalNum(totalNum.longValue());
@@ -315,17 +316,18 @@ public class TableFacade extends BaseFacade {
      * @return
      */
     @Transactional
-    public TableConfig createCustomTableConfig(CreateTableVO createTableVO) throws SQLException {
+    public TableConfig createCustomTableConfig(CreateTableVO createTableVO) throws SQLException, IOException, JSONException {
 
         TableConfig tableConfig = createTableVO.getTableConfig();
         tableConfig.setCreateFrom("user");
         tableConfig.setTableDesc(tableConfig.getTableName());
+        tableConfig.setTableDefineObject(JSONUtil.objectToJsonString(createTableVO));
 
         Connection connection = this.dataSource.getConnection();
         try {
             String executeSQL = createExecuteSQL(createTableVO.getUserCustomTableVOs(), createTableVO.getOperationConditionVOS());
             List<TableColConfig> tableColConfigs = createTAbleColConfigs(createTableVO.getUserCustomTableVOs(), createTableVO.getOperationConditionVOS());
-            String tableName =  createUserDefineTable(tableConfig.getTableName());
+            String tableName = createUserDefineTable(tableConfig.getTableName());
             String createTableSql = createCreateCustomTableSQL(tableColConfigs, tableName);
 
             String[] split = createTableSql.split(";");
@@ -350,7 +352,7 @@ public class TableFacade extends BaseFacade {
             //将初始化用户自定义表数据
             connection.prepareStatement(executeSQL).getResultSet();
             List queryList = createNativeQuery(executeSQL).getResultList();
-            saveResultToDb(tableName,0, executeSQL, queryList,connection);
+            saveResultToDb(tableName, 0, executeSQL, queryList, connection);
             //添加用户报表到自定义的报表分组下2018-10-19
             ReportGroup reportGroup = new ReportGroup();
             reportGroup.setParentId(createTableVO.getParentId());
@@ -359,10 +361,10 @@ public class TableFacade extends BaseFacade {
             reportGroup.setStatus("1");
             reportGroup.setTemplateId(tableConfig.getFormId());
             merge(reportGroup);
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             throw new SQLException(e.getMessage());
-        }finally {
+        } finally {
             //关闭链接
             connection.close();
         }
@@ -371,70 +373,74 @@ public class TableFacade extends BaseFacade {
 
     /**
      * 生成主表进行判断，如果存在的话 添加下标
+     *
      * @param templateName
      * @return
      */
-    public String getMasterTableName(String templateName){
-       String tableName = "data_master_" + PinYin2Abbreviation.cn2py(templateName);
-       String sql = "select table_name from table_config where table_name = '"+tableName+"'";
-       List list = createNativeQuery(sql).getResultList();
-       if(list!=null && !list.isEmpty()){
-           sql = "select nextval('s_master_count') from dual";
-           List clist = createNativeQuery(sql).getResultList();
-           String mindex = clist.get(0).toString();
-           tableName = tableName + "_" + mindex;
-       }
-       return tableName;
+    public String getMasterTableName(String templateName) {
+        String tableName = "data_master_" + PinYin2Abbreviation.cn2py(templateName);
+        String sql = "select table_name from table_config where table_name = '" + tableName + "'";
+        List list = createNativeQuery(sql).getResultList();
+        if (list != null && !list.isEmpty()) {
+            sql = "select nextval('s_master_count') from dual";
+            List clist = createNativeQuery(sql).getResultList();
+            String mindex = clist.get(0).toString();
+            tableName = tableName + "_" + mindex;
+        }
+        return tableName;
     }
 
     /**
      * 查询表是否存在
+     *
      * @param tableName
      * @return
      */
-    public List<String> queryTableExist(String tableName){
-        String sql = "select table_name from table_config where table_name like '"+tableName+"%' ";
+    public List<String> queryTableExist(String tableName) {
+        String sql = "select table_name from table_config where table_name like '" + tableName + "%' ";
         List list = createNativeQuery(sql).getResultList();
         return list;
     }
 
     /**
      * 生成表名
+     *
      * @param tableName
      * @return
      */
-    public synchronized String createUserDefineTable(String tableName){
+    public synchronized String createUserDefineTable(String tableName) {
         String table = "USER_CUSTOM_" + PinYin2Abbreviation.cn2py(tableName);
         List list = queryTableExist(table);
-        if(!list.isEmpty()){
+        if (!list.isEmpty()) {
             list.remove(table);
-            if(!list.isEmpty()){
+            if (!list.isEmpty()) {
                 final String orignTable = table;
-                Map<String,Integer> map = new HashMap();
+                Map<String, Integer> map = new HashMap();
                 list.stream().forEach(o -> {
                     String oStr = o.toString();
-                    if(oStr.contains(orignTable+"_")){
-                        String tindex = oStr.replace(orignTable+"_","");
-                        if(TemplateConst.isNumeric(tindex)){
+                    if (oStr.contains(orignTable + "_")) {
+                        String tindex = oStr.replace(orignTable + "_", "");
+                        if (TemplateConst.isNumeric(tindex)) {
                             Integer index = Integer.valueOf(tindex);
-                            if(map.containsKey(orignTable) && map.get(orignTable)<index){
-                                map.put(orignTable,index);
+                            if (map.containsKey(orignTable) && map.get(orignTable) < index) {
+                                map.put(orignTable, index);
                             }
-                            if(map.isEmpty()){
-                                map.put(orignTable,index);
+                            if (map.isEmpty()) {
+                                map.put(orignTable, index);
                             }
                         }
                     }
                 });
-                if(!map.isEmpty()){
-                    table = table + "_" + (map.get(orignTable)+1);
+                if (!map.isEmpty()) {
+                    table = table + "_" + (map.get(orignTable) + 1);
                 }
-            }else{
-                table = table+ "_1";
+            } else {
+                table = table + "_1";
             }
         }
         return table;
     }
+
     /**
      * 生成建表语句
      *
@@ -448,7 +454,7 @@ public class TableFacade extends BaseFacade {
         for (TableColConfig config : tableColConfigs) {
             if ("id".equals(config.getColCode())) {
                 sb.append(config.getColCode()).append(" varchar(64) comment '").append(config.getColName()).append("',");
-            }else if("data_version".equals(config.getColCode())){
+            } else if ("data_version".equals(config.getColCode())) {
                 sb.append(config.getColCode()).append(" varchar(4) comment '").append(config.getColName()).append("',");
             } else {
                 sb.append(config.getColCode()).append(" text comment '").append(config.getColName()).append("',");//varchar(1600)
@@ -505,26 +511,26 @@ public class TableFacade extends BaseFacade {
         String sql = "select ";
         String from = " from ";
         String condition = "  where 1=1 and ";
-        Map<String,String> tableInfo = new HashMap<>();
-        Map<String,Integer> colCodeMap = new HashMap<>();
-        int k=1;
+        Map<String, String> tableInfo = new HashMap<>();
+        Map<String, Integer> colCodeMap = new HashMap<>();
+        int k = 1;
         for (UserCustomTableVO vo : userCustomTableVOs) {
             List<TableColConfig> tableColConfigs = vo.getTableColConfigs();
             TableConfig tableConfig = vo.getTableConfig();
-            String tableAs = "t"+k;
-            from += tableConfig.getTableName() + " as "+tableAs+",";
+            String tableAs = "t" + k;
+            from += tableConfig.getTableName() + " as " + tableAs + ",";
             for (TableColConfig colConfig : tableColConfigs) {
-                if(colCodeMap.containsKey(colConfig.getColCode())){//创建的表列名一致的话 加下标 否则建表失败
-                    String colCodeAs = getColCodeAs(colConfig.getColCode(),colCodeMap);
-                    sql += " " + tableAs + "." + colConfig.getColCode() + " as " + colCodeAs +",";
+                if (colCodeMap.containsKey(colConfig.getColCode())) {//创建的表列名一致的话 加下标 否则建表失败
+                    String colCodeAs = getColCodeAs(colConfig.getColCode(), colCodeMap);
+                    sql += " " + tableAs + "." + colConfig.getColCode() + " as " + colCodeAs + ",";
                     colConfig.setColCode(colCodeAs);
-                    colCodeMap.put(colCodeAs,1);
-                }else{
+                    colCodeMap.put(colCodeAs, 1);
+                } else {
                     sql += " " + tableAs + "." + colConfig.getColCode() + ",";
-                    colCodeMap.put(colConfig.getColCode(),1);
+                    colCodeMap.put(colConfig.getColCode(), 1);
                 }
             }
-            tableInfo.put(tableConfig.getId(),tableAs);
+            tableInfo.put(tableConfig.getId(), tableAs);
             k++;
         }
         sql = sql.substring(0, sql.length() - 1);
@@ -542,6 +548,15 @@ public class TableFacade extends BaseFacade {
                     }
                     condition = condition.substring(0, condition.length() - 1);
                     condition += " ) " + conditionVO.getNextOperation();
+                    break;
+                case NOT_EQUAL:
+                    condition += this.buildCondition("<>", conditionVO, tableInfo);
+                    break;
+                case LIKE:
+                    condition += " like '%" + conditionVO.getThanValue() + "%'";
+                    break;
+                case NOT_LIKE:
+                    condition += " not like '%"+ conditionVO.getThanValue()+"%'";
                     break;
                 case EQUAL:
                     condition += this.buildCondition("=", conditionVO, tableInfo);
@@ -574,10 +589,10 @@ public class TableFacade extends BaseFacade {
      * @param conditionVO
      * @return
      */
-    private String buildCondition(String operation, OperationConditionVO conditionVO, Map<String,String> tableInfo) {
+    private String buildCondition(String operation, OperationConditionVO conditionVO, Map<String, String> tableInfo) {
         String condition = "";
         if (conditionVO.getThanValue() != null) {
-            condition += operation  + getRealValue(conditionVO.getThanValue()) + " " + conditionVO.getNextOperation();
+            condition += operation + getRealValue(conditionVO.getThanValue()) + " " + conditionVO.getNextOperation();
         }
         if (conditionVO.getSecondTableColConfig() != null) {
             condition += operation + tableInfo.get(conditionVO.getSecondTableColConfig().getTableId()) + "." + conditionVO.getSecondTableColConfig().getColCode() + " " + conditionVO.getNextOperation();
@@ -593,7 +608,7 @@ public class TableFacade extends BaseFacade {
      * @return
      */
     @Transactional
-    public String fetchMongoToTable(String templateId) throws Exception{
+    public String fetchMongoToTable(String templateId) throws Exception {
         Query query = new Query();
         query.addCriteria(Criteria.where("templateId").is(templateId));
         try {
@@ -643,7 +658,7 @@ public class TableFacade extends BaseFacade {
         String sql = "select table_name from table_config where create_from = 'system' and form_id = '" + templateId + "'" +
                 " and table_name like 'data_master%'";
         List<String> colList = createNativeQuery(sql).getResultList();
-        return colList.isEmpty()?"":colList.get(0);
+        return colList.isEmpty() ? "" : colList.get(0);
     }
 
     public String getInsertSqlBef(List<String> colList, String tableName) {
@@ -713,8 +728,8 @@ public class TableFacade extends BaseFacade {
                         } else {
                             String valueStr = document.get(ckey) == null ? "" : document.get(ckey).toString();
                             valueStr = valueStr.replace("'", "");
-                            if(valueStr.contains(TemplateConst.UPLOAD_FILE_KEY_WORD)){
-                                valueStr = (String)(((List<Document>)document.get(ckey)).get(0).get("name"));
+                            if (valueStr.contains(TemplateConst.UPLOAD_FILE_KEY_WORD)) {
+                                valueStr = (String) (((List<Document>) document.get(ckey)).get(0).get("name"));
                             }
                             valueSqlBuf.append("'").append(valueStr).append("',");
                         }
@@ -724,8 +739,8 @@ public class TableFacade extends BaseFacade {
                         } else {
                             String valueStr = document.get(ckey) == null ? "" : document.get(ckey).toString();
                             valueStr = valueStr.replace("'", "");
-                            if(valueStr.contains(TemplateConst.UPLOAD_FILE_KEY_WORD)){
-                                valueStr = (String)(((List<Document>)document.get(ckey)).get(0).get("name"));
+                            if (valueStr.contains(TemplateConst.UPLOAD_FILE_KEY_WORD)) {
+                                valueStr = (String) (((List<Document>) document.get(ckey)).get(0).get("name"));
                             }
                             valueSqlBuf.append("'").append(valueStr).append("'),");
                         }
@@ -737,18 +752,20 @@ public class TableFacade extends BaseFacade {
                         System.out.println(key);
                     } else if (value instanceof List) {
                         if (!value.toString().contains("dch")) {
-                            System.out.println("value=="+value);
+                            System.out.println("value==" + value);
                         } else {
                             dealListToMap((List) value, key, "", "", document.get("masterId").toString(), inserSqlMap, tableColMap, sqlBefMap);
                         }
-                    }else if (value instanceof Document) {
+                    } else if (value instanceof Document) {
                         List<Document> dlist = new ArrayList<>();
-                        Document doc = (Document)value;
+                        Document doc = (Document) value;
                         String one_key = doc.keySet().iterator().next();
                         Object one_value = doc.get(one_key);
                         Document indoc = new Document();
-                        if(!one_value.toString().contains("dch")){
-                            doc.forEach((k,v) -> {indoc.put(k,v);});
+                        if (!one_value.toString().contains("dch")) {
+                            doc.forEach((k, v) -> {
+                                indoc.put(k, v);
+                            });
                             dlist.add(indoc);
                             dealListToMap(dlist, key, "", "", document.get("masterId").toString(), inserSqlMap, tableColMap, sqlBefMap);
                         }
@@ -765,7 +782,7 @@ public class TableFacade extends BaseFacade {
                 insertList.add(inserSqlFinal);
                 inserSqlMap.put(tableName, insertList);
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return inserSqlMap;
@@ -803,8 +820,8 @@ public class TableFacade extends BaseFacade {
                             valueSqlBuf.append("'").append(parentId).append("',");
                         } else {
                             String valueStr = document.get(ckey) == null ? "" : document.get(ckey).toString();
-                            if(valueStr.length()>1600){
-                                valueStr = valueStr.substring(0,1600);
+                            if (valueStr.length() > 1600) {
+                                valueStr = valueStr.substring(0, 1600);
                             }
                             valueStr = valueStr.replace("'", "");
                             valueSqlBuf.append("'").append(valueStr).append("',");
@@ -864,8 +881,8 @@ public class TableFacade extends BaseFacade {
         String sql = "select max(data_version) from " + tableName + " where 1=1";
         List colList = createNativeQuery(sql).getResultList();
         if (colList != null && !colList.isEmpty()) {
-            version = colList.get(0)==null?0:Integer.valueOf(colList.get(0).toString());
-        }else{
+            version = colList.get(0) == null ? 0 : Integer.valueOf(colList.get(0).toString());
+        } else {
             version = 0;
         }
         return version;
@@ -892,19 +909,19 @@ public class TableFacade extends BaseFacade {
             String execute_sql = innerParams[2].toString();
             List queryList = createNativeQuery(execute_sql).getResultList();
             Integer version = getTableVersion(tableName);
-            saveResultToDb(tableName,version, execute_sql, queryList,connection);
+            saveResultToDb(tableName, version, execute_sql, queryList, connection);
         }
         return getTableColVO(tableId, 20, 1);
     }
 
-    public void saveResultToDb(String tableName,Integer dataVersion, String sql, List queryList,Connection connection){
+    public void saveResultToDb(String tableName, Integer dataVersion, String sql, List queryList, Connection connection) {
         PreparedStatement statement = null;
         try {
-            if(queryList==null || queryList.isEmpty()){
+            if (queryList == null || queryList.isEmpty()) {
                 return;
             }
             StringBuffer inserSqlBef = new StringBuffer("insert into ").append(tableName).append("(id,data_version,");
-            List<String> keyList = getTableColum(sql,tableName);
+            List<String> keyList = getTableColum(sql, tableName);
             for (String key : keyList) {
                 inserSqlBef.append(key).append(",");
             }
@@ -942,19 +959,19 @@ public class TableFacade extends BaseFacade {
         }
     }
 
-    public List<String> getTableColum(String sql,String tableName) {
+    public List<String> getTableColum(String sql, String tableName) {
         List<String> list = new ArrayList<>();
-        if(!StringUtils.isEmptyParam(sql)){
+        if (!StringUtils.isEmptyParam(sql)) {
             String sqlUpper = sql.toUpperCase();
             int table_index = sqlUpper.indexOf("FROM");
             int select_indxe = sqlUpper.indexOf("SELECT");
             String tableColums = sqlUpper.substring(select_indxe + "SELECT".length(), table_index);
             String[] colums = tableColums.split(",");
             for (String colum : colums) {
-                if(colum.contains(" AS ")){
+                if (colum.contains(" AS ")) {
                     int lindex = colum.indexOf(" AS ");
                     list.add(colum.substring(lindex + 4).trim());
-                }else{
+                } else {
                     int lindex = colum.lastIndexOf(".");
                     if (lindex > 0) {
                         list.add(colum.substring(lindex + 1));
@@ -963,8 +980,8 @@ public class TableFacade extends BaseFacade {
                     }
                 }
             }
-        }else{
-            String querySql = "SELECT COLUMN_NAME from information_schema.COLUMNS where TABLE_NAME = '"+tableName+"'" +
+        } else {
+            String querySql = "SELECT COLUMN_NAME from information_schema.COLUMNS where TABLE_NAME = '" + tableName + "'" +
                     " and COLUMN_NAME NOT IN ('id','data_version')";
             list = createNativeQuery(querySql).getResultList();
         }
@@ -973,13 +990,14 @@ public class TableFacade extends BaseFacade {
 
     /**
      * 获取统计结果
+     *
      * @param reportQueryParam
      * @param reportData
      * @param <T>
      * @return
      * @throws Exception
      */
-    public <T> List<T> getReportStatistics(ReportQueryParam reportQueryParam, ReportData reportData) throws Exception{
+    public <T> List<T> getReportStatistics(ReportQueryParam reportQueryParam, ReportData reportData) throws Exception {
         List<T> reportList = new ArrayList<>();
         String tableName = reportQueryParam.getTableName();
         String x_field = reportQueryParam.getXaxis();
@@ -992,201 +1010,202 @@ public class TableFacade extends BaseFacade {
             //表格类型查询，查询字段表统并赋值，柱状图 也赋予字段值
             setReportFieldValue(reportQueryParam);
             //如果图像为表格类型则直接查询
-            if("table".equals(reportQueryParam.getChart())){
-                if(StringUtils.isEmptyParam(tableName)){
+            if ("table".equals(reportQueryParam.getChart())) {
+                if (StringUtils.isEmptyParam(tableName)) {
                     return new ArrayList<>();
                 }
                 List<FieldChange> fieldChangeList = reportQueryParam.getTableResults();
                 x_field = fieldChangeList.get(0).getTitle();
                 fieldChangeList.stream().forEach(x -> sqlBuffer.append(x.getTitle()).append(","));
-                String sqlStr = sqlBuffer.toString().substring(0,sqlBuffer.length()-1);
+                String sqlStr = sqlBuffer.toString().substring(0, sqlBuffer.length() - 1);
                 StringBuffer dvBuffer = new StringBuffer(" FROM ").append(tableName);
-                if(!tableName.startsWith("data_master")){
+                if (!tableName.startsWith("data_master")) {
                     dvBuffer.append(" where data_version = (select max(data_version) from ").append(tableName).append(")");
                 }
-                if("0".equals(sort)){//降序
+                if ("0".equals(sort)) {//降序
                     sqlBuffer.append(" ORDER BY ").append(x_field).append(" DESC");
-                }else if("1".equals(sort)){
+                } else if ("1".equals(sort)) {
                     sqlBuffer.append(" ORDER BY ").append(x_field).append(" ASC");
                 }
                 sqlStr += dvBuffer.toString();
-                int perPage = reportData ==null?20:reportData.getPerPage();
-                int currentPage = reportData ==null?1:reportData.getCurrentPage();
-                long limit_start = (currentPage -1) * perPage;
+                int perPage = reportData == null ? 20 : reportData.getPerPage();
+                int currentPage = reportData == null ? 1 : reportData.getCurrentPage();
+                long limit_start = (currentPage - 1) * perPage;
                 long limit_end = perPage;
-                sqlStr += " limit " + limit_start + ","+limit_end;
+                sqlStr += " limit " + limit_start + "," + limit_end;
                 List resultList = createNativeQuery(sqlStr).getResultList();
                 return resultList;
             }
-            if(StringUtils.isEmptyParam(tableName)){
+            if (StringUtils.isEmptyParam(tableName)) {
                 return reportList;
             }
             //如果所选的字段一致，则为统计计数
-            if(x_field.equals(y_field) || StringUtils.isEmptyParam(y_field)){
+            if (x_field.equals(y_field) || StringUtils.isEmptyParam(y_field)) {
                 sqlBuffer.append(" count(*),").append(x_field).append(" FROM ").append(tableName);
-                if(!tableName.startsWith("data_master")){
+                if (!tableName.startsWith("data_master")) {
                     sqlBuffer.append(" WHERE data_version = (select max(data_version) from ").append(tableName).append(")");
                 }
                 sqlBuffer.append(" GROUP BY ").append(x_field);
-                if("0".equals(sort)){//降序
+                if ("0".equals(sort)) {//降序
                     sqlBuffer.append(" ORDER BY ").append(x_field).append(" DESC");
-                }else if("1".equals(sort)){
+                } else if ("1".equals(sort)) {
                     sqlBuffer.append(" ORDER BY ").append(x_field).append(" ASC");
                 }
                 List resultList = createNativeQuery(sqlBuffer.toString()).getResultList();
-                for(int i=0;i<resultList.size();i++) {
+                for (int i = 0; i < resultList.size(); i++) {
                     UnitFunds unitFunds = new UnitFunds();
                     Object[] innerParams = (Object[]) resultList.get(i);
                     Integer countNum = Integer.valueOf(innerParams[0].toString());
                     String fieldValue = innerParams[1].toString();
                     unitFunds.setUnit(fieldValue);
                     unitFunds.setFunds(countNum.doubleValue());
-                    reportList.add((T)unitFunds);
+                    reportList.add((T) unitFunds);
                 }
                 return reportList;
-            }else{
-                if(!StringUtils.isEmptyParam(x_field)){
+            } else {
+                if (!StringUtils.isEmptyParam(x_field)) {
                     sqlBuffer.append(x_field).append(",");
-                }else{
+                } else {
                     sqlBuffer.append("1").append(",");
                 }
                 sqlBuffer.append(y_field).append(" FROM ").append(tableName);
-                if(!tableName.startsWith("data_master")){
+                if (!tableName.startsWith("data_master")) {
                     sqlBuffer.append(" where data_version = (select max(data_version) from ").append(tableName).append(")");
                 }
-                if("0".equals(sort)) {//降序
+                if ("0".equals(sort)) {//降序
                     sqlBuffer.append(" order by ").append(x_field).append(" desc");
-                }else if("1".equals(sort)){
+                } else if ("1".equals(sort)) {
                     sqlBuffer.append(" order by ").append(x_field).append(" asc");
                 }
                 List resultList = createNativeQuery(sqlBuffer.toString()).getResultList();
-                Map<String,List<UnitFunds>> resultMap = Maps.newLinkedHashMap();
-                for(int i=0;i<resultList.size();i++){
+                Map<String, List<UnitFunds>> resultMap = Maps.newLinkedHashMap();
+                for (int i = 0; i < resultList.size(); i++) {
                     Object[] innerParams = (Object[]) resultList.get(i);
                     String xValue = innerParams[0].toString();
                     String yValue = getRealYvalue(innerParams[1].toString());
                     Double yValueNum = Double.valueOf(yValue);
-                    if(yValueNum>0){
-                        if(resultMap.containsKey(xValue)){
+                    if (yValueNum > 0) {
+                        if (resultMap.containsKey(xValue)) {
                             List<UnitFunds> unitFundsList = resultMap.get(xValue);
                             UnitFunds unitFunds = new UnitFunds();
                             unitFunds.setUnit(y_field);
                             unitFunds.setFunds(yValueNum);
                             unitFundsList.add(unitFunds);
-                        }else{
+                        } else {
                             List<UnitFunds> unitFundsList = new ArrayList<>();
                             UnitFunds unitFunds = new UnitFunds();
                             unitFunds.setUnit(y_field);
                             unitFunds.setFunds(yValueNum);
                             unitFundsList.add(unitFunds);
-                            resultMap.put(xValue,unitFundsList);
+                            resultMap.put(xValue, unitFundsList);
                         }
                     }
                 }
-                for(String key:resultMap.keySet()){
+                for (String key : resultMap.keySet()) {
                     UnitFunds unitFunds = new UnitFunds();
-                    Double statValue = getStatisticsValue(resultMap.get(key),type);
+                    Double statValue = getStatisticsValue(resultMap.get(key), type);
                     unitFunds.setUnit(key);
                     unitFunds.setFunds(statValue);
-                    reportList.add((T)unitFunds);
+                    reportList.add((T) unitFunds);
                 }
             }
-            if("2".equals(reportQueryParam.getIfDuplicate())){//不统计的话则查询x轴y轴
+            if ("2".equals(reportQueryParam.getIfDuplicate())) {//不统计的话则查询x轴y轴
                 String isDouble = "2";
                 String oderField = x_field;
-                if(!StringUtils.isEmptyParam(x_field) && !StringUtils.isEmptyParam(y_field)){
-                    if(x_field.equals(y_field)){
+                if (!StringUtils.isEmptyParam(x_field) && !StringUtils.isEmptyParam(y_field)) {
+                    if (x_field.equals(y_field)) {
                         sqlBuffer.append(x_field).append(",").append(y_field).append(" as ").append(y_field).append("_");
-                    }else{
+                    } else {
                         sqlBuffer.append(x_field).append(",").append(y_field);
                     }
-                }else if(!StringUtils.isEmptyParam(x_field)){
+                } else if (!StringUtils.isEmptyParam(x_field)) {
                     sqlBuffer.append(x_field);
                     isDouble = "1";
-                }else{
+                } else {
                     sqlBuffer.append(y_field);
                     isDouble = "0";
                     oderField = y_field;
                 }
                 sqlBuffer.append(" from ").append(tableName);
-                if(!tableName.startsWith("data_master")){
+                if (!tableName.startsWith("data_master")) {
                     sqlBuffer.append(" where data_version = (select max(data_version) from ")
                             .append(tableName).append(")");
                 }
-                if("0".equals(sort)) {//降序
+                if ("0".equals(sort)) {//降序
                     sqlBuffer.append(" order by ").append(oderField).append(" desc");
-                }else if("1".equals(sort)){
+                } else if ("1".equals(sort)) {
                     sqlBuffer.append(" order by ").append(oderField).append(" asc");
                 }
                 final String isDb = isDouble;
                 List resultList = createNativeQuery(sqlBuffer.toString()).getResultList();
-                resultList.stream().forEach(rt->{
-                    Object[] innerParams = (Object[])rt;
-                    if(isDb.equals("2")){
+                resultList.stream().forEach(rt -> {
+                    Object[] innerParams = (Object[]) rt;
+                    if (isDb.equals("2")) {
                         String xvalue = innerParams[0].toString();
                         String yvalue = innerParams[1].toString();
                         UnitFunds unitFunds = new UnitFunds();
                         unitFunds.setUnit(xvalue);
                         unitFunds.setFunds(Double.valueOf(yvalue));
-                        reportList.add((T)unitFunds);
-                    }else if(isDb.equals("1")){
+                        reportList.add((T) unitFunds);
+                    } else if (isDb.equals("1")) {
                         String xvalue = innerParams[0].toString();
                         UnitFunds unitFunds = new UnitFunds();
                         unitFunds.setUnit(xvalue);
-                        reportList.add((T)unitFunds);
-                    }else if(isDb.equals("0")){
+                        reportList.add((T) unitFunds);
+                    } else if (isDb.equals("0")) {
                         String yvalue = innerParams[0].toString();
                         UnitFunds unitFunds = new UnitFunds();
                         unitFunds.setFunds(Double.valueOf(yvalue));
-                        reportList.add((T)unitFunds);
+                        reportList.add((T) unitFunds);
                     }
                 });
                 return reportList;
             }
-        }catch (NumberFormatException e){
+        } catch (NumberFormatException e) {
             throw new Exception("所选y轴字段非数字类型，无法进行统计");
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return reportList;
     }
 
-    public String getTableNameById(String tableId){
-        String sql = "select table_name from table_config where id = '"+tableId+"'";
+    public String getTableNameById(String tableId) {
+        String sql = "select table_name from table_config where id = '" + tableId + "'";
         List<String> list = createNativeQuery(sql).getResultList();
-        return list.isEmpty()?"":list.get(0);
+        return list.isEmpty() ? "" : list.get(0);
     }
 
-    public String getTableIdByName(String tableName){
-        String sql = "select id from table_config where table_name = '"+tableName+"'";
+    public String getTableIdByName(String tableName) {
+        String sql = "select id from table_config where table_name = '" + tableName + "'";
         List<String> list = createNativeQuery(sql).getResultList();
-        return list.isEmpty()?tableName:list.get(0);
+        return list.isEmpty() ? tableName : list.get(0);
     }
 
-    public Double getStatisticsValue(List<UnitFunds> unitFundsList,String type){
+    public Double getStatisticsValue(List<UnitFunds> unitFundsList, String type) {
         Double result = 0D;
-        if(unitFundsList!=null && !unitFundsList.isEmpty()){
-            if("1".equals(type)){//求和
+        if (unitFundsList != null && !unitFundsList.isEmpty()) {
+            if ("1".equals(type)) {//求和
                 return unitFundsList.stream().mapToDouble(UnitFunds::getFunds).sum();
-            }else if("2".equals(type)){
+            } else if ("2".equals(type)) {
                 return unitFundsList.stream().mapToDouble(UnitFunds::getFunds).average().getAsDouble();
             }
         }
         return result;
     }
-    public static String getRealYvalue(String value){
+
+    public static String getRealYvalue(String value) {
         String numStr = value;
-        numStr = numStr.replace(" ","");
-        numStr = numStr.replace(",","");
-        numStr = numStr.replace("/","");
-        numStr = numStr.replace("-","");
-        numStr = numStr.replace("无","");
-        if("".equals(numStr)){
+        numStr = numStr.replace(" ", "");
+        numStr = numStr.replace(",", "");
+        numStr = numStr.replace("/", "");
+        numStr = numStr.replace("-", "");
+        numStr = numStr.replace("无", "");
+        if ("".equals(numStr)) {
             numStr = "0";
         }
         Pattern pattern = Pattern.compile(".*?(\\d+[.]\\d+)[.].*");
         Matcher matcher = pattern.matcher(numStr);
-        if (matcher.find()){
+        if (matcher.find()) {
             return matcher.group(1);
         }
         return numStr;
@@ -1197,27 +1216,27 @@ public class TableFacade extends BaseFacade {
         ReturnInfo returnInfo = null;
         try {
             //删除table_config中定义的表
-            TableConfig tableConfig = get(TableConfig.class,tableId);
-            if(tableConfig!=null){
+            TableConfig tableConfig = get(TableConfig.class, tableId);
+            if (tableConfig != null) {
                 remove(tableConfig);
                 //删除table_col_config中的表字段
-                String hql = "delete from TableColConfig where tableId = '"+tableId+"'";
+                String hql = "delete from TableColConfig where tableId = '" + tableId + "'";
                 excHql(hql);
                 //删除创建的表
                 String tableName = tableConfig.getTableName();
-                String sql = "DROP TABLE if EXISTS "+ tableName + ";";
+                String sql = "DROP TABLE if EXISTS " + tableName + ";";
                 createNativeQuery(sql).executeUpdate();
             }
-            returnInfo = new ReturnInfo("true","操作成功");
-        }catch (Exception e){
+            returnInfo = new ReturnInfo("true", "操作成功");
+        } catch (Exception e) {
             e.printStackTrace();
-            returnInfo = new ReturnInfo("false",e.getMessage());
+            returnInfo = new ReturnInfo("false", e.getMessage());
             throw e;
         }
         return returnInfo;
     }
 
-    public static void main(String args[]){
+    public static void main(String args[]) {
         List<MongoResultVo> list = new ArrayList<>();
         MongoResultVo mongoResultVo = new MongoResultVo();
         mongoResultVo.setName("1");
@@ -1238,7 +1257,7 @@ public class TableFacade extends BaseFacade {
         unitFunds1.setUnit("1");
         unitFunds1.setFunds(2.0);
         unitFundsList.add(unitFunds);
-        if(!unitFundsList.contains(unitFunds1)){
+        if (!unitFundsList.contains(unitFunds1)) {
             unitFundsList.add(unitFunds1);
         }
         System.out.println(unitFundsList.stream().mapToDouble(UnitFunds::getFunds).sum());
@@ -1264,25 +1283,26 @@ public class TableFacade extends BaseFacade {
 
     /**
      * 多报表查询接口
+     *
      * @param reportParamList
      * @return
      */
     public Object getManyReportStatistics(List<ReportParam> reportParamList) {
         try {
-            for(ReportParam reportParam:reportParamList){
+            for (ReportParam reportParam : reportParamList) {
                 ReportQueryParam reportQueryParam = reportParam.getConfig();
-                if(reportQueryParam==null){
+                if (reportQueryParam == null) {
                     continue;
                 }
-                if(StringUtils.isEmptyParam(reportQueryParam.getChart())){
+                if (StringUtils.isEmptyParam(reportQueryParam.getChart())) {
                     reportQueryParam.setChart(reportParam.getChart());
                 }
                 ReportData reportData = reportParam.getReportData();
-                if(reportData==null){
+                if (reportData == null) {
                     reportData = new ReportData();
                 }
-                reportData.setResult(getReportStatistics(reportQueryParam,reportData));
-                if("table".equals(reportQueryParam.getChart())){
+                reportData.setResult(getReportStatistics(reportQueryParam, reportData));
+                if ("table".equals(reportQueryParam.getChart())) {
                     String table_name = reportQueryParam.getTableName();
                     BigInteger totalCount = getQueryResultFromTable(table_name);
                     reportData.setTotalCount(totalCount.longValue());
@@ -1302,7 +1322,7 @@ public class TableFacade extends BaseFacade {
 //                    reportParam.setReportData(reportData);
 //                }
 //            });
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return reportParamList;
@@ -1310,16 +1330,17 @@ public class TableFacade extends BaseFacade {
 
     /**
      * 根据前端传入参数设置字段表头中文名称
+     *
      * @param reportQueryParam
      */
-    public void setReportFieldValue(ReportQueryParam reportQueryParam){
+    public void setReportFieldValue(ReportQueryParam reportQueryParam) {
         List<String> fieldList = new ArrayList<>();
-        if("table".equals(reportQueryParam.getChart())){
+        if ("table".equals(reportQueryParam.getChart())) {
             reportQueryParam.getTableResults().stream().forEach(fc -> fieldList.add(fc.getTitle()));
-        }else{
-            if(!StringUtils.isEmptyParam(reportQueryParam.getXaxis()))
+        } else {
+            if (!StringUtils.isEmptyParam(reportQueryParam.getXaxis()))
                 fieldList.add(reportQueryParam.getXaxis());
-            if(!StringUtils.isEmptyParam(reportQueryParam.getYaxis()))
+            if (!StringUtils.isEmptyParam(reportQueryParam.getYaxis()))
                 fieldList.add(reportQueryParam.getYaxis());
         }
         String colCodes = StringUtils.getQueryIdsString(fieldList);
@@ -1328,24 +1349,24 @@ public class TableFacade extends BaseFacade {
                 .append(colCodes).append(")");
         String query_sql = sb.toString();
         List list = createNativeQuery(query_sql).getResultList();
-        if("table".equals(reportQueryParam.getChart())){
+        if ("table".equals(reportQueryParam.getChart())) {
             List<FieldChange> fieldChangeList = reportQueryParam.getTableResults();
-            Map<String,String> reMap = new HashMap<>();
-            for(int i=0;i<list.size();i++) {
+            Map<String, String> reMap = new HashMap<>();
+            for (int i = 0; i < list.size(); i++) {
                 Object[] innerParams = (Object[]) list.get(i);
                 String colName = innerParams[0].toString();
                 String colCode = innerParams[1].toString();
-                reMap.put(colCode,colName);
+                reMap.put(colCode, colName);
             }
             fieldChangeList.stream().forEach(fieldChange -> {
-                if(StringUtils.isEmptyParam(fieldChange.getChangeTitle())){
+                if (StringUtils.isEmptyParam(fieldChange.getChangeTitle())) {
                     fieldChange.setChangeTitle(reMap.get(fieldChange.getTitle()));
                 }
             });
             reportQueryParam.setTableResults(fieldChangeList);
-        }else{
+        } else {
             List<FieldChange> fieldChangeList = new ArrayList<>();
-            for(int i=0;i<list.size();i++) {
+            for (int i = 0; i < list.size(); i++) {
                 Object[] innerParams = (Object[]) list.get(i);
                 String colName = innerParams[0].toString();
                 String colCode = innerParams[1].toString();
@@ -1358,14 +1379,15 @@ public class TableFacade extends BaseFacade {
         }
     }
 
-    public <T> T getQueryResultFromTable(String tableName){
+    public <T> T getQueryResultFromTable(String tableName) {
         StringBuffer sb = new StringBuffer("SELECT COUNT(*) FROM ").append(tableName);
-        BigInteger total = (BigInteger)createNativeQuery(sb.toString()).getResultList().get(0);
-        return (T)total;
+        BigInteger total = (BigInteger) createNativeQuery(sb.toString()).getResultList().get(0);
+        return (T) total;
     }
 
     /**
      * 新建，修改，删除用户自定义报表分组
+     *
      * @param reportGroup
      * @return
      */
@@ -1373,14 +1395,14 @@ public class TableFacade extends BaseFacade {
     public Response mergeCustomerReportGroup(ReportGroup reportGroup) {
         try {
             ReportGroup merge = merge(reportGroup);
-            if("-1".equals(reportGroup.getStatus()) && !StringUtils.isEmptyParam(reportGroup.getParentId())){
+            if ("-1".equals(reportGroup.getStatus()) && !StringUtils.isEmptyParam(reportGroup.getParentId())) {
                 delCustomerDefineTable(reportGroup.getTableId());
                 //删除自定义表所关联的数据分析表
-                String hql = "update TemplateQueryRule set status = '-1' where content like '%"+reportGroup.getTableId()+"%'";
+                String hql = "update TemplateQueryRule set status = '-1' where content like '%" + reportGroup.getTableId() + "%'";
                 excHql(hql);
             }
             return Response.status(Response.Status.OK).entity(merge).build();
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             throw e;
         }
@@ -1388,40 +1410,41 @@ public class TableFacade extends BaseFacade {
 
     /**
      * 获取用户自定义报表分组
+     *
      * @param reportName
      * @return
      */
-    public List<ReportGroupVo> getReportGroupVoList(String templateId,String reportName) {
+    public List<ReportGroupVo> getReportGroupVoList(String templateId, String reportName) {
         List<ReportGroupVo> reportGroupVos = new ArrayList<>();
-        try{
+        try {
             String userId = UserUtils.getCurrentUser().getId();
-            String hql = " from ReportGroup as r where r.status <> '-1' and r.createBy = '" +userId+"' and r.templateId = '"+templateId+"'";
-            if(!StringUtils.isEmptyParam(reportName)){
-                hql += " and r.reportName like '%"+reportName+"%' or exists(select 1 from ReportGroup where parentId = r.id" +
+            String hql = " from ReportGroup as r where r.status <> '-1' and r.createBy = '" + userId + "' and r.templateId = '" + templateId + "'";
+            if (!StringUtils.isEmptyParam(reportName)) {
+                hql += " and r.reportName like '%" + reportName + "%' or exists(select 1 from ReportGroup where parentId = r.id" +
                         " and status<>'-1') ";
             }
             hql += " order by createDate desc";
-            List<ReportGroup> reportGroups = createQuery(ReportGroup.class,hql,new ArrayList<>()).getResultList();
-            Map<String,List<ReportGroup>> secondGroups = new HashMap<>();
+            List<ReportGroup> reportGroups = createQuery(ReportGroup.class, hql, new ArrayList<>()).getResultList();
+            Map<String, List<ReportGroup>> secondGroups = new HashMap<>();
             reportGroups.stream().forEach(reportGroup -> {
-                if(StringUtils.isEmptyParam(reportGroup.getParentId())){
-                    ReportGroupVo reportGroupVo = new ReportGroupVo(reportGroup.getId(),reportGroup.getTableId(),reportGroup.getReportName());
+                if (StringUtils.isEmptyParam(reportGroup.getParentId())) {
+                    ReportGroupVo reportGroupVo = new ReportGroupVo(reportGroup.getId(), reportGroup.getTableId(), reportGroup.getReportName());
                     reportGroupVos.add(reportGroupVo);
-                }else{
-                    if(secondGroups.containsKey(reportGroup.getParentId())){
+                } else {
+                    if (secondGroups.containsKey(reportGroup.getParentId())) {
                         List<ReportGroup> innerList = secondGroups.get(reportGroup.getParentId());
                         innerList.add(reportGroup);
-                    }else{
+                    } else {
                         List<ReportGroup> innerList = new ArrayList<>();
                         innerList.add(reportGroup);
-                        secondGroups.put(reportGroup.getParentId(),innerList);
+                        secondGroups.put(reportGroup.getParentId(), innerList);
                     }
                 }
             });
             reportGroupVos.stream().parallel().forEach(reportGroupVo -> {
-                if(secondGroups.containsKey(reportGroupVo.getId())){
+                if (secondGroups.containsKey(reportGroupVo.getId())) {
                     reportGroupVo.setReportGroupList(secondGroups.get(reportGroupVo.getId()));
-                }else{
+                } else {
                     reportGroupVo.setReportGroupList(new ArrayList<ReportGroup>());
                 }
             });
@@ -1430,21 +1453,21 @@ public class TableFacade extends BaseFacade {
             reportGroupVo.setTableId("");
             reportGroupVo.setReportName("系统初始化报表");
             List<ReportGroup> systemReportList = new ArrayList<>();
-            List<TableConfig> tableConfigs = getTableConfig(templateId,"system");
+            List<TableConfig> tableConfigs = getTableConfig(templateId, "system");
             tableConfigs.stream().forEach(tableConfig -> {
                 ReportGroup sysReport = new ReportGroup();
                 sysReport.setTableId(tableConfig.getId());
                 sysReport.setReportName(tableConfig.getTableDesc());
-                if(!StringUtils.isEmptyParam(reportName)){
-                    if(tableConfig.getTableDesc().contains(reportName))
+                if (!StringUtils.isEmptyParam(reportName)) {
+                    if (tableConfig.getTableDesc().contains(reportName))
                         systemReportList.add(sysReport);
-                }else{
+                } else {
                     systemReportList.add(sysReport);
                 }
             });
             reportGroupVo.setReportGroupList(systemReportList);
             reportGroupVos.add(reportGroupVo);
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return reportGroupVos;
@@ -1452,63 +1475,64 @@ public class TableFacade extends BaseFacade {
 
     /**
      * 清洗表数据，版本号+1
+     *
      * @param tableUponFieldVo
      * @return
      */
     @Transactional
-    public TableUponFieldVo cleanDataByTableField(TableUponFieldVo tableUponFieldVo) throws Exception{
+    public TableUponFieldVo cleanDataByTableField(TableUponFieldVo tableUponFieldVo) throws Exception {
         Connection connection = null;
         try {
             //后续优化
             connection = dataSource.getConnection();
             String tableName = getTableNameById(tableUponFieldVo.getTableId());
             String templateId = tableUponFieldVo.getTemplateId();
-            TableUpon tableUponDb = getTableUponDb(tableName,templateId);
-            if(!"-1".equals(tableUponFieldVo.getStatus())){
-                Integer dataVersion = tableUponDb==null?0:tableUponDb.getDataVersion();
-                List<String> columnList = getTableColum("",tableName);
+            TableUpon tableUponDb = getTableUponDb(tableName, templateId);
+            if (!"-1".equals(tableUponFieldVo.getStatus())) {
+                Integer dataVersion = tableUponDb == null ? 0 : tableUponDb.getDataVersion();
+                List<String> columnList = getTableColum("", tableName);
                 List<FieldUponValue> fieldUponValueList = tableUponFieldVo.getFieldUponValueList();
-                Map<Integer,Map<String,Object>> fieldValueMapTo = new HashMap<>();
-                for(FieldUponValue fieldUponValue:fieldUponValueList){
+                Map<Integer, Map<String, Object>> fieldValueMapTo = new HashMap<>();
+                for (FieldUponValue fieldUponValue : fieldUponValueList) {
                     int index = columnList.indexOf(fieldUponValue.getField());
-                    Map<String,Object> innerMap = new HashMap<>();
+                    Map<String, Object> innerMap = new HashMap<>();
                     fieldUponValue.getUponValueList().stream().forEach(uponValue -> {
-                        uponValue.getNormalList().stream().forEach(x ->{
-                            innerMap.put(x==null?"":x.toString(),uponValue.getUponValue());
+                        uponValue.getNormalList().stream().forEach(x -> {
+                            innerMap.put(x == null ? "" : x.toString(), uponValue.getUponValue());
                         });
                     });
-                    if(fieldValueMapTo.containsKey(index)){
+                    if (fieldValueMapTo.containsKey(index)) {
                         fieldValueMapTo.get(index).putAll(innerMap);
-                    }else {
+                    } else {
                         fieldValueMapTo.put(index, innerMap);
                     }
                 }
                 StringBuffer sbSql = new StringBuffer("select ");
-                columnList.stream().forEach(f ->  sbSql.append(f).append(","));
-                String sql = sbSql.toString().substring(0,sbSql.toString().length()-1) + " from "+ tableName + " where data_version = '"+dataVersion+"'";
+                columnList.stream().forEach(f -> sbSql.append(f).append(","));
+                String sql = sbSql.toString().substring(0, sbSql.toString().length() - 1) + " from " + tableName + " where data_version = '" + dataVersion + "'";
                 List<Object> queryList = createNativeQuery(sql).getResultList();
-                queryList.stream().parallel().forEach(Object ->{
-                    Object[] innerParams = (Object[])Object;
-                    fieldValueMapTo.forEach((k,v) -> {
-                        String normalValue = innerParams[k]==null?"":innerParams[k].toString();
-                        if(v.containsKey(normalValue)){
+                queryList.stream().parallel().forEach(Object -> {
+                    Object[] innerParams = (Object[]) Object;
+                    fieldValueMapTo.forEach((k, v) -> {
+                        String normalValue = innerParams[k] == null ? "" : innerParams[k].toString();
+                        if (v.containsKey(normalValue)) {
                             innerParams[k] = v.get(normalValue);
                         }
                     });
                 });
-                saveResultToDb(tableName,dataVersion+1, "", queryList,connection);
+                saveResultToDb(tableName, dataVersion + 1, "", queryList, connection);
                 //保存 清洗记录
-                TableUpon tableUpon = tableUponDb==null?(new TableUpon()):tableUponDb;
+                TableUpon tableUpon = tableUponDb == null ? (new TableUpon()) : tableUponDb;
                 tableUpon.setTableName(tableName);
                 tableUpon.setTemplateId(templateId);
-                tableUpon.setDataVersion(dataVersion+1);
+                tableUpon.setDataVersion(dataVersion + 1);
                 tableUpon.setStatus("1");
                 TableUpon merge = merge(tableUpon);
                 List<FieldUponInfo> fieldUponInfos = new ArrayList<>();
-                tableUponFieldVo.getFieldUponValueList().stream().forEach(fuv ->{
+                tableUponFieldVo.getFieldUponValueList().stream().forEach(fuv -> {
                     fuv.getUponValueList().stream().parallel().forEach(uponValue -> {
                         FieldUponInfo fieldUponInfo = new FieldUponInfo();
-                        fieldUponInfo.setDataVersion(dataVersion+1);
+                        fieldUponInfo.setDataVersion(dataVersion + 1);
                         fieldUponInfo.setFieldEn(fuv.getField());
                         fieldUponInfo.setFieldZn(fuv.getFieldZn());
                         fieldUponInfo.setOriginalValue(uponValue.getNormalList().toString());
@@ -1519,30 +1543,30 @@ public class TableFacade extends BaseFacade {
                     });
                 });
                 batchInsert(fieldUponInfos);
-            }else{
+            } else {
                 //数据回退
-                if(tableUponDb!=null && tableUponDb.getDataVersion()> 0){
+                if (tableUponDb != null && tableUponDb.getDataVersion() > 0) {
                     Integer dataVersion = tableUponDb.getDataVersion();
                     //删除表中的数据
-                    String delTableSql = " delete from " + tableName + " where data_version = '"+dataVersion+"'";
+                    String delTableSql = " delete from " + tableName + " where data_version = '" + dataVersion + "'";
                     createNativeQuery(delTableSql).executeUpdate();
                     //删除映射的字段信息
-                    String delFieldHql = " delete from FieldUponInfo where relatedTableUponId = '"+tableUponDb.getId()+"' and dataVersion = "+ dataVersion;
+                    String delFieldHql = " delete from FieldUponInfo where relatedTableUponId = '" + tableUponDb.getId() + "' and dataVersion = " + dataVersion;
                     excHql(delFieldHql);
                     //原始表判断dataVersion是否大于0大于则更新，否则删除
-                    if(dataVersion>1){
-                        tableUponDb.setDataVersion(dataVersion-1);
+                    if (dataVersion > 1) {
+                        tableUponDb.setDataVersion(dataVersion - 1);
                         merge(tableUponDb);
-                    }else{
+                    } else {
                         remove(tableUponDb);
                     }
                 }
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             throw e;
-        }finally {
-            if(connection!=null){
+        } finally {
+            if (connection != null) {
                 try {
                     connection.close();
                 } catch (SQLException e) {
@@ -1553,29 +1577,33 @@ public class TableFacade extends BaseFacade {
         return tableUponFieldVo;
     }
 
-    public TableUpon getTableUponDb(String tableName,String templateId){
-        String hql = " from TableUpon where tableName = '" + tableName + "' and templateId = '"+templateId+"'";
-        List<TableUpon> tableUponList = createQuery(TableUpon.class,hql,new ArrayList<>()).getResultList();
-        return tableUponList.isEmpty()?null:tableUponList.get(0);
+    public TableUpon getTableUponDb(String tableName, String templateId) {
+        String hql = " from TableUpon where tableName = '" + tableName + "' and templateId = '" + templateId + "'";
+        List<TableUpon> tableUponList = createQuery(TableUpon.class, hql, new ArrayList<>()).getResultList();
+        return tableUponList.isEmpty() ? null : tableUponList.get(0);
     }
 
     /**
-     *根据tableId查询表所有的字段
+     * 根据tableId查询表所有的字段
+     *
      * @param tableId
      * @return
      */
     public List<TableColConfig> getTableColList(String tableId) {
-        String hql = " from TableColConfig where tableId = '"+tableId+"'";
-        List<TableColConfig> tableColConfigs = createQuery(TableColConfig.class,hql,new ArrayList<>()).getResultList();
+        String hql = " from TableColConfig where tableId = '" + tableId + "'";
+        List<TableColConfig> tableColConfigs = createQuery(TableColConfig.class, hql, new ArrayList<>()).getResultList();
         List<TableColConfig> tableColConfigList = new ArrayList<>();
-        for(TableColConfig tf:tableColConfigs){
-            if(!"id".equals(tf.getColCode()) && !"data_version".equals(tf.getColCode())){tableColConfigList.add(tf);}
+        for (TableColConfig tf : tableColConfigs) {
+            if (!"id".equals(tf.getColCode()) && !"data_version".equals(tf.getColCode())) {
+                tableColConfigList.add(tf);
+            }
         }
         return tableColConfigList;
     }
 
     /**
      * 查询字段去重后的值
+     *
      * @param fieldName
      * @param tableId
      * @return
@@ -1585,7 +1613,7 @@ public class TableFacade extends BaseFacade {
         StringBuffer sqlBf = new StringBuffer("select distinct ").append(fieldName).append(" from ").append(tableName);
         sqlBf.append(" where data_version = ").append("(select max(data_version) from ").append(tableName).append(" )");
         List list = createNativeQuery(sqlBf.toString()).getResultList();
-        if(list.contains(null)){
+        if (list.contains(null)) {
             list.remove(null);
             list.add("");
         }
@@ -1594,16 +1622,17 @@ public class TableFacade extends BaseFacade {
 
     /**
      * 根据templateId判断用户是否填写表单数据
+     *
      * @param templateId
      * @return
      */
     public List<String> getTemplateMasterFillInfo(String templateId) {
         List<String> info = new ArrayList<>();
-        String sql = "select id from template_result_master where status <>'-1' and template_id = '"+templateId+"'";
+        String sql = "select id from template_result_master where status <>'-1' and template_id = '" + templateId + "'";
         List list = createNativeQuery(sql).getResultList();
-        if(list!=null && !list.isEmpty()){
+        if (list != null && !list.isEmpty()) {
             info.add("true");
-        }else{
+        } else {
             info.add("false");
         }
         return info;
@@ -1615,44 +1644,44 @@ public class TableFacade extends BaseFacade {
         List<String> relist = new ArrayList<>();
         try {
             List<Document> result = mongoTemplate.find(query, Document.class, "templateFilling");
-            for(int i=1;i<result.size();i++){
+            for (int i = 1; i < result.size(); i++) {
                 Document doc = result.get(i);
-                List<Document> zzdoc = (List<Document>)doc.get("dch_1523184137019");
+                List<Document> zzdoc = (List<Document>) doc.get("dch_1523184137019");
                 List<Document> zzdocNew = new ArrayList<>();
-                for(Document zc:zzdoc){
-                    if(!zc.isEmpty() && !zc.containsKey("dch_1523184137019@2")){
-                        zc.put("dch_1523184137019@2","");
+                for (Document zc : zzdoc) {
+                    if (!zc.isEmpty() && !zc.containsKey("dch_1523184137019@2")) {
+                        zc.put("dch_1523184137019@2", "");
                     }
-                    if(!zc.isEmpty()){
+                    if (!zc.isEmpty()) {
                         zzdocNew.add(zc);
                     }
                 }
                 doc.put("dch_1523184137019", zzdocNew);
                 String jsonStr = JSONUtil.objectToJson(doc).toString();
                 String sql = "select data_element_code,data_element_name from template_data_element where " +
-                        " page_id in (select id from template_page where status<>'-1' and template_id = '"+templateId+"') order by data_element_code desc";
+                        " page_id in (select id from template_page where status<>'-1' and template_id = '" + templateId + "') order by data_element_code desc";
                 List list = createNativeQuery(sql).getResultList();
-                Map<String,String> codeMap = new HashMap<>();
-                Map<String,String> codeMapAll = new LinkedHashMap<>();
-                list.stream().forEach(cd->{
-                    Object[] params = (Object[])cd;
+                Map<String, String> codeMap = new HashMap<>();
+                Map<String, String> codeMapAll = new LinkedHashMap<>();
+                list.stream().forEach(cd -> {
+                    Object[] params = (Object[]) cd;
                     String code = params[0].toString();
-                    if(code.contains("$")){
-                        code = code.replace("$","@");
-                        codeMapAll.put(code,params[1].toString());
-                    }else{
+                    if (code.contains("$")) {
+                        code = code.replace("$", "@");
+                        codeMapAll.put(code, params[1].toString());
+                    } else {
                         codeMap.put(code, params[1].toString());
                     }
                 });
-                for(String key:codeMap.keySet()){
-                    codeMapAll.put(key,codeMap.get(key));
+                for (String key : codeMap.keySet()) {
+                    codeMapAll.put(key, codeMap.get(key));
                 }
-                for(String key:codeMapAll.keySet()){
-                    jsonStr = jsonStr.replace(key,codeMapAll.get(key));
+                for (String key : codeMapAll.keySet()) {
+                    jsonStr = jsonStr.replace(key, codeMapAll.get(key));
                 }
-                TemplateConst.createJsonFile(jsonStr,"D:/dch","project"+i);
+                TemplateConst.createJsonFile(jsonStr, "D:/dch", "project" + i);
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return relist;
@@ -1660,65 +1689,66 @@ public class TableFacade extends BaseFacade {
 
     /**
      * 初始化用户自定义的表
+     *
      * @param templateId
      */
-    public void initCustomerDefineTables(String templateId) throws Exception{
+    public void initCustomerDefineTables(String templateId) throws Exception {
         Connection connection = dataSource.getConnection();
         try {
             connection.setAutoCommit(false);
             StringBuffer sb = new StringBuffer("select create_by,table_name,execute_sql from table_config where create_from = 'user'");
             sb.append("and create_by is not null and form_id = '").append(templateId).append("' order by create_by desc, create_date asc");
             List list = createNativeQuery(sb.toString()).getResultList();
-            Map<String,List> tableList = new HashMap<>();
-            Map<String,TreeMap<String,String>> tableMap = new HashMap<>();
-            list.parallelStream().forEach(s->{
-                Object[] params = (Object[])s;
+            Map<String, List> tableList = new HashMap<>();
+            Map<String, TreeMap<String, String>> tableMap = new HashMap<>();
+            list.parallelStream().forEach(s -> {
+                Object[] params = (Object[]) s;
                 String user = params[0].toString();
-                if(tableMap.containsKey(user)){
-                    tableMap.get(user).put(params[1].toString(),params[2].toString());
-                }else{
-                    TreeMap<String,String> sqlMap = new TreeMap();
-                    sqlMap.put(params[1].toString(),params[2].toString());
-                    tableMap.put(user,sqlMap);
+                if (tableMap.containsKey(user)) {
+                    tableMap.get(user).put(params[1].toString(), params[2].toString());
+                } else {
+                    TreeMap<String, String> sqlMap = new TreeMap();
+                    sqlMap.put(params[1].toString(), params[2].toString());
+                    tableMap.put(user, sqlMap);
                 }
             });
             PreparedStatement ps = connection.prepareStatement("");
-            tableMap.forEach((k,v)-> v.forEach((ik,iv)->{
+            tableMap.forEach((k, v) -> v.forEach((ik, iv) -> {
                 String delSql = "delete FROM " + ik;
                 try {
                     ps.execute(delSql);
                     ResultSet resultSet = ps.executeQuery(iv);
-                    List queryList = getConnectionQueryResult(resultSet,iv);
-                    saveResultToDb(ik,0, iv, queryList,connection);
-                    tableList.put(ik,queryList);
+                    List queryList = getConnectionQueryResult(resultSet, iv);
+                    saveResultToDb(ik, 0, iv, queryList, connection);
+                    tableList.put(ik, queryList);
                 } catch (SQLException e) {
                     new RuntimeException(e);
                 }
             }));
-            Map<String,Integer> tableVersion = new HashMap<>();
+            Map<String, Integer> tableVersion = new HashMap<>();
             StringBuffer cusBuf = new StringBuffer("select tu.table_name,ff.field_en,ff.original_value,ff.upon_value,tu.data_version from");
             cusBuf.append(" table_upon tu,field_upon_info ff where ff.related_table_upon_id = tu.id and tu.templateId = '")
                     .append(templateId).append("'").append(" ORDER BY tu.table_name asc, ff.data_version asc");
             List dataList = createNativeQuery(cusBuf.toString()).getResultList();
-            Map<String,TreeMap<String,List<UponValue>>> dataMap = new HashMap<>();
-            dataList.parallelStream().forEach(r->{
-                Object[] params = (Object[])r;
+            Map<String, TreeMap<String, List<UponValue>>> dataMap = new HashMap<>();
+            dataList.parallelStream().forEach(r -> {
+                Object[] params = (Object[]) r;
                 String tableName = params[0].toString();
                 String field = params[1].toString();
                 String oirginaValue = params[2].toString();
                 String uponValue = params[3].toString();
                 String data_version = params[4].toString();
-                tableVersion.put(tableName,Integer.valueOf(data_version));
+                tableVersion.put(tableName, Integer.valueOf(data_version));
                 List normalList = getNormalList(oirginaValue);
-                if(dataMap.containsKey(tableName)){
-                    TreeMap<String,List<UponValue>> treeMap = dataMap.get(tableName);
+                if (dataMap.containsKey(tableName)) {
+                    TreeMap<String, List<UponValue>> treeMap = dataMap.get(tableName);
                     List<UponValue> newUponList = new ArrayList<>();
-                    if(treeMap.containsKey(field)){
+                    if (treeMap.containsKey(field)) {
                         List<UponValue> uponList = treeMap.get(field);
-                        uponList.parallelStream().forEach(up->{
-                            if(normalList.contains(up.getUponValue())){
+                        uponList.parallelStream().forEach(up -> {
+                            if (normalList.contains(up.getUponValue())) {
                                 up.setUponValue(uponValue);
-                            }else{
+                            } else {
                                 UponValue upon = new UponValue();
                                 upon.setNormalList(normalList);
                                 upon.setUponValue(uponValue);
@@ -1726,63 +1756,63 @@ public class TableFacade extends BaseFacade {
                             }
                         });
                         uponList.addAll(newUponList);
-                    }else{
+                    } else {
                         UponValue upon = new UponValue();
                         upon.setNormalList(normalList);
                         upon.setUponValue(uponValue);
                         newUponList.add(upon);
-                        treeMap.put(field,newUponList);
+                        treeMap.put(field, newUponList);
                     }
-                }else{
-                    TreeMap<String,List<UponValue>> treeMap = new TreeMap<>();
+                } else {
+                    TreeMap<String, List<UponValue>> treeMap = new TreeMap<>();
                     List<UponValue> uponValues = new ArrayList<>();
                     UponValue upon = new UponValue();
                     upon.setNormalList(normalList);
                     upon.setUponValue(uponValue);
                     uponValues.add(upon);
-                    treeMap.put(field,uponValues);
-                    dataMap.put(tableName,treeMap);
+                    treeMap.put(field, uponValues);
+                    dataMap.put(tableName, treeMap);
                 }
             });
-            dataMap.forEach((tk,tv)->{
-                List<String> columnList = getTableColum("",tk);
-                Map<Integer,Map<String,Object>> fieldValueMapTo = new HashMap<>();
-                tv.forEach((ik,iv)->{
+            dataMap.forEach((tk, tv) -> {
+                List<String> columnList = getTableColum("", tk);
+                Map<Integer, Map<String, Object>> fieldValueMapTo = new HashMap<>();
+                tv.forEach((ik, iv) -> {
                     int index = columnList.indexOf(ik);
-                    Map<String,Object> innerMap = new HashMap<>();
+                    Map<String, Object> innerMap = new HashMap<>();
                     iv.stream().forEach(uponValue -> {
-                        uponValue.getNormalList().stream().forEach(x ->{
-                            innerMap.put(x==null?"":x.toString(),uponValue.getUponValue());
+                        uponValue.getNormalList().stream().forEach(x -> {
+                            innerMap.put(x == null ? "" : x.toString(), uponValue.getUponValue());
                         });
                     });
-                    if(fieldValueMapTo.containsKey(index)){
+                    if (fieldValueMapTo.containsKey(index)) {
                         fieldValueMapTo.get(index).putAll(innerMap);
-                    }else {
+                    } else {
                         fieldValueMapTo.put(index, innerMap);
                     }
                 });
                 StringBuffer sbSql = new StringBuffer("select ");
-                columnList.stream().forEach(f ->  sbSql.append(f).append(","));
+                columnList.stream().forEach(f -> sbSql.append(f).append(","));
                 List<Object> queryList = tableList.get(tk);
-                queryList.stream().parallel().forEach(Object ->{
-                    Object[] innerParams = (Object[])Object;
-                    fieldValueMapTo.forEach((k,v) -> {
-                        String normalValue = innerParams[k]==null?"":innerParams[k].toString();
-                        if(v.containsKey(normalValue)){
+                queryList.stream().parallel().forEach(Object -> {
+                    Object[] innerParams = (Object[]) Object;
+                    fieldValueMapTo.forEach((k, v) -> {
+                        String normalValue = innerParams[k] == null ? "" : innerParams[k].toString();
+                        if (v.containsKey(normalValue)) {
                             innerParams[k] = v.get(normalValue);
                         }
                     });
                 });
-                saveResultToDb(tk,tableVersion.get(tk), "", queryList,connection);
+                saveResultToDb(tk, tableVersion.get(tk), "", queryList, connection);
             });
-        }catch (Exception e){
-            if(connection!=null){
+        } catch (Exception e) {
+            if (connection != null) {
                 connection.rollback();
             }
             throw e;
-        }finally {
+        } finally {
             connection.commit();
-            if(connection!=null){
+            if (connection != null) {
                 try {
                     connection.close();
                 } catch (SQLException e) {
@@ -1792,26 +1822,26 @@ public class TableFacade extends BaseFacade {
         }
     }
 
-    public List getNormalList(String listValue){
+    public List getNormalList(String listValue) {
         List list = null;
-        if(!StringUtils.isEmptyParam(listValue)){
-            listValue = listValue.replace("[","");
-            listValue = listValue.replace("]","");
-            listValue = listValue.replace(" ","");
+        if (!StringUtils.isEmptyParam(listValue)) {
+            listValue = listValue.replace("[", "");
+            listValue = listValue.replace("]", "");
+            listValue = listValue.replace(" ", "");
             String[] strs = listValue.split(",");
             list = Arrays.asList(strs);
         }
         return list;
     }
 
-    public List getConnectionQueryResult(ResultSet reset,String sql) throws SQLException{
+    public List getConnectionQueryResult(ResultSet reset, String sql) throws SQLException {
         List queryList = new ArrayList();
-        List<String> columnList = getTableColum(sql,"");
+        List<String> columnList = getTableColum(sql, "");
         int size = columnList.size();
-        while(reset.next()){
+        while (reset.next()) {
             Object[] params = new Object[size];
-            for(int i=1;i<=size;i++){
-                params[i-1] = reset.getString(i);
+            for (int i = 1; i <= size; i++) {
+                params[i - 1] = reset.getString(i);
             }
             queryList.add(params);
         }
@@ -1820,28 +1850,38 @@ public class TableFacade extends BaseFacade {
 
     /**
      * 前端传入的值有问题，后端去除特殊符号
+     *
      * @param value
      * @return
      */
-    public String getRealValue(Object value){
+    public String getRealValue(Object value) {
         String valueStr = value.toString();
-        valueStr = valueStr.replace("[","");
-        valueStr = valueStr.replace("]","");
-        valueStr = valueStr.replace(",","");
-        valueStr = valueStr.replace("，","");
-        if(TemplateConst.isNumeric(valueStr)){
+        valueStr = valueStr.replace("[", "");
+        valueStr = valueStr.replace("]", "");
+        valueStr = valueStr.replace(",", "");
+        valueStr = valueStr.replace("，", "");
+        if (TemplateConst.isNumeric(valueStr)) {
             return valueStr;
         }
-        return "'"+valueStr+"'";
+        return "'" + valueStr + "'";
     }
 
-    public String getColCodeAs(String code,Map<String,Integer> map){
+    public String getColCodeAs(String code, Map<String, Integer> map) {
         Integer index = map.get(code);
         String colCodeAs = code + "_" + index;
-        if(map.containsKey(colCodeAs)){
-            map.put(code,index + 1);
-            colCodeAs = getColCodeAs(code,map);
+        if (map.containsKey(colCodeAs)) {
+            map.put(code, index + 1);
+            colCodeAs = getColCodeAs(code, map);
         }
         return colCodeAs;
+    }
+
+    /**
+     * 根据ID获取具体的TableConfig
+     * @param id
+     * @return
+     */
+    public TableConfig getTableConfig(String id) {
+        return get(TableConfig.class,id);
     }
 }

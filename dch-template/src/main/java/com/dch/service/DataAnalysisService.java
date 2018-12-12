@@ -12,6 +12,7 @@ import org.apache.zookeeper.Op;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.PathVariable;
 import sun.security.provider.certpath.OCSPResponse;
 
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -51,6 +52,13 @@ public class DataAnalysisService {
     @Path("get-tables")
     public List<TableConfig> getTableConfig(@QueryParam("templateId") String templateId,@QueryParam("type")String type){
         return tableFacade.getTableConfig(templateId,type) ;
+    }
+
+    @GET
+    @Path("get-custom-table")
+    public TableConfig getTableConfig(@QueryParam("id") String id){
+
+        return tableFacade.getTableConfig(id);
     }
 
 

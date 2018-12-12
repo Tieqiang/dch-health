@@ -6,8 +6,11 @@ import com.dch.entity.TableColConfig;
 import com.dch.entity.TableConfig;
 import com.dch.facade.TableFacade;
 import com.dch.test.base.TestUtils;
+import com.dch.util.JSONUtil;
 import com.dch.vo.*;
 import com.sun.jersey.api.client.WebResource;
+import net.sf.json.util.JSONUtils;
+import org.codehaus.jettison.json.JSONException;
 import org.hibernate.metamodel.domain.Entity;
 import org.junit.Assert;
 import org.junit.Before;
@@ -16,6 +19,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.MediaType;
+import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -1216,5 +1221,38 @@ public class DataAnalysisServiceTest extends BaseTest {
         TableConfig response  =webResource.path("data-analysis/create-custom-table").type(MediaType.APPLICATION_JSON_TYPE).post(TableConfig.class,json);
         Assert.assertNotNull(response);
     }
+
+    @Test
+    public void testObjectJsonUtils() throws IOException, JSONException {
+        TestBean testBean = new TestBean();
+        testBean.setName("测试");
+        testBean.setPassword("password");
+        String s = JSONUtil.objectToJsonString(testBean);
+        logger.info(s);
+        Assert.assertEquals(true,true);
+    }
+
+
+    public class TestBean implements Serializable{
+        private String name ;
+        private String password ;
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public String getPassword() {
+            return password;
+        }
+
+        public void setPassword(String password) {
+            this.password = password;
+        }
+    }
+
 
 }

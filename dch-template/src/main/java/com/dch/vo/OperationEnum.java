@@ -10,5 +10,7 @@ public enum OperationEnum {
     GRATER_OR_EQUAL_THAN,//大于等于
     LESS_OR_EQUAL_THAN,//小于等于
     IN,//在什么范围内
-
+    NOT_LIKE,//不与相似
+    NOT_EQUAL,//不等于
+    LIKE,//相似
 }

@@ -12,6 +12,7 @@ public class TableConfig extends BaseEntity {
     private String formId;
     private String createFrom;
     private String executeSql ;
+    private String tableDefineObject ;
 
     @Basic
     @Column(name = "table_name")
@@ -63,4 +64,12 @@ public class TableConfig extends BaseEntity {
         this.executeSql = executeSql;
     }
 
+
+    public String getTableDefineObject() {
+        return tableDefineObject;
+    }
+
+    public void setTableDefineObject(String tableDefineObject) {
+        this.tableDefineObject = tableDefineObject;
+    }
 }
