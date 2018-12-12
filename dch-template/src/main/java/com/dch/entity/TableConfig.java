@@ -65,6 +65,8 @@ public class TableConfig extends BaseEntity {
     }
 
 
+    @Basic
+    @Column(name="table_define_object")
     public String getTableDefineObject() {
         return tableDefineObject;
     }
