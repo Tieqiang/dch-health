@@ -549,6 +549,14 @@ public class TableFacade extends BaseFacade {
                     condition = condition.substring(0, condition.length() - 1);
                     condition += " ) " + conditionVO.getNextOperation();
                     break;
+                case NOT_IN:
+                    condition += " not in (";
+                    for (String str : conditionVO.getInValues()) {
+                        condition += "'" + str + "',";
+                    }
+                    condition = condition.substring(0, condition.length() - 1);
+                    condition += " ) " + conditionVO.getNextOperation();
+                    break;
                 case NOT_EQUAL:
                     condition += this.buildCondition("<>", conditionVO, tableInfo);
                     break;

@@ -13,4 +13,5 @@ public enum OperationEnum {
     NOT_LIKE,//不与相似
     NOT_EQUAL,//不等于
     LIKE,//相似
+    NOT_IN,//不在什么范围内
 }
