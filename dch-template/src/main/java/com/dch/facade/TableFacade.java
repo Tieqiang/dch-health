@@ -321,8 +321,8 @@ public class TableFacade extends BaseFacade {
         TableConfig tableConfig = createTableVO.getTableConfig();
         tableConfig.setCreateFrom("user");
         tableConfig.setTableDesc(tableConfig.getTableName());
-        tableConfig.setTableDefineObject(JSONUtil.objectToJsonString(createTableVO));
-
+        tableConfig.setTableDefineObject(createTableVO.getTableConfig().getTableDefineObject());
+        Boolean isModify = StringUtils.isEmptyParam(tableConfig.getId()) ? false:true;
         Connection connection = this.dataSource.getConnection();
         try {
             String executeSQL = createExecuteSQL(createTableVO.getUserCustomTableVOs(), createTableVO.getOperationConditionVOS());
@@ -344,6 +344,12 @@ public class TableFacade extends BaseFacade {
             tableConfig.setModifyDate(new Timestamp(new Date().getTime()));
             TableConfig merge = merge(tableConfig);
             logger.info("保存自定义表信息成功！");
+            if(isModify){
+                String sql = "delete from TableColConfig where tableId = '"+tableConfig.getId()+"'";
+                excHql(sql);
+                String rsql = "delete from ReportGroup where tableId = '"+tableConfig.getId()+"'";
+                excHql(rsql);
+            }
             for (TableColConfig config : tableColConfigs) {
                 config.setTableId(merge.getId());
                 merge(config);
@@ -1054,10 +1060,12 @@ public class TableFacade extends BaseFacade {
                     sqlBuffer.append(" WHERE data_version = (select max(data_version) from ").append(tableName).append(")");
                 }
                 sqlBuffer.append(" GROUP BY ").append(x_field);
-                if ("0".equals(sort)) {//降序
-                    sqlBuffer.append(" ORDER BY ").append(x_field).append(" DESC");
-                } else if ("1".equals(sort)) {
-                    sqlBuffer.append(" ORDER BY ").append(x_field).append(" ASC");
+                if ("1".equals(sort)) {//升序
+                    sqlBuffer.append(" ORDER BY count(*) ASC");
+//                    sqlBuffer.append(" ORDER BY ").append(x_field).append(" ASC");
+                } else {
+//                    sqlBuffer.append(" ORDER BY ").append(x_field).append(" DESC");
+                    sqlBuffer.append(" ORDER BY count(*) DESC");
                 }
                 List resultList = createNativeQuery(sqlBuffer.toString()).getResultList();
                 for (int i = 0; i < resultList.size(); i++) {
