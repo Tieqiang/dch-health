@@ -272,4 +272,15 @@ public class DataAnalysisService {
     public Response cleanTableDataByFieldCondition(TableDelVo tableDelVo){
         return tableFacade.cleanTableDataByFieldCondition(tableDelVo);
     }
+
+    /**
+     * 报表统计点击统计数量查看详情信息
+     * @param cencusCondition
+     * @return
+     */
+    @POST
+    @Path("get-detail-by-condition")
+    public CensusDetailVo getCountDetailByCondition(CencusCondition cencusCondition){
+        return tableFacade.getCountDetailByCondition(cencusCondition);
+    }
 }

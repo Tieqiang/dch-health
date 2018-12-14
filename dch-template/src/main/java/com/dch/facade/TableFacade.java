@@ -329,10 +329,12 @@ public class TableFacade extends BaseFacade {
         tableConfig.setTableDefineObject(createTableVO.getTableConfig().getTableDefineObject());
         Boolean isModify = StringUtils.isEmptyParam(tableConfig.getId()) ? false:true;
         Connection connection = this.dataSource.getConnection();
+        String dbTableName = "";
         try {
             String executeSQL = createExecuteSQL(createTableVO.getUserCustomTableVOs(), createTableVO.getOperationConditionVOS());
             List<TableColConfig> tableColConfigs = createTAbleColConfigs(createTableVO.getUserCustomTableVOs(), createTableVO.getOperationConditionVOS());
-            String tableName = createUserDefineTable(tableConfig.getTableName());
+            dbTableName = isModify ? getTableNameById(tableConfig.getId()):"";
+            String tableName = createUserDefineTable(tableConfig,dbTableName);
             String createTableSql = createCreateCustomTableSQL(tableColConfigs, tableName);
 
             String[] split = createTableSql.split(";");
@@ -342,8 +344,10 @@ public class TableFacade extends BaseFacade {
                 preparedStatement.execute();
                 preparedStatement.close();
             }
-            if(isModify && !tableName.equals(tableConfig.getTableName())){
-                modifyTemplateQueryRule(tableConfig.getTableName(),tableName);
+            if(isModify){
+                if(!dbTableName.equals(tableName)){
+                    modifyTemplateQueryRule(dbTableName,tableName);
+                }
             }
             tableConfig.setTableName(tableName);
             tableConfig.setExecuteSql(executeSQL);
@@ -433,11 +437,14 @@ public class TableFacade extends BaseFacade {
     /**
      * 生成表名
      *
-     * @param tableName
+     * @param tableConfig
      * @return
      */
-    public synchronized String createUserDefineTable(String tableName) {
-        String table = "USER_CUSTOM_" + PinYin2Abbreviation.cn2py(tableName);
+    public synchronized String createUserDefineTable(TableConfig tableConfig,String dbTableName) {
+        String table = "USER_CUSTOM_" + PinYin2Abbreviation.cn2py(tableConfig.getTableName());
+        if(dbTableName.equals(table)){
+            return dbTableName;
+        }
         List list = queryTableExist(table);
         if (!list.isEmpty()) {
             list.remove(table);
@@ -1077,7 +1084,7 @@ public class TableFacade extends BaseFacade {
             //如果所选的字段一致，则为统计计数
             if (x_field.equals(y_field) || StringUtils.isEmptyParam(y_field)) {
                 sqlBuffer.append(" count(*),").append(x_field).append(" FROM ").append(tableName)
-                         .append(" WHERE ").append(x_field).append(" not in ('','无','-','/') ");
+                         .append(" WHERE ").append(" 1=1 ");
                 if (!tableName.startsWith("data_master")) {
                     sqlBuffer.append(" and data_version = (select max(data_version) from ").append(tableName).append(")");
                 }
@@ -1272,51 +1279,6 @@ public class TableFacade extends BaseFacade {
         return returnInfo;
     }
 
-    public static void main(String args[]) {
-        List<MongoResultVo> list = new ArrayList<>();
-        MongoResultVo mongoResultVo = new MongoResultVo();
-        mongoResultVo.setName("1");
-        mongoResultVo.setValue(2);
-        list.add(mongoResultVo);
-        MongoResultVo mongoResultVo2 = new MongoResultVo();
-        mongoResultVo2.setName("1");
-        mongoResultVo2.setValue(2);
-        list.add(mongoResultVo2);
-        System.out.println(list.stream().mapToDouble(MongoResultVo::getValue).average().getAsDouble());
-        System.out.println(list.stream().mapToDouble(MongoResultVo::getValue).sum());
-
-        List<UnitFunds> unitFundsList = new ArrayList<>();
-        UnitFunds unitFunds = new UnitFunds();
-        unitFunds.setUnit("1");
-        unitFunds.setFunds(2.0);
-        UnitFunds unitFunds1 = new UnitFunds();
-        unitFunds1.setUnit("1");
-        unitFunds1.setFunds(2.0);
-        unitFundsList.add(unitFunds);
-        if (!unitFundsList.contains(unitFunds1)) {
-            unitFundsList.add(unitFunds1);
-        }
-        System.out.println(unitFundsList.stream().mapToDouble(UnitFunds::getFunds).sum());
-        ReportQueryParam reportQueryParam = new ReportQueryParam();
-        List<FieldChange> fieldChangeList = new ArrayList<>();
-        FieldChange fieldChange = new FieldChange();
-        fieldChange.setChangeTitle("姓名");
-        fieldChange.setTitle("name");
-        FieldChange fieldChange1 = new FieldChange();
-        fieldChange1.setChangeTitle("年龄");
-        fieldChange1.setTitle("age");
-        fieldChangeList.add(fieldChange);
-        fieldChangeList.add(fieldChange1);
-        reportQueryParam.setTableResults(fieldChangeList);
-        try {
-            System.out.println(JSONUtil.objectToJson(reportQueryParam));
-        } catch (JSONException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     /**
      * 多报表查询接口
      *
@@ -1347,17 +1309,6 @@ public class TableFacade extends BaseFacade {
                 }
                 reportParam.setReportData(reportData);
             }
-//            reportParamList.stream().parallel().forEach(reportParam -> {
-//                ReportQueryParam reportQueryParam = reportParam.getConfig();
-//                if(reportQueryParam!=null){
-//                    if(StringUtils.isEmptyParam(reportQueryParam.getChart())){
-//                        reportQueryParam.setChart(reportParam.getChart());
-//                    }
-//                    ReportData reportData = new ReportData();
-//                    reportData.setResult(getReportStatistics(reportQueryParam));
-//                    reportParam.setReportData(reportData);
-//                }
-//            });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -1637,6 +1588,17 @@ public class TableFacade extends BaseFacade {
         return tableColConfigList;
     }
 
+    public List<TableColConfig> getTableFieldsByTableName(String tableName) {
+        String hql = "select t from TableColConfig as t where exists(select 1 from TableConfig where id = t.tableId and tableName = '"+tableName+"')";
+        List<TableColConfig> tableColConfigs = createQuery(TableColConfig.class, hql, new ArrayList<>()).getResultList();
+        List<TableColConfig> tableColConfigList = new ArrayList<>();
+        for (TableColConfig tf : tableColConfigs) {
+            if (!"id".equals(tf.getColCode()) && !"data_version".equals(tf.getColCode())) {
+                tableColConfigList.add(tf);
+            }
+        }
+        return tableColConfigList;
+    }
     /**
      * 查询字段去重后的值
      *
@@ -1971,7 +1933,7 @@ public class TableFacade extends BaseFacade {
                     fileInputStream.close();
                 });
                 String fileName = URLEncoder.encode(tableConfig.getTableDesc(), "UTF-8");
-                return Response.status(Response.Status.OK).entity(streamingOutput).header("Content-disposition","attachment;filename="+ fileName)
+                return Response.status(Response.Status.OK).entity(streamingOutput).header("Content-disposition","attachment;filename="+ fileName +".xls")
                         .header("Cache-Control","no-cache").build();
             }
         }catch (Exception e){
@@ -2040,5 +2002,24 @@ public class TableFacade extends BaseFacade {
         }catch (Exception e){
             return Response.status(Response.Status.OK).entity(new ReturnInfo("false",e.getMessage())).build();
         }
+    }
+
+    public CensusDetailVo getCountDetailByCondition(CencusCondition cencusCondition) {
+        CensusDetailVo cv = new CensusDetailVo();
+        String tableName = cencusCondition.getTableName();
+        List<String> fieldList = new ArrayList<>();
+        List<TableColConfig> tableColConfigs = getTableFieldsByTableName(tableName);
+        StringBuffer queryBuf = new StringBuffer("SELECT ");
+        tableColConfigs.stream().forEach(t->{
+            queryBuf.append(t.getColCode()).append(",");
+            fieldList.add(t.getColName());
+        });
+        StringBuffer queryBf = new StringBuffer(queryBuf.toString().substring(0,queryBuf.length()-1));
+        queryBf.append(" FROM ").append(tableName).append(" WHERE ").append(cencusCondition.getField())
+                .append("= '").append(cencusCondition.getFieldValue()).append("'");
+        List resultList = createNativeQuery(queryBf.toString()).getResultList();
+        cv.setFieldList(fieldList);
+        cv.setResultList(resultList);
+        return cv;
     }
 }
