@@ -151,4 +151,22 @@ public class TemplateConst {
         }
         return result.toString();
     }
+
+    /**
+     * 前端传入的值有问题，后端去除特殊符号
+     *
+     * @param value
+     * @return
+     */
+    public static String getSqlConditionValue(Object value) {
+        String valueStr = value.toString();
+        valueStr = valueStr.replace("[", "");
+        valueStr = valueStr.replace("]", "");
+        valueStr = valueStr.replace(",", "");
+        valueStr = valueStr.replace("，", "");
+        if (isNumeric(valueStr)) {
+            return valueStr;
+        }
+        return "'" + valueStr + "'";
+    }
 }

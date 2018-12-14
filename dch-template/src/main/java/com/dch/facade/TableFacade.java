@@ -19,11 +19,16 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.net.URLEncoder;
 import java.sql.*;
 import java.util.*;
 import java.util.Date;
@@ -337,7 +342,9 @@ public class TableFacade extends BaseFacade {
                 preparedStatement.execute();
                 preparedStatement.close();
             }
-
+            if(isModify && !tableName.equals(tableConfig.getTableName())){
+                modifyTemplateQueryRule(tableConfig.getTableName(),tableName);
+            }
             tableConfig.setTableName(tableName);
             tableConfig.setExecuteSql(executeSQL);
             tableConfig.setCreateDate(new Timestamp(new Date().getTime()));
@@ -377,6 +384,21 @@ public class TableFacade extends BaseFacade {
         return tableConfig;
     }
 
+    /**
+     * 如果修改表名，统计查询中的表命需要变更成新的表名
+     * @param oldTableName
+     * @param newTableName
+     */
+    public void modifyTemplateQueryRule(String oldTableName,String newTableName){
+        String hql = " from TemplateQueryRule where content like '%"+oldTableName+"%'";
+        List<TemplateQueryRule> templateQueryRules = createQuery(TemplateQueryRule.class,hql,new ArrayList<>()).getResultList();
+        for(TemplateQueryRule templateQueryRule:templateQueryRules){
+            String content = templateQueryRule.getContent();
+            content = content.replaceAll(oldTableName,newTableName);
+            templateQueryRule.setContent(content);
+            merge(templateQueryRule);
+        }
+    }
     /**
      * 生成主表进行判断，如果存在的话 添加下标
      *
@@ -1018,7 +1040,6 @@ public class TableFacade extends BaseFacade {
         String y_field = reportQueryParam.getYaxis();
         String sort = reportQueryParam.getSortType();
         String type = reportQueryParam.getType();
-        //String table_name = getTableNameById(tableName);
         StringBuffer sqlBuffer = new StringBuffer("SELECT ");
         try {
             //表格类型查询，查询字段表统并赋值，柱状图 也赋予字段值
@@ -1055,16 +1076,15 @@ public class TableFacade extends BaseFacade {
             }
             //如果所选的字段一致，则为统计计数
             if (x_field.equals(y_field) || StringUtils.isEmptyParam(y_field)) {
-                sqlBuffer.append(" count(*),").append(x_field).append(" FROM ").append(tableName);
+                sqlBuffer.append(" count(*),").append(x_field).append(" FROM ").append(tableName)
+                         .append(" WHERE ").append(x_field).append(" not in ('','无','-','/') ");
                 if (!tableName.startsWith("data_master")) {
-                    sqlBuffer.append(" WHERE data_version = (select max(data_version) from ").append(tableName).append(")");
+                    sqlBuffer.append(" and data_version = (select max(data_version) from ").append(tableName).append(")");
                 }
                 sqlBuffer.append(" GROUP BY ").append(x_field);
                 if ("1".equals(sort)) {//升序
                     sqlBuffer.append(" ORDER BY count(*) ASC");
-//                    sqlBuffer.append(" ORDER BY ").append(x_field).append(" ASC");
                 } else {
-//                    sqlBuffer.append(" ORDER BY ").append(x_field).append(" DESC");
                     sqlBuffer.append(" ORDER BY count(*) DESC");
                 }
                 List resultList = createNativeQuery(sqlBuffer.toString()).getResultList();
@@ -1899,5 +1919,126 @@ public class TableFacade extends BaseFacade {
      */
     public TableConfig getTableConfig(String id) {
         return get(TableConfig.class,id);
+    }
+
+    /**
+     * 根据表id导出表数据
+     * @param tableId
+     * @return
+     */
+    public Response exportTableDataAsExcel(String tableId) {
+        try {
+            TableConfig tableConfig = get(TableConfig.class,tableId);
+            String tableName = tableConfig.getTableName();
+            if(!StringUtils.isEmptyParam(tableName)){
+                List<String> titles = new ArrayList<>();
+                List<TableColConfig> tableColConfigs = getTableColList(tableId);
+                StringBuffer sb = new StringBuffer("SELECT ");
+                for(int i=0;i<tableColConfigs.size();i++){
+                    TableColConfig tableColConfig = tableColConfigs.get(i);
+                    titles.add(tableColConfig.getColName());
+                    if(i!=tableColConfigs.size()-1){
+                        sb.append(tableColConfig.getColCode()).append(",");
+                    }else {
+                        sb.append(tableColConfig.getColCode());
+                    }
+                }
+                sb.append(" FROM ").append(tableName);
+                String sql = sb.toString();
+                List list = createNativeQuery(sql).getResultList();
+                String os = System.getProperty("os.name");
+                String excelDrc = "";
+                if(os.toLowerCase().startsWith("win")){
+                    excelDrc = StringUtils.getStringByKey("exportExcelPathWindow");
+                }else{
+                    excelDrc = StringUtils.getStringByKey("exportExcelPathLinux");
+                }
+                File folder = new File(excelDrc);
+                if (!folder.exists()) {
+                    folder.mkdirs();
+                }
+                String filePath = excelDrc + File.separator +tableConfig.getTableDesc()+ ".xls";
+                ProduceExcel.produceTableExcel(titles,list,filePath);
+                StreamingOutput streamingOutput = (outputStream -> {
+                    FileInputStream fileInputStream = new FileInputStream(filePath);
+                    int length =  0 ;
+                    byte[] bytes = new byte[1024];
+                    while(-1!=(length=fileInputStream.read(bytes))){
+                        outputStream.write(bytes);
+                    }
+                    outputStream.flush();
+                    outputStream.close();
+                    fileInputStream.close();
+                });
+                String fileName = URLEncoder.encode(tableConfig.getTableDesc(), "UTF-8");
+                return Response.status(Response.Status.OK).entity(streamingOutput).header("Content-disposition","attachment;filename="+ fileName)
+                        .header("Cache-Control","no-cache").build();
+            }
+        }catch (Exception e){
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e).build();
+        }
+        return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("导出表不存在").build();
+    }
+
+    /**
+     * 根据传入表字段删除条件删除表中无用数据
+     * @param tableDelVo
+     * @return
+     */
+    @Transactional
+    public Response cleanTableDataByFieldCondition(TableDelVo tableDelVo) {
+        try {
+            String tableName = getTableNameById(tableDelVo.getTableId());
+            StringBuffer delBuf = new StringBuffer("");
+            List<FieldDelCondition> fcList = tableDelVo.getFieldUponValueList();
+            Boolean isDel = false;
+            if(fcList!=null){
+                delBuf.append("delete from ").append(tableName);
+                for(int i=0;i<fcList.size();i++){
+                    FieldDelCondition fc = fcList.get(i);
+                    if(i==0){
+                        delBuf.append(" where ");
+                    }
+                    OperationEnum operationEnum = fc.getOperationEnum();
+                    switch (operationEnum){
+                        case IN:
+                            delBuf.append(fc.getField()).append(" IN (").append(fc.getDeleteValue()).append(") ").append(fc.getNextOperation()).append(" ");
+                        case NOT_IN:
+                            delBuf.append(fc.getField()).append(" IN (").append(fc.getDeleteValue()).append(") ").append(fc.getNextOperation()).append(" ");
+                        case NOT_EQUAL:
+                            delBuf.append(fc.getField()).append(" <> ").append(TemplateConst.getSqlConditionValue(fc.getDeleteValue()))
+                                    .append(" ").append(fc.getNextOperation()).append(" ");
+                        case EQUAL:
+                            delBuf.append(fc.getField()).append(" = ").append(fc.getDeleteValue()).append(" ").append(fc.getNextOperation()).append(" ");
+                        case LIKE:
+                            delBuf.append(fc.getField()).append(" LIKE '%").append(fc.getDeleteValue()).append("%' ")
+                                    .append(fc.getNextOperation()).append(" ");
+                        case NOT_LIKE:
+                            delBuf.append(fc.getField()).append(" NOT LIKE '%").append(fc.getDeleteValue()).append("%' ")
+                                    .append(fc.getNextOperation()).append(" ");
+                        case GRATER_THAN:
+                            delBuf.append(fc.getField()).append(" > ").append(TemplateConst.getSqlConditionValue(fc.getDeleteValue()))
+                                    .append(" ").append(fc.getNextOperation()).append(" ");
+                        case GRATER_OR_EQUAL_THAN:
+                            delBuf.append(fc.getField()).append(" >= ").append(TemplateConst.getSqlConditionValue(fc.getDeleteValue()))
+                                    .append(" ").append(fc.getNextOperation()).append(" ");
+                        case LESS_THAN:
+                            delBuf.append(fc.getField()).append(" < ").append(TemplateConst.getSqlConditionValue(fc.getDeleteValue()))
+                                    .append(" ").append(fc.getNextOperation()).append(" ");
+                        case LESS_OR_EQUAL_THAN:
+                            delBuf.append(fc.getField()).append(" <= ").append(TemplateConst.getSqlConditionValue(fc.getDeleteValue()))
+                                    .append(" ").append(fc.getNextOperation()).append(" ");
+                    }
+                    isDel = true;
+                }
+                String delSql = delBuf.toString();
+                if(isDel){
+                    createNativeQuery(delSql).executeUpdate();
+                }
+            }
+            return Response.status(Response.Status.OK).entity(new ReturnInfo("true","操作成功")).build();
+        }catch (Exception e){
+            return Response.status(Response.Status.OK).entity(new ReturnInfo("false",e.getMessage())).build();
+        }
     }
 }

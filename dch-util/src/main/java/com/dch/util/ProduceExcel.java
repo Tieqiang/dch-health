@@ -58,4 +58,36 @@ public class ProduceExcel {
            }
         System.out.println("Excel文件生成成功...");
     }
+
+    public static void produceTableExcel(List<String> titles,List resultList,String excelPath){
+        //第一步创建workbook
+        HSSFWorkbook wb = new HSSFWorkbook();
+
+        HSSFSheet sheet = wb.createSheet("导出数据");
+
+        HSSFRow row = sheet.createRow(0);
+        HSSFCellStyle style = wb.createCellStyle();
+        //第四步创建单元格
+        for(int i=0;i<titles.size();i++){
+            HSSFCell cell = row.createCell(i); //第一个单元格
+            cell.setCellValue(titles.get(i));
+            cell.setCellStyle(style);
+        }
+        int size = resultList.size();
+        for(int i=0;i<size; i++){
+            Object[] params = (Object[])resultList.get(i);
+            row = sheet.createRow(i+1);
+            for(int j=0;j<params.length;j++){
+                row.createCell(j).setCellValue(params[j]==null?"":params[j].toString());
+            }
+        }
+        //第六步将生成excel文件保存到指定路径下
+        try {
+            FileOutputStream fout = new FileOutputStream(excelPath);
+            wb.write(fout);
+            fout.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }

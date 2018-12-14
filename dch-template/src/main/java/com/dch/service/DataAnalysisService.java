@@ -20,6 +20,7 @@ import com.mchange.v2.c3p0.ComboPooledDataSource;
 import org.bson.Document;
 import javax.ws.rs.*;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.*;
 
@@ -247,5 +248,28 @@ public class DataAnalysisService {
     @Path("get-template-result-text")
     public List<String> getTemplateResultMasterText(@QueryParam("templateId")String templateId){
         return tableFacade.getTemplateResultMasterText(templateId);
+    }
+
+    /**
+     * 根据表id导出表数据
+     * @param tableId
+     * @return
+     */
+    @GET
+    @Path("export-table-data-as-excel")
+    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    public Response exportTableDataAsExcel(@QueryParam("tableId")String tableId){
+        return tableFacade.exportTableDataAsExcel(tableId);
+    }
+
+    /**
+     * 根据传入表字段删除条件删除表中无用数据
+     * @param tableDelVo
+     * @return
+     */
+    @POST
+    @Path("clean-data-by-condition")
+    public Response cleanTableDataByFieldCondition(TableDelVo tableDelVo){
+        return tableFacade.cleanTableDataByFieldCondition(tableDelVo);
     }
 }
