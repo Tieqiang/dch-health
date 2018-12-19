@@ -1,10 +1,13 @@
 package com.dch.util;
 
+import com.dch.vo.FieldChange;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -13,6 +16,22 @@ import java.util.regex.Pattern;
  */
 public class TemplateConst {
     public static final String UPLOAD_FILE_KEY_WORD = "storePath";
+
+    public static final Charset CHAR_SET = new Charset();
+    public static final CountType COUNT_TYPE = new CountType();
+    public static class Charset extends GenericEnum{
+        public static final String BAR = "bar";
+        public static final String PIE = "pie";
+        public static final String LINE = "line";
+        public static final String TABLE = "table";
+    }
+
+    public static class CountType extends GenericEnum{
+        public static final String COUNT = "";
+        public static final String SUM = "1";
+        public static final String AVERAGE = "2";
+    }
+
     /**
      * 单位缩进字符串。
      */
@@ -168,5 +187,16 @@ public class TemplateConst {
             return valueStr;
         }
         return "'" + valueStr + "'";
+    }
+
+    public static String getGroupFields(List<FieldChange> groupFields){
+        StringBuffer sb = new StringBuffer("");
+        groupFields.stream().forEach(g->sb.append(g.getTitle()).append(","));
+        String res = sb.toString();
+        if(res.length()>0){
+            return res.substring(0,res.length()-1);
+        }else {
+            return res;
+        }
     }
 }

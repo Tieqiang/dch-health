@@ -1057,17 +1057,60 @@ public class TableFacade extends BaseFacade {
                     return new ArrayList<>();
                 }
                 List<FieldChange> fieldChangeList = reportQueryParam.getTableResults();
-                x_field = fieldChangeList.get(0).getTitle();
-                fieldChangeList.stream().forEach(x -> sqlBuffer.append(x.getTitle()).append(","));
+                String computedField = "";
+                StringBuffer groupFieldBuf = new StringBuffer("");
+                String comFieldName = "";
+                for(FieldChange f:fieldChangeList){
+                    if("1".equals(f.getComputedOrNot())){
+                        computedField = f.getTitle();
+                        comFieldName = f.getChangeTitle()==null?"":f.getChangeTitle();
+                        if("$$".equals(computedField)){
+                            f.setTitle("ct");
+                            computedField = "*";//什么字段也不选，也进行分组统计
+                            f.setChangeTitle(comFieldName.equals("")?"计数":comFieldName);
+                        }
+                    }else{
+                        sqlBuffer.append(f.getTitle()).append(",");
+                        groupFieldBuf.append(f.getTitle()).append(",");
+                    }
+                }
+                String ct = "";
+                //要统计的列 如果统计列不为空，统计类型不选 则为计数，统计类型type为1 求和,统计类型为2求平均
+                if(!StringUtils.isEmptyParam(computedField)){
+                    if("*".equals(computedField)){
+                        ct = "count(*)";
+                    }else{
+                        FieldChange fieldChange = new FieldChange();
+                        fieldChange.setTitle("ct");
+                        if(TemplateConst.CountType.COUNT.equals(reportQueryParam.getType())){
+                            ct = "count(*)";
+                            fieldChange.setChangeTitle(comFieldName.equals("")?"计数":comFieldName);
+                        }else if(TemplateConst.CountType.SUM.equals(reportQueryParam.getType())){
+                            ct = "sum(" + reportQueryParam.getXaxis() + ")";
+                            fieldChange.setChangeTitle(comFieldName.equals("")?"求和":comFieldName);
+                        }else if(TemplateConst.CountType.AVERAGE.equals(reportQueryParam.getType())){
+                            ct = "average(" + reportQueryParam.getXaxis() + ")";
+                            fieldChange.setChangeTitle(comFieldName.equals("")?"平均值":comFieldName);
+                        }
+                        reportQueryParam.getTableResults().add(fieldChange);
+                    }
+                    sqlBuffer.append(ct).append(" as ct,");
+                }
                 String sqlStr = sqlBuffer.toString().substring(0, sqlBuffer.length() - 1);
                 StringBuffer dvBuffer = new StringBuffer(" FROM ").append(tableName);
                 if (!tableName.startsWith("data_master")) {
                     dvBuffer.append(" where data_version = (select max(data_version) from ").append(tableName).append(")");
                 }
-                if ("0".equals(sort)) {//降序
-                    sqlBuffer.append(" ORDER BY ").append(x_field).append(" DESC");
-                } else if ("1".equals(sort)) {
-                    sqlBuffer.append(" ORDER BY ").append(x_field).append(" ASC");
+                if(!StringUtils.isEmptyParam(computedField)){
+                    String groupFields = groupFieldBuf.toString();
+                    dvBuffer.append(" group by ").append(groupFields.substring(0,groupFields.length()-1));
+                }
+                if(!StringUtils.isEmptyParam(computedField)){
+                    if ("0".equals(sort)) {//降序
+                        dvBuffer.append(" ORDER BY ").append(ct).append(" ASC");
+                    } else {
+                        dvBuffer.append(" ORDER BY ").append(ct).append(" DESC");
+                    }
                 }
                 sqlStr += dvBuffer.toString();
                 int perPage = reportData == null ? 20 : reportData.getPerPage();
@@ -1089,7 +1132,7 @@ public class TableFacade extends BaseFacade {
                     sqlBuffer.append(" and data_version = (select max(data_version) from ").append(tableName).append(")");
                 }
                 sqlBuffer.append(" GROUP BY ").append(x_field);
-                if ("1".equals(sort)) {//升序
+                if ("0".equals(sort)) {//升序
                     sqlBuffer.append(" ORDER BY count(*) ASC");
                 } else {
                     sqlBuffer.append(" ORDER BY count(*) DESC");
@@ -1116,9 +1159,9 @@ public class TableFacade extends BaseFacade {
                     sqlBuffer.append(" where data_version = (select max(data_version) from ").append(tableName).append(")");
                 }
                 if ("0".equals(sort)) {//降序
-                    sqlBuffer.append(" order by ").append(x_field).append(" desc");
-                } else if ("1".equals(sort)) {
                     sqlBuffer.append(" order by ").append(x_field).append(" asc");
+                } else if ("1".equals(sort)) {
+                    sqlBuffer.append(" order by ").append(x_field).append(" desc");
                 }
                 List resultList = createNativeQuery(sqlBuffer.toString()).getResultList();
                 Map<String, List<UnitFunds>> resultMap = Maps.newLinkedHashMap();
@@ -1175,9 +1218,9 @@ public class TableFacade extends BaseFacade {
                             .append(tableName).append(")");
                 }
                 if ("0".equals(sort)) {//降序
-                    sqlBuffer.append(" order by ").append(oderField).append(" desc");
-                } else if ("1".equals(sort)) {
-                    sqlBuffer.append(" order by ").append(oderField).append(" asc");
+                    sqlBuffer.append(" order by ").append(oderField).append(" asc ");
+                } else {
+                    sqlBuffer.append(" order by ").append(oderField).append(" desc ");
                 }
                 final String isDb = isDouble;
                 List resultList = createNativeQuery(sqlBuffer.toString()).getResultList();

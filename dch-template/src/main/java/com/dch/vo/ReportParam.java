@@ -12,6 +12,7 @@ public class ReportParam implements Serializable{
     private String chart;
     private ReportQueryParam config;
     private ReportData reportData;
+    private String desc;
 
     public String getName() {
         return name;
@@ -59,5 +60,13 @@ public class ReportParam implements Serializable{
 
     public void setReportData(ReportData reportData) {
         this.reportData = reportData;
+    }
+
+    public String getDesc() {
+        return desc;
+    }
+
+    public void setDesc(String desc) {
+        this.desc = desc;
     }
 }

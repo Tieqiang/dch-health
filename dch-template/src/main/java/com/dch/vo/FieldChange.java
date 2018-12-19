@@ -9,6 +9,8 @@ public class FieldChange {
     //要更改的字段（中文）
     private String changeTitle;
 
+    private String computedOrNot;
+
     public String getTitle() {
         return title;
     }
@@ -23,5 +25,13 @@ public class FieldChange {
 
     public void setChangeTitle(String changeTitle) {
         this.changeTitle = changeTitle;
+    }
+
+    public String getComputedOrNot() {
+        return computedOrNot;
+    }
+
+    public void setComputedOrNot(String computedOrNot) {
+        this.computedOrNot = computedOrNot;
     }
 }
