@@ -31,8 +31,8 @@ import java.util.List;
     @POST
     @Path("merge-template-master")
     @Transactional
-    public Response mergeTemplateMaster(TemplateMaster templateMaster) throws Exception{
-        return templateMasterFacade.mergeTemplateMaster(templateMaster);
+    public Response mergeTemplateMaster(TemplateMaster templateMaster,@QueryParam("existId") String existId) throws Exception{
+        return templateMasterFacade.mergeTemplateMaster(templateMaster,existId);
     }
     /**
      *获取表单
