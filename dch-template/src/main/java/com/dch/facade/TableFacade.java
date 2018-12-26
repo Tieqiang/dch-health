@@ -360,6 +360,8 @@ public class TableFacade extends BaseFacade {
                 excHql(sql);
                 String rsql = "delete from ReportGroup where tableId = '"+tableConfig.getId()+"'";
                 excHql(rsql);
+                String tHql = "delete from TableUpon where tableName = '"+dbTableName+"' and templateId = '"+tableConfig.getFormId()+"'";
+                excHql(tHql);
             }
             for (TableColConfig config : tableColConfigs) {
                 config.setTableId(merge.getId());
@@ -974,12 +976,17 @@ public class TableFacade extends BaseFacade {
             for (int i = 0; i < queryList.size(); i++) {
                 String uid = getUID();
                 valueSqlBuf.append("('").append(uid).append("',").append(dataVersion).append(",");
-                Object[] innerParams = (Object[]) queryList.get(i);
-                for (int k = 0; k < innerParams.length; k++) {
-                    if (k != innerParams.length - 1) {
-                        valueSqlBuf.append("'").append(innerParams[k]).append("',");
-                    } else {
-                        valueSqlBuf.append("'").append(innerParams[k]).append("'),");
+                Object ql = queryList.get(i);
+                if(ql instanceof String){
+                    valueSqlBuf.append("'").append(ql).append("'),");
+                }else{
+                    Object[] innerParams = (Object[]) queryList.get(i);
+                    for (int k = 0; k < innerParams.length; k++) {
+                        if (k != innerParams.length - 1) {
+                            valueSqlBuf.append("'").append(innerParams[k]).append("',");
+                        } else {
+                            valueSqlBuf.append("'").append(innerParams[k]).append("'),");
+                        }
                     }
                 }
             }
