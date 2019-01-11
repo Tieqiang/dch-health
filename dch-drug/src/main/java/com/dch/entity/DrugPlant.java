@@ -7,6 +7,7 @@ import java.sql.Timestamp;
 
 /**
  * Created by Administrator on 2017/8/22.
+ * 天然植物
  */
 @Entity
 @Table(name = "drug_plant", schema = "dch", catalog = "")

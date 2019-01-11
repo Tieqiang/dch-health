@@ -6,11 +6,10 @@ import com.dch.entity.FrontSearchCategory;
 import com.dch.entity.FrontSearchCategoryField;
 import com.dch.facade.BaseSolrFacade;
 import com.dch.facade.FrontCategorySearchFacade;
+import com.dch.facade.FrontCountFacade;
 import com.dch.facade.common.VO.Page;
 import com.dch.util.PinYin2Abbreviation;
-import com.dch.vo.PageParam;
-import com.dch.vo.SolrPageVo;
-import com.dch.vo.SolrVo;
+import com.dch.vo.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +28,9 @@ public class FrontCategorySearchService {
 
     @Autowired
     private BaseSolrFacade baseSolrFacade;
+
+    @Autowired
+    private FrontCountFacade frontCountFacade;
 
     /**
      * 查询一级分类信息
@@ -180,5 +182,24 @@ public class FrontCategorySearchService {
     @Path("get-solrvo-by-id")
     public SolrPageVo getSolrVoById(@QueryParam("id")String id) throws Exception {
         return frontCategorySearchFacade.getSolrVoById(id);
+    }
+
+    /**
+     * 查询药物循证，病例库，疾病知识，政策资源，临床实验数据统计数
+     * @return
+     */
+    @GET
+    @Path("get-all-drug-count")
+    public List<DrugInfoCountVo> getAllDrugCount(){
+        return frontCategorySearchFacade.getAllDrugCount();
+    }
+    /**
+     * 查询药物循证下的分类统计数（药物基本信息，药品厂商，药品广告）
+     * @return
+     */
+    @GET
+    @Path("get-drug-evidence-count")
+    public List<DrugInfoCountVo> getDrugEvidenceCount(){
+        return frontCategorySearchFacade.getDrugEvidenceCount();
     }
 }

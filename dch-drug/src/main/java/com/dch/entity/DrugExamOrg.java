@@ -8,6 +8,7 @@ import java.sql.Timestamp;
 
 /**
  * Created by Administrator on 2017/8/22.
+ * 临床药物试验机构
  */
 @Entity
 @Table(name = "drug_exam_org", schema = "dch", catalog = "")

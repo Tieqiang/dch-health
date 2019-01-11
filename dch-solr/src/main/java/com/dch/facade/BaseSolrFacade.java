@@ -1,10 +1,14 @@
 package com.dch.facade;
 
 import com.dch.facade.common.VO.Page;
+import com.dch.vo.DataGroupVo;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
+import org.apache.solr.client.solrj.response.FacetField;
+import org.apache.solr.client.solrj.response.GroupCommand;
+import org.apache.solr.client.solrj.response.GroupResponse;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
@@ -342,4 +346,34 @@ public class BaseSolrFacade {
         httpSolrServer.commit();
     }
 
+    /**
+     * 根据分类字段获取药品信息分类统计数
+     * @param <T>
+     * @return
+     */
+    public <T> List<T> getSolrTypeGroupData(){
+        List<T> result = new ArrayList<>();
+        try {
+            SolrQuery query = new SolrQuery();// 查询
+            query.set("q", "*:*" );
+            //是否分组
+            query.setFacet(true);
+            //分组的字段，不可以是多值字段
+            query.addFacetField(new String[]{"categoryCode"});
+            QueryResponse response = httpSolrServer.query(query);
+            List<FacetField>facets = response.getFacetFields();
+            for (FacetField facet :facets) {
+                List<FacetField.Count> counts = facet.getValues();
+                for (FacetField.Count count : counts){
+                    DataGroupVo dataGroupVo = new DataGroupVo(count.getName(),count.getCount());
+                    result.add((T)dataGroupVo);
+                }
+            }
+        }catch (SolrServerException e){
+            e.printStackTrace();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return result;
+    }
 }

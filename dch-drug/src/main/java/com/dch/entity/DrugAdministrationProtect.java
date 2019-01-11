@@ -8,6 +8,7 @@ import java.sql.Timestamp;
 
 /**
  * Created by Administrator on 2017/8/22.
+ * 药品行政政策
  */
 @Entity
 @Table(name = "drug_administration_protect", schema = "dch", catalog = "")

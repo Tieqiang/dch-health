@@ -8,6 +8,7 @@ import java.sql.Timestamp;
 
 /**
  * Created by Administrator on 2017/8/22.
+ * 天然药物属性
  */
 @Entity
 @Table(name = "drug_natural_active", schema = "dch", catalog = "")

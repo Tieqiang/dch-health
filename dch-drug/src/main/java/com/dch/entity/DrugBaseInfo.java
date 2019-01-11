@@ -9,6 +9,7 @@ import java.util.Arrays;
 
 /**
  * Created by Administrator on 2017/8/22.
+ * 药物基本信息维护
  */
 @Entity
 @Table(name = "drug_base_info", schema = "dch", catalog = "")

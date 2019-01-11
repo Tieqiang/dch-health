@@ -7,6 +7,7 @@ import java.sql.Timestamp;
 
 /**
  * Created by Administrator on 2017/8/22.
+ * 天然药物化学成分
  */
 @Entity
 @Table(name = "drug_natural_chemical_composition", schema = "dch", catalog = "")

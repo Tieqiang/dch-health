@@ -8,6 +8,7 @@ import java.sql.Timestamp;
 
 /**
  * Created by Administrator on 2017/8/22.
+ * 药品专利文献
  */
 @Entity
 @Table(name = "drug_patent", schema = "dch", catalog = "")

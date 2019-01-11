@@ -6,6 +6,7 @@ import javax.persistence.*;
 
 /**
  * Created by Administrator on 2017/8/22.
+ * 不良反应信息
  */
 @Entity
 @Table(name = "drug_untoward_effect", schema = "dch", catalog = "")

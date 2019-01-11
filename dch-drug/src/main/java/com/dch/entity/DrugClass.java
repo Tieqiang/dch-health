@@ -7,6 +7,7 @@ import java.sql.Timestamp;
 
 /**
  * Created by Administrator on 2017/8/22.
+ * 药品类别维护
  */
 @Entity
 @Table(name = "drug_class", schema = "dch", catalog = "")

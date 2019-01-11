@@ -7,6 +7,7 @@ import java.sql.Date;
 
 /**
  * Created by Administrator on 2017/8/22.
+ * 药品品广告
  */
 @Entity
 @Table(name = "drug_ad", schema = "dch", catalog = "")
