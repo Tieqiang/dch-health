@@ -15,6 +15,7 @@ public class Role extends BaseEntity{
     private String moduleId;
 
 
+
     @Basic
     @Column(name = "role_name")
     public String getRoleName() {

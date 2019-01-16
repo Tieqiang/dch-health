@@ -23,6 +23,8 @@ public class User {
     private Timestamp modifyDate;
     private String status;
 
+    private String orgId ;
+
     @Id
     @Column(name = "id")
     @GenericGenerator(name="generator",strategy = "uuid.hex")
@@ -127,6 +129,16 @@ public class User {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    @Basic
+    @Column(name = "org_id")
+    public String getOrgId() {
+        return orgId;
+    }
+
+    public void setOrgId(String orgId) {
+        this.orgId = orgId;
     }
 
     @Override
