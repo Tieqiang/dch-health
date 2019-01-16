@@ -19,6 +19,8 @@ import java.util.List;
 public class ResearchProjectFacade extends BaseFacade {
 
 
+    private List<ResearchOrgVO> allResearchOrg;
+
     public ResearchOrgVO getResearchOrg(String orgId) {
 
         if (StringUtils.isEmptyParam(orgId)) {
@@ -26,12 +28,31 @@ public class ResearchProjectFacade extends BaseFacade {
         } else {
             OrgInfo orgInfo = get(OrgInfo.class, orgId);
 
-            String hql = "from ResearchProject as p where p.orgId = '" + orgId + "'";
-            List<ResearchProject> projects = createQuery(ResearchProject.class, hql, new ArrayList<>()).getResultList();
+
             ResearchOrgVO vo = new ResearchOrgVO();
             vo.setOrgInfo(orgInfo);
-            vo.setResearchProjects(projects);
+            vo.setResearchProjects(this.getPorjects(orgId));
             return vo;
         }
+    }
+
+    public List<ResearchOrgVO> getAllResearchOrg() {
+
+        String hql = "from OrgInfo as o where status<>'-1'";
+        List<OrgInfo> orgInfos = createQuery(OrgInfo.class,hql,new ArrayList<>()).getResultList();
+        List<ResearchOrgVO> vos= new ArrayList<>();
+        for (OrgInfo info:orgInfos){
+            ResearchOrgVO vo = new ResearchOrgVO();
+            vo.setOrgInfo(info);
+            vo.setResearchProjects(this.getPorjects(info.getId()));
+            vos.add(vo);
+        }
+        return vos;
+    }
+
+    private List<ResearchProject> getPorjects(String orgId){
+        String hql = "from ResearchProject as p where p.orgId = '" + orgId + "' and status<>'-1'";
+        List<ResearchProject> projects = createQuery(ResearchProject.class, hql, new ArrayList<>()).getResultList();
+        return projects;
     }
 }

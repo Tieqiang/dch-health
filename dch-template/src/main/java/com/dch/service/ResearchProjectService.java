@@ -10,6 +10,8 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 
+import java.util.List;
+
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 @Controller
@@ -25,6 +27,14 @@ public class ResearchProjectService {
     @Path("get-org")
     public ResearchOrgVO getResearchOrg(@QueryParam("orgId") String orgId){
         return researchProjectFacade.getResearchOrg(orgId);
+    }
+
+
+    @GET
+    @Path("get-all-org")
+    public List<ResearchOrgVO> getAllResearchOrg(){
+
+        return researchProjectFacade.getAllResearchOrg();
     }
 
 }
