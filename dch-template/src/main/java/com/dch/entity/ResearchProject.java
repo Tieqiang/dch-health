@@ -23,6 +23,7 @@ public class ResearchProject extends BaseEntity {
     @Column
     private String resultId ;//对应的填报结果
 
+
     public String getProjectName() {
         return projectName;
     }
