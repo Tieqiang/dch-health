@@ -13,6 +13,9 @@ public class ResearchOrgVO implements Serializable {
 
     private List<ResearchProject> researchProjects= new ArrayList<>();
 
+    private int totals ;
+
+
 
     public OrgInfo getOrgInfo() {
         return orgInfo;
@@ -28,5 +31,13 @@ public class ResearchOrgVO implements Serializable {
 
     public void setResearchProjects(List<ResearchProject> researchProjects) {
         this.researchProjects = researchProjects;
+    }
+
+    public int getTotals() {
+        return totals;
+    }
+
+    public void setTotals(int totals) {
+        this.totals = totals;
     }
 }

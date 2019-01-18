@@ -598,10 +598,10 @@ public class TableFacade extends BaseFacade {
                     condition += this.buildCondition("<>", conditionVO, tableInfo);
                     break;
                 case LIKE:
-                    condition += " like '%" + conditionVO.getThanValue() + "%'";
+                    condition += " like '%" + conditionVO.getThanValue() + "%' and ";
                     break;
                 case NOT_LIKE:
-                    condition += " not like '%"+ conditionVO.getThanValue()+"%'";
+                    condition += " not like '%"+ conditionVO.getThanValue()+"%' and ";
                     break;
                 case EQUAL:
                     condition += this.buildCondition("=", conditionVO, tableInfo);

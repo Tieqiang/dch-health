@@ -2,6 +2,7 @@ package com.dch.entity;
 
 import com.dch.entity.base.BaseEntity;
 
+import javax.persistence.Basic;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
@@ -10,18 +11,19 @@ import javax.persistence.Table;
 @Table(name = "org_info", schema = "dch", catalog = "")
 public class OrgInfo extends BaseEntity {
 
-    @Column
+
     private String orgName;
-    @Column
-    private String orgCode ;
-    @Column
-    private String address ;
-    @Column
-    private String relationName ;
-    @Column
-    private String tel ;
 
+    private String orgCode;
 
+    private String address;
+
+    private String relationName;
+
+    private String tel;
+
+    @Basic
+    @Column(name = "org_name")
     public String getOrgName() {
         return orgName;
     }
@@ -30,6 +32,8 @@ public class OrgInfo extends BaseEntity {
         this.orgName = orgName;
     }
 
+    @Basic
+    @Column(name = "org_code")
     public String getOrgCode() {
         return orgCode;
     }
@@ -38,6 +42,8 @@ public class OrgInfo extends BaseEntity {
         this.orgCode = orgCode;
     }
 
+    @Basic
+    @Column(name = "address")
     public String getAddress() {
         return address;
     }
@@ -46,6 +52,8 @@ public class OrgInfo extends BaseEntity {
         this.address = address;
     }
 
+    @Basic
+    @Column(name = "relation_name")
     public String getRelationName() {
         return relationName;
     }
@@ -54,6 +62,7 @@ public class OrgInfo extends BaseEntity {
         this.relationName = relationName;
     }
 
+    @Column(name = "tel")
     public String getTel() {
         return tel;
     }

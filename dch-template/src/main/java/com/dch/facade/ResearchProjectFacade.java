@@ -36,13 +36,27 @@ public class ResearchProjectFacade extends BaseFacade {
         }
     }
 
-    public List<ResearchOrgVO> getAllResearchOrg() {
+    public List<ResearchOrgVO> getAllResearchOrg(String orgName, int perPage, int currentPage) {
 
         String hql = "from OrgInfo as o where status<>'-1'";
+
+        if(perPage==0){
+            perPage = 10 ;
+        }
+
+
+        if(!"".equals(orgName)&&orgName!=null){
+            hql+=" and orgName like '%"+orgName+"%'";
+        }
+
         List<OrgInfo> orgInfos = createQuery(OrgInfo.class,hql,new ArrayList<>()).getResultList();
+        int total = orgInfos.size();
+        orgInfos = orgInfos.subList(currentPage*perPage,perPage*(currentPage+1));
+
         List<ResearchOrgVO> vos= new ArrayList<>();
         for (OrgInfo info:orgInfos){
             ResearchOrgVO vo = new ResearchOrgVO();
+            vo.setTotals(total);
             vo.setOrgInfo(info);
             vo.setResearchProjects(this.getPorjects(info.getId()));
             vos.add(vo);
@@ -54,5 +68,12 @@ public class ResearchProjectFacade extends BaseFacade {
         String hql = "from ResearchProject as p where p.orgId = '" + orgId + "' and status<>'-1'";
         List<ResearchProject> projects = createQuery(ResearchProject.class, hql, new ArrayList<>()).getResultList();
         return projects;
+    }
+
+    public List<ResearchProject> getResearchProject(String userId) {
+
+        String hql = "from ResearchProject as p where p.reportPerson='"+userId+"'";
+        List<ResearchProject> resultList = createQuery(ResearchProject.class, hql, new ArrayList<>()).getResultList();
+        return resultList;
     }
 }
