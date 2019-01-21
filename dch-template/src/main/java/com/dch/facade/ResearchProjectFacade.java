@@ -51,7 +51,11 @@ public class ResearchProjectFacade extends BaseFacade {
 
         List<OrgInfo> orgInfos = createQuery(OrgInfo.class,hql,new ArrayList<>()).getResultList();
         int total = orgInfos.size();
-        orgInfos = orgInfos.subList(currentPage*perPage,perPage*(currentPage+1));
+        int defaultLat = perPage*(currentPage+1);
+        if(total<defaultLat){
+            defaultLat = total;
+        }
+        orgInfos = orgInfos.subList(currentPage*perPage,defaultLat);
 
         List<ResearchOrgVO> vos= new ArrayList<>();
         for (OrgInfo info:orgInfos){
