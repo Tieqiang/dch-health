@@ -286,7 +286,9 @@ public class FrontCategorySearchFacade extends BaseFacade {
         List list = createNativeQuery(sb.toString()).getResultList();
         for(Object obj:list){
             Object[] objArray = (Object[])obj;
-            belongMaps.put((String)objArray[0],(String)objArray[1]);
+            if(objArray[0]!=null && objArray[1]!=null){
+                belongMaps.put((String)objArray[0],(String)objArray[1]);
+            }
         }
     }
 
