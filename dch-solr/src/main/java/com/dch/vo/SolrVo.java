@@ -13,6 +13,7 @@ public class SolrVo implements Serializable{
     private String label;
     private String category;
     private String firstPy;//首字母拼音码
+    private String belong;//所属模块
 
     public String getId() {
         return id;
@@ -68,6 +69,14 @@ public class SolrVo implements Serializable{
 
     public void setFirstPy(String firstPy) {
         this.firstPy = firstPy;
+    }
+
+    public String getBelong() {
+        return belong;
+    }
+
+    public void setBelong(String belong) {
+        this.belong = belong;
     }
 
     @Override
