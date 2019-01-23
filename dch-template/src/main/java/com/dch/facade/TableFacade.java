@@ -1644,7 +1644,7 @@ public class TableFacade extends BaseFacade {
         List<TableColConfig> tableColConfigs = createQuery(TableColConfig.class, hql, new ArrayList<>()).getResultList();
         List<TableColConfig> tableColConfigList = new ArrayList<>();
         for (TableColConfig tf : tableColConfigs) {
-            if (!"id".equals(tf.getColCode()) && !"data_version".equals(tf.getColCode())) {
+            if (!"id".equals(tf.getColCode())) {
                 tableColConfigList.add(tf);
             }
         }
@@ -2063,10 +2063,11 @@ public class TableFacade extends BaseFacade {
         StringBuffer queryBuf = new StringBuffer("SELECT ");
         Set set = Sets.newHashSet();
         tableColConfigs.stream().forEach(t->{
-            queryBuf.append(t.getColCode()).append(",");
-            fieldList.add(t.getColName());
             if("data_version".equals(t.getColCode())){
                 set.add(t);
+            }else {
+                queryBuf.append(t.getColCode()).append(",");
+                fieldList.add(t.getColName());
             }
         });
         StringBuffer queryBf = new StringBuffer(queryBuf.toString().substring(0,queryBuf.length()-1));
