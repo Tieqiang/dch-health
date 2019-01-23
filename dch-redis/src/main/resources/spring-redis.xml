@@ -8,6 +8,7 @@
           p:use-pool="true"
           p:hostName="${redis.host}"
           p:port="${redis.port}"
+          p:password="${redis.password}"
           >
     </bean>
     <bean id="defaultRedisSerializer" class="org.springframework.data.redis.serializer.StringRedisSerializer"></bean>

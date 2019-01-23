@@ -7,6 +7,7 @@ import com.dch.util.*;
 import com.dch.vo.*;
 import com.dch.vo.OperationEnum;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 import org.aspectj.lang.annotation.DeclareWarning;
 import org.bson.Document;
@@ -2060,13 +2061,20 @@ public class TableFacade extends BaseFacade {
         List<String> fieldList = new ArrayList<>();
         List<TableColConfig> tableColConfigs = getTableFieldsByTableName(tableName);
         StringBuffer queryBuf = new StringBuffer("SELECT ");
+        Set set = Sets.newHashSet();
         tableColConfigs.stream().forEach(t->{
             queryBuf.append(t.getColCode()).append(",");
             fieldList.add(t.getColName());
+            if("data_version".equals(t.getColCode())){
+                set.add(t);
+            }
         });
         StringBuffer queryBf = new StringBuffer(queryBuf.toString().substring(0,queryBuf.length()-1));
         queryBf.append(" FROM ").append(tableName).append(" WHERE ").append(cencusCondition.getField())
                 .append("= '").append(cencusCondition.getFieldValue()).append("'");
+        if(!set.isEmpty()){
+            queryBf.append(" and data_version = (select max(data_version) from ").append(tableName).append(")");
+        }
         List resultList = createNativeQuery(queryBf.toString()).getResultList();
         cv.setFieldList(fieldList);
         cv.setResultList(resultList);

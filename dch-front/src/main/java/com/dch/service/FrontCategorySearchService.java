@@ -10,13 +10,19 @@ import com.dch.facade.FrontCountFacade;
 import com.dch.facade.common.VO.Page;
 import com.dch.util.PinYin2Abbreviation;
 import com.dch.vo.*;
+import jdk.nashorn.internal.objects.annotations.Constructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.DependsOn;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.PostConstruct;
 import javax.ws.rs.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Path("front/category")
 @Produces("application/json")
@@ -29,9 +35,17 @@ public class FrontCategorySearchService {
     @Autowired
     private BaseSolrFacade baseSolrFacade;
 
-    @Autowired
-    private FrontCountFacade frontCountFacade;
 
+    public static Map<String,String> belongMaps = new ConcurrentHashMap<>();
+
+    /**
+     * solr索引库查询初始化药品所属分类信息
+     */
+    @PostConstruct
+    @DependsOn("frontCategorySearchFacade")
+    public void initBelongMaps(){
+        frontCategorySearchFacade.initBelongMaps(belongMaps);
+    }
     /**
      * 查询一级分类信息
      * @return
@@ -201,5 +215,15 @@ public class FrontCategorySearchService {
     @Path("get-drug-evidence-count")
     public List<DrugInfoCountVo> getDrugEvidenceCount(){
         return frontCategorySearchFacade.getDrugEvidenceCount();
+    }
+
+    /**
+     * 获取热门关键字
+     * @return
+     */
+    @GET
+    @Path("get-hot-key-words")
+    public List<String> getHotKeyWords(){
+        return frontCategorySearchFacade.getHotKeyWords();
     }
 }

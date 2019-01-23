@@ -31,17 +31,14 @@ public class RedisQueryService {
     @PostConstruct
     public void iniRedisCache(){
         Set<String> set = redisFacade.getRedisTemplate().keys("*");
-        for(String key:set){
-            redisFacade.del(key);
-        }
-        redisFacade.flushDB();
-        List<String> nameList = getRdfDatas();
-        if(nameList!=null && !nameList.isEmpty()){
-            for(String rname:nameList){
-                redisFacade.getRedisTemplate().opsForValue().set(rname,rname);
+        if(set==null || set.isEmpty()){
+            List<String> nameList = getRdfDatas();
+            if(nameList!=null && !nameList.isEmpty()){
+                for(String rname:nameList){
+                    redisFacade.getRedisTemplate().opsForValue().set(rname,rname);
+                }
             }
         }
-        System.out.println("我被执行了=====");
     }
 
     public List<String> getRdfDatas(){

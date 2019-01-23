@@ -12,6 +12,7 @@ import com.dch.util.UserUtils;
 import com.dch.vo.SolrVo;
 import com.dch.vo.TemplateMasterVo;
 import com.dch.vo.TemplateResultMasterVo;
+import com.dch.vo.UserFillVo;
 import com.mongodb.BasicDBObject;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -575,5 +576,40 @@ public class TemplateResultFacade extends BaseFacade {
             returnList.add((T)o);
         });
         return returnList;
+    }
+
+    /**
+     * 根据用户id及模板id查询表单填报信息
+     * @param userId
+     * @param templateId
+     * @return
+     */
+    public Response getUserFillInfoByParam(String userId, String templateId,String masterId) {
+        if(StringUtils.isEmptyParam(userId)||StringUtils.isEmptyParam(templateId)){
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("用户填报信息不存在").build();
+        }
+        StringBuffer sb = new StringBuffer("select t.status,(select 1 from template_result_support where related_master_id = t.id) upload,");
+        sb.append("CASE WHEN t.complete_rate >= 1 then '1' ELSE '0' END as done")
+                .append(" from template_result_master t where ");
+        if(!StringUtils.isEmptyParam(masterId)){
+            sb.append(" t.id = '").append(masterId).append("'");
+        }else{
+            sb.append("t.template_id = '").append(templateId).append("' and t.create_by = '").append(userId).append("' and t.status IN ('1','2')");
+        }
+        UserFillVo userFillVo = new UserFillVo();
+        List list = createNativeQuery(sb.toString()).getResultList();
+        String flag = "1";
+        String upload = "0";
+        String done = "0";
+        if(list!=null && !list.isEmpty()){
+            Object[] ob = (Object[])list.get(0);
+            flag = ob[0]==null?"1":ob[0].toString();
+            upload = ob[1]==null?"0":ob[1].toString();
+            done = ob[2]==null?"0":ob[2].toString();
+        }
+        userFillVo.setFlag(flag);
+        userFillVo.setUpload(upload);
+        userFillVo.setDone(done);
+        return Response.status(Response.Status.OK).entity(userFillVo).build();
     }
 }

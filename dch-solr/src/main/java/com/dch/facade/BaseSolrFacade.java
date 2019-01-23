@@ -2,6 +2,7 @@ package com.dch.facade;
 
 import com.dch.facade.common.VO.Page;
 import com.dch.vo.DataGroupVo;
+import com.dch.vo.SolrVo;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -157,7 +158,6 @@ public class BaseSolrFacade {
         Page<T> resul = new Page<>();
         List<T> resultList = new ArrayList<>();
         SolrQuery query = new SolrQuery();// 查询
-
         if(param==null||"".equals(param)){
             param = "*:*";
         }
@@ -190,7 +190,6 @@ public class BaseSolrFacade {
         }
         query.setStart((currentPage-1)*perPage);
         query.setRows(perPage);
-
         QueryResponse queryResponse = httpSolrServer.query(query, SolrRequest.METHOD.POST);
         //返回所有的结果...
         SolrDocumentList childDocs=queryResponse.getResults();

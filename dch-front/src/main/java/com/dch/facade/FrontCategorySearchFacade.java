@@ -1,14 +1,17 @@
 package com.dch.facade;
 
+import com.dch.aop.HotKeywordsAop;
 import com.dch.entity.FrontSearchCategory;
 import com.dch.entity.PolicyResourcesDetail;
 import com.dch.facade.common.BaseFacade;
 import com.dch.facade.common.VO.Page;
+import com.dch.service.FrontCategorySearchService;
 import com.dch.util.LogHome;
 import com.dch.util.StringUtils;
 import com.dch.vo.*;
 import com.google.common.collect.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -18,6 +21,9 @@ public class FrontCategorySearchFacade extends BaseFacade {
 
     @Autowired
     private BaseSolrFacade baseSolrFacade;
+
+    @Autowired
+    private RedisTemplate redisTemplate;
 
     /**
      * 查询一级分类信息
@@ -78,6 +84,14 @@ public class FrontCategorySearchFacade extends BaseFacade {
                     param += " AND categorykeywords:" + keyWords;
                 }
                 solrVoPage = baseSolrFacade.getSolrObjectByParamAndPageParm(param,hl,perPage, currentPage, SolrVo.class);
+            }
+            if(solrVoPage!=null){
+                if(StringUtils.isEmptyParam(param)){
+                    List<SolrVo> solrVoList = solrVoPage.getData();
+                    for(SolrVo solrVo:solrVoList){
+                        solrVo.setBelong(FrontCategorySearchService.belongMaps.get(solrVo.getCategoryCode()));
+                    }
+                }
             }
         }catch (Exception e){
             e.printStackTrace();
@@ -260,5 +274,34 @@ public class FrontCategorySearchFacade extends BaseFacade {
             System.out.println(e.getMessage());
         }
         return drugCountryVos;
+    }
+
+    /**
+     * solr索引库查询初始化药品所属分类信息
+     * @param belongMaps
+     */
+    public void initBelongMaps(Map<String, String> belongMaps) {
+        StringBuffer sb = new StringBuffer("select b.category_code, CONCAT_WS('-',a.category_name,b.category_name) as belong");
+        sb.append(" from front_search_category a,front_search_category b where b.parent_id = a.id");
+        List list = createNativeQuery(sb.toString()).getResultList();
+        for(Object obj:list){
+            Object[] objArray = (Object[])obj;
+            if(objArray[0]!=null && objArray[1]!=null){
+                belongMaps.put((String)objArray[0],(String)objArray[1]);
+            }
+        }
+    }
+
+    /**
+     * 获取热门关键字 展示最前12条
+     * @return
+     */
+    public List<String> getHotKeyWords() {
+        Set set = redisTemplate.opsForZSet().reverseRange(HotKeywordsAop.HOT_WORDS, 0, 11);
+        List<String> hotwordList = new ArrayList<>();
+        for(Object obj:set){
+            hotwordList.add((String)obj);
+        }
+        return hotwordList;
     }
 }

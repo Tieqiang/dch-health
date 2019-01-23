@@ -79,11 +79,11 @@
             <artifactId>dch-template</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
-        <!--<dependency>-->
-            <!--<groupId>com.dch</groupId>-->
-            <!--<artifactId>dch-rdf</artifactId>-->
-            <!--<version>1.0-SNAPSHOT</version>-->
-        <!--</dependency>-->
+        <dependency>
+            <groupId>com.dch</groupId>
+            <artifactId>dch-rdf</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
         <!--<dependency>-->
             <!--<groupId>com.dch</groupId>-->
             <!--<artifactId>dch-hdfs</artifactId>-->
@@ -213,11 +213,6 @@
             <version>${jersey.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>13.0.1</version>
-        </dependency>
         <dependency>
             <groupId>org.codehaus.jackson</groupId>
             <artifactId>jackson-core-asl</artifactId>

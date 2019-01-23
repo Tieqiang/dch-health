@@ -84,7 +84,6 @@ public class TemplateResultService {
             String toMongoResult = stringBuffer.toString();
             TemplateResultMaster templateResultMaster = templateResultFacade.get(TemplateResultMaster.class,masterId);
             toMongoResult = toMongoResult.replace(inputSpeChar,specialChar);
-            System.out.println("=====toMongoResult"+toMongoResult);
             try{
                 removeTemplateResultByMasterId(masterId,type);
                 if("fill".equals(type)){
@@ -93,7 +92,6 @@ public class TemplateResultService {
                     mongoTemplate.insert(toMongoResult,tempCollectionName);
                 }
             }catch (Exception e){
-                System.out.println("=====1");
                 e.printStackTrace();
                 throw new Exception("表单数据保存异常");
             }
@@ -101,7 +99,6 @@ public class TemplateResultService {
                 templateResultMaster.setStatus("2");//表单状态设置为已保存
                 templateResultFacade.merge(templateResultMaster);
             }catch (Exception e){
-                System.out.println("=====2");
                 e.printStackTrace();
                 removeTemplateResultByMasterId(masterId,type);//保存异常 清除mongo中已保存的数据
                 throw new Exception("表单信息保存异常");
@@ -482,6 +479,19 @@ public class TemplateResultService {
     public Page<TemplateResultMasterVo> getTemplateResultMasterVoByParam(QueryCondition queryCondition){
         Map<String,Object> paramMap = queryCondition.getParamMap();
         return  templateResultFacade.getTemplateResultMasterVoByParam(paramMap,mongoTemplate);
+    }
+
+    /**
+     * 根据用户id及模板id查询表单填报信息
+     * @param userId
+     * @param templateId
+     * @return
+     */
+    @GET
+    @Path("get-user-fill-info")
+    public Response getUserFillInfoByParam(@QueryParam("userId")String userId,@QueryParam("templateId")String templateId,
+                                            @QueryParam("masterId")String masterId){
+        return  templateResultFacade.getUserFillInfoByParam(userId,templateId,masterId);
     }
 //    @GET
 //    @Path("init-template-result-list")
