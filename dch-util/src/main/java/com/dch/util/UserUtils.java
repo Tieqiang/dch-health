@@ -27,8 +27,11 @@ import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.ext.Provider;
+import java.io.File;
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -63,5 +66,32 @@ public class UserUtils {
 			e.printStackTrace();
 		}
 		return userVo;
+	}
+
+	/**
+	 * 获取表单填报excel上传路径
+	 * @param afterPath
+	 * @return
+	 */
+	public static String getExcelPathByLocate(String afterPath){
+		String realFilePath= "";
+		String path = System.getProperty("user.dir");
+		String excelPath = path + File.separator + "excel" + File.separator + "templateResult";
+		File folder = new File(excelPath);
+		if (!folder.exists()) {
+			folder.mkdirs();
+		}
+		File[] files = folder.listFiles();
+		if(files!=null && files.length>0){
+			for(File file:files){
+				String fileName = file.getName();
+				fileName = fileName.substring(0,fileName.indexOf('.'));
+				if(afterPath.equals(fileName)){
+					realFilePath = excelPath + File.separator + file.getName();
+					break;
+				}
+			}
+		}
+		return realFilePath;
 	}
 }

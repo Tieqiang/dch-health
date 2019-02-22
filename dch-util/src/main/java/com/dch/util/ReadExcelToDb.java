@@ -6,11 +6,7 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.*;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by sunkqa on 2018/4/8.
@@ -24,30 +20,42 @@ public class ReadExcelToDb {
             if (file.isDirectory()) {
                 File[] files = file.listFiles();
                 for (File f : files) {
-                    if(f.getName().indexOf("xls")>0||f.getName().indexOf("xlsx")>0){
-                        InputStream is = new FileInputStream(f.getAbsolutePath());
-                        // jxl提供的Workbook类
-                        Workbook wb = readExcel(f.getAbsolutePath());
-                        // Excel的页签数量
-                        int sheet_size = wb.getNumberOfSheets();
-                        Sheet sheet=wb.getSheetAt(0);
-                        for(int i=0;i<sheet.getPhysicalNumberOfRows();i++){
-                            Map map = new HashMap();
-                            Row row = sheet.getRow(i);
-                            for(int j=0;j<row.getPhysicalNumberOfCells();j++){
-                                String value = (String) getCellFormatValue(row.getCell(j));
-                                value = value.replace(" ","");
-                                System.out.print(value+"===");
-                                map.put("col_"+j,value);
-                            }
-                            list.add(map);
-                            System.out.println();
-                        }
-                    }
+                    list.addAll(readExcelFile(f,null));
                 }
+            }else{
+                list = readExcelFile(file,null);
             }
         }catch (Exception e){
             e.printStackTrace();
+        }
+        return list;
+    }
+
+    public static List<Map> readExcelFile(File f,Map titleMap) throws Exception{
+        List<Map> list = new ArrayList<>();
+        LinkedHashMap colMap = new LinkedHashMap();
+        if(f.getName().indexOf("xls")>0||f.getName().indexOf("xlsx")>0){
+            // jxl提供的Workbook类
+            Workbook wb = readExcel(f.getAbsolutePath());
+            Sheet sheet=wb.getSheetAt(0);
+            for(int i=0;i<sheet.getPhysicalNumberOfRows();i++){
+                LinkedHashMap map = new LinkedHashMap();
+                Row row = sheet.getRow(i);
+                if(i<1 && !titleMap.isEmpty()){
+                    for(int j=0;j<row.getPhysicalNumberOfCells();j++){
+                        colMap.put("col_"+j,titleMap.get(getCellFormatValue(row.getCell(j))));
+                    }
+                }else{
+                    for(int j=0;j<row.getPhysicalNumberOfCells();j++){
+                        Object value = getCellFormatValue(row.getCell(j));
+                        if(value instanceof String){
+                            value = value.toString().replace(" ","");
+                        }
+                        map.put(colMap.get("col_"+j),value);
+                    }
+                    list.add(map);
+                }
+            }
         }
         return list;
     }
@@ -69,7 +77,6 @@ public class ReadExcelToDb {
             }else{
                 return wb = null;
             }
-
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -84,8 +91,7 @@ public class ReadExcelToDb {
             switch(cell.getCellType()){
                 case Cell.CELL_TYPE_NUMERIC:{
                     cellValue = String.valueOf(cell.getNumericCellValue());
-                    BigDecimal bigDecimal = new BigDecimal(Double.valueOf(cellValue.toString()));
-                    cellValue = bigDecimal.toString();
+                    cellValue = Double.valueOf(cellValue.toString());
                     break;
                 }
                 case Cell.CELL_TYPE_FORMULA:{
@@ -110,9 +116,5 @@ public class ReadExcelToDb {
             cellValue = "";
         }
         return cellValue;
-    }
-
-    public static void main(String args[]){
-        readDirExcel("F:\\skqRare\\excel");
     }
 }

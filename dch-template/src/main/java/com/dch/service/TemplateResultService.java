@@ -493,6 +493,13 @@ public class TemplateResultService {
                                             @QueryParam("masterId")String masterId){
         return  templateResultFacade.getUserFillInfoByParam(userId,templateId,masterId);
     }
+
+    @GET
+    @Path("fill-template-by-excel")
+    public Response fillUserTemplateMasterByExcel(@QueryParam("loginName")String loginName,@QueryParam("pageId")String pageId,
+                                                  @QueryParam("parentCode")String parentCode,@QueryParam("masterId")String masterId) throws Exception{
+        return templateResultFacade.fillUserTemplateMasterByExcel(loginName,pageId,parentCode,masterId,mongoTemplate);
+    }
 //    @GET
 //    @Path("init-template-result-list")
 //    public List<String> initTemplateResultList(){

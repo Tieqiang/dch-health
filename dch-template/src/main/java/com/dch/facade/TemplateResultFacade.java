@@ -7,12 +7,14 @@ import com.dch.facade.common.BaseFacade;
 import com.dch.facade.common.VO.Page;
 import com.dch.service.TemplateResultService;
 import com.dch.util.JSONUtil;
+import com.dch.util.ReadExcelToDb;
 import com.dch.util.StringUtils;
 import com.dch.util.UserUtils;
 import com.dch.vo.SolrVo;
 import com.dch.vo.TemplateMasterVo;
 import com.dch.vo.TemplateResultMasterVo;
 import com.dch.vo.UserFillVo;
+import com.google.common.collect.Maps;
 import com.mongodb.BasicDBObject;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,9 +23,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import javax.persistence.TypedQuery;
 import javax.ws.rs.core.Response;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -611,5 +615,92 @@ public class TemplateResultFacade extends BaseFacade {
         userFillVo.setUpload(upload);
         userFillVo.setDone(done);
         return Response.status(Response.Status.OK).entity(userFillVo).build();
+    }
+
+    /**
+     * 根据用户id，表单id，填报表单上传要填报的论文信息
+     * @param loginName
+     * @param pageId
+     * @param parentCode
+     * @param masterId
+     * @param mongoTemplate
+     * @return
+     * @throws Exception
+     */
+    @Transactional
+    public Response fillUserTemplateMasterByExcel(String loginName, String pageId,String parentCode,String masterId,MongoTemplate mongoTemplate) throws Exception{
+        TemplateResult templateResult = null;
+        try {
+            if(StringUtils.isEmptyParam(parentCode)){
+                parentCode = "dch_1545816971844";
+            }
+            String excelPath = UserUtils.getExcelPathByLocate(loginName);
+            if(StringUtils.isEmptyParam(excelPath)){
+                throw new Exception("上传论文Excel名称有误或不存在");
+            }
+            File excelFile = new File(excelPath);
+            Map titleMap = getChildDataElementCodeMaptByCode(parentCode);//论文的code
+            List<Map> fillList = ReadExcelToDb.readExcelFile(excelFile,titleMap);
+            templateResult = getFillTemplateResultByMasterIdAndPageId(masterId,pageId);
+            if(templateResult!=null){
+                String templateResultJson = templateResult.getTemplateResult();
+                if(!StringUtils.isEmptyParam(templateResultJson) && !"null".equals(templateResultJson)){
+                    Map map = (Map) JSONUtil.JSONToObj(templateResultJson,Map.class);
+                    for(Object obj:map.keySet()) {
+                        String value = map.get(obj) == null ? "" : map.get(obj).toString();
+                        if(parentCode.equals(obj)){
+                            if(value.startsWith("[{") && value.endsWith("}]")){
+                                List<Map> mapList = (List<Map>)map.get(obj);
+                                mapList.clear();
+                                mapList.addAll(fillList);
+                            }
+                        }
+                    }
+                    String newTemplateResult = JSONUtil.objectToJsonString(map);
+                    templateResult.setTemplateResult(newTemplateResult);
+                    merge(templateResult);
+                    //mongoTemplate.insert(newTemplateResult,TemplateResultService.templateResultList);
+                }
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+            throw e;
+        }
+        return Response.status(Response.Status.OK).entity(templateResult).build();
+    }
+
+    /**
+     * 根据填报信息id和表单页id获取表单页填报结果
+     * @param masterId
+     * @param pageId
+     * @return
+     */
+    public TemplateResult getFillTemplateResultByMasterIdAndPageId(String masterId,String pageId){
+        StringBuffer sb = new StringBuffer("from TemplateResult t where t.masterId = '");
+        sb.append(masterId).append("' and t.pageId = '").append(pageId).append("'");
+        TemplateResult templateResult = createQuery(TemplateResult.class,sb.toString(),new ArrayList<>()).getSingleResult();
+        return templateResult;
+    }
+    /**
+     * 根据填报元数据查询子元数据信息
+     * @param parentCode
+     * @return
+     */
+    public Map getChildDataElementCodeMaptByCode(String parentCode){
+        Map map = Maps.newHashMap();
+        StringBuffer sb = new StringBuffer("select data_element_name,data_element_code from template_data_element ");
+        sb.append("where parent_data_id in (select id from template_data_element where data_element_code = '");
+        sb.append(parentCode).append("')");
+        List list = createNativeQuery(sb.toString()).getResultList();
+        if(list!=null && !list.isEmpty()){
+            list.stream().forEach(t->{
+                Object[] obj = (Object[])t;
+                map.put(obj[0],obj[1]);
+            });
+        }
+        return map;
+    }
+    public static void main(String[] args) {
+        System.out.println(System.getProperty("user.dir"));
     }
 }
