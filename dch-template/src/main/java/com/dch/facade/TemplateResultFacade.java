@@ -592,7 +592,7 @@ public class TemplateResultFacade extends BaseFacade {
         if(StringUtils.isEmptyParam(userId)||StringUtils.isEmptyParam(templateId)){
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("用户填报信息不存在").build();
         }
-        StringBuffer sb = new StringBuffer("select t.status,(select 1 from template_result_support where related_master_id = t.id) upload,");
+        StringBuffer sb = new StringBuffer("select t.status,(select case when max(id) !='' then 1 else 0 END from template_result_support where related_master_id = t.id) upload,");
         sb.append("CASE WHEN t.complete_rate >= 1 then '1' ELSE '0' END as done")
                 .append(" from template_result_master t where ");
         if(!StringUtils.isEmptyParam(masterId)){

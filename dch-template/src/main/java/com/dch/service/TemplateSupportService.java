@@ -42,6 +42,16 @@ public class TemplateSupportService {
         return Response.status(Response.Status.OK).entity(merge).build();
     }
 
+    /**
+     * 根据填报表单获取上传的表单
+     * @param masterId
+     * @return
+     */
+    @GET
+    @Path("find-one")
+    public TemplateResultSupport getTemplateResultSupport(@QueryParam("masterId") String masterId) throws Exception{
+        return templateSupportFacade.getTemplateResultSupport(masterId);
+    }
     @GET
     @Path("down-load")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)

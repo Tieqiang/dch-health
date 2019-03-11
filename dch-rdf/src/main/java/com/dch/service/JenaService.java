@@ -34,6 +34,13 @@ public class JenaService {
     @Autowired
     private JenaFaccade jenaFaccade;
 
+    /**
+     * 根据传入名称和数据库类型查询图谱信息 名称为模糊匹配
+     * @param label
+     * @param dbType
+     * @return
+     * @throws Exception
+     */
     @GET
     @Path("get-rdf-query-result")
     public RdfDataVo getRdfResultVoByParam(@QueryParam("label")String label,@QueryParam("dbType")String dbType) throws Exception{
@@ -79,9 +86,6 @@ public class JenaService {
             }
         }
 
-//        Query query = QueryFactory.create(queryString);
-//        QueryExecution qe = QueryExecutionFactory.create(query, model);
-//        ResultSet results = qe.execSelect();
         Map<String,Map> resultMap = jenaFaccade.getQueryResultMap(queryString,label,dbName);
         String middleKey = JenaUtil.getMiddleKey(resultMap);
         RdfDataVo rdfDataVo = new RdfDataVo();
@@ -148,86 +152,6 @@ public class JenaService {
         rdfDataVo.setRdfEntityList(rdfEntityList);
         rdfDataVo.setRdfRelationList(rdfRelationList);
         System.out.println(JSONUtil.objectToJson(rdfDataVo));
-
-//        RdfResultVo rdfResultVo = new RdfResultVo();
-//        List<RdfChildren> childrenList = new ArrayList<>();
-//        if(!resultMap.isEmpty() && resultMap.size()<2){
-//            for(String key:resultMap.keySet()){
-//                rdfResultVo.setId(key);
-//                rdfResultVo.setAttId("");
-//                rdfResultVo.setAttName("");
-//                rdfResultVo.setImage("");
-//                rdfResultVo.setKgType("1");
-//                rdfResultVo.setName(JenaUtil.getNameByRdfId(key));
-//                Map map = resultMap.get(key);
-//                for(Object chkey:map.keySet()){
-//                    String childId = chkey.toString();
-//                    String value = map.get(childId)+"";
-//                    if(value.endsWith("#type")){
-//                        RdfChildren parent = new RdfChildren();
-//                        parent.setKgType("0");
-//                        parent.setId(childId);
-//                        parent.setImage("");
-//                        parent.setName(JenaUtil.getNameByRdfId(childId));
-//                        rdfResultVo.setAttName("实体");
-//                        rdfResultVo.setAttId(value);
-//                        rdfResultVo.setParent(parent);
-//                    }else{
-//                        RdfChildren rdfChildren = new RdfChildren();
-//                        rdfChildren.setId(childId);
-//                        rdfChildren.setImage("");
-//                        rdfChildren.setKgType("2");
-//                        rdfChildren.setAttId(value);
-//                        rdfChildren.setAttName(JenaConst.RELATION_TYPE.getName(value));
-//                        rdfChildren.setName(JenaUtil.getNameByRdfId(childId));
-//                        childrenList.add(rdfChildren);
-//                    }
-//                }
-//                rdfResultVo.setChildrens(childrenList);
-//            }
-//        }else if(!resultMap.isEmpty()){
-//            String middleKey = JenaUtil.getMiddleKey(resultMap);
-//            String firstKey = resultMap.get(middleKey).keySet().iterator().next()+"";
-//
-//            RdfChildren parent = new RdfChildren();
-//            parent.setKgType("0");
-//            parent.setId(firstKey);
-//            parent.setImage("");
-//            parent.setName(JenaUtil.getNameByRdfId(firstKey));
-//            rdfResultVo.setParent(parent);
-//            Map seMap = resultMap.get(middleKey);
-//            String seId = middleKey;
-//            String attId="";
-//            for(Object seKey:seMap.keySet()){
-//                attId = seMap.get(seKey)+"";
-//            }
-//            String relation= JenaConst.RELATION_TYPE.getName(attId);
-//            int seIndex = seId.lastIndexOf("#");
-//            rdfResultVo.setId(seId);
-//            rdfResultVo.setAttId(attId);
-//            rdfResultVo.setAttName(relation);
-//            rdfResultVo.setImage("");
-//            rdfResultVo.setKgType("1");
-//            rdfResultVo.setName(seId.substring(seIndex+1));
-//            for(String key:resultMap.keySet()){
-//                Map innerMap = resultMap.get(key);
-//                if(innerMap.containsKey(middleKey)){
-//                    String value = innerMap.get(middleKey)+"";
-//                    RdfChildren rdfChildren = new RdfChildren();
-//                    rdfChildren.setId(key);
-//                    rdfChildren.setImage("");
-//                    rdfChildren.setKgType("2");
-//                    rdfChildren.setAttId(value);
-//                    rdfChildren.setAttName(JenaConst.RELATION_TYPE.getName(value));
-//                    rdfChildren.setName(JenaUtil.getNameByRdfId(key));
-//                    childrenList.add(rdfChildren);
-//                }
-//            }
-//            rdfResultVo.setChildrens(childrenList);
-//        }
-//        qe.close();
-//        dataset.end();
-//        dataset.close();
         return rdfDataVo;
     }
 
@@ -279,11 +203,4 @@ public class JenaService {
         return rdfElementVos;
     }
 
-//    public static void main(String args[]) throws Exception{
-//        System.out.println(JenaUtil.getUID());
-//        JenaService jenaService = new JenaService();
-//        RdfDataVo rdfDataVo = jenaService.getRdfResultVoByParam("武汉人福药业有限责任公司");
-//        List<RdfElementVo> rdfElementVos = jenaService.getRdfElementVoById("http://www.imicams.ac.cn/administrator/ontologies/2018/4/medical-ontologies#三维制霉素栓");
-//        System.out.println(JSONUtil.objectToJson(rdfDataVo));
-//    }
 }

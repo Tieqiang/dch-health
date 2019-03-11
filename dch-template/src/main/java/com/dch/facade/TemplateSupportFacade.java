@@ -1,8 +1,11 @@
 package com.dch.facade;
 
+import com.dch.entity.TemplateResultSupport;
 import com.dch.facade.common.BaseFacade;
+import com.dch.util.StringUtils;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,5 +33,20 @@ public class TemplateSupportFacade extends BaseFacade {
             }
         }
         return map;
+    }
+
+    /**
+     * 根据表单id查询上传表单保存信息
+     * @param masterId
+     * @return
+     * @throws Exception
+     */
+    public TemplateResultSupport getTemplateResultSupport(String masterId) throws Exception{
+        if(StringUtils.isEmptyParam(masterId)){
+            throw new Exception("填报表单不存在！");
+        }else {
+            String hql = " from TemplateResultSupport where relatedMasterId = '"+masterId+"'";
+            return createQuery(TemplateResultSupport.class,hql,new ArrayList<>()).getSingleResult();
+        }
     }
 }
