@@ -229,7 +229,7 @@ public class TableFacade extends BaseFacade {
                     tableCol.setColDescription(elementVo.getDataElementName());
                     tableCol.setDataVersion(0);
                     tableColConfigs.add(tableCol);
-                    sql += "" + elementVo.getDataElementCode() + " varchar(1700) comment '" + elementVo.getDataElementName() + "',";
+                    sql += "" + elementVo.getDataElementCode() + " text comment '" + elementVo.getDataElementName() + "',";
                 }
             }
         }
