@@ -175,7 +175,7 @@ public class TableFacade extends BaseFacade {
             createSql = createSql + "" + data.getDataElementCode() + " varchar(200) comment '" + data.getDataElementName() + "',";
         }
 
-        createSql = createSql + "  PRIMARY KEY (id) ) ENGINE=InnoDB DEFAULT CHARSET=utf8;";
+        createSql = createSql + "  PRIMARY KEY (id) ) ENGINE=MyISAM DEFAULT CHARSET=utf8;";
         tableCreateVo.setInsertSql(createSql);
         tableCreateVo.setTableColConfigList(tableColConfigs);
 
@@ -234,7 +234,7 @@ public class TableFacade extends BaseFacade {
             }
         }
         sql = sql + " data_version int DEFAULT 0  comment '版本',";
-        sql = sql + "  PRIMARY KEY (id) ) ENGINE=InnoDB DEFAULT CHARSET=utf8 comment '" +
+        sql = sql + "  PRIMARY KEY (id) ) ENGINE=MyISAM DEFAULT CHARSET=utf8 comment '" +
                 vo.getDataElementName() + "';";
 
         logger.info("创建SQL：" + sql);
@@ -498,7 +498,7 @@ public class TableFacade extends BaseFacade {
                 sb.append(config.getColCode()).append(" text comment '").append(config.getColName()).append("',");//varchar(1600)
             }
         }
-        sb.append("  PRIMARY KEY (id) ) ENGINE=InnoDB DEFAULT CHARSET=utf8");
+        sb.append("  PRIMARY KEY (id) ) ENGINE=MyISAM DEFAULT CHARSET=utf8");
         return sb.toString();
     }
 
