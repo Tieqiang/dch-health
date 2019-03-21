@@ -172,7 +172,7 @@ public class TableFacade extends BaseFacade {
             tableCol.setColDescription(data.getDataElementName());
             tableCol.setDataVersion(0);
             tableColConfigs.add(tableCol);
-            createSql = createSql + "" + data.getDataElementCode() + " varchar(200) comment '" + data.getDataElementName() + "',";
+            createSql = createSql + "" + data.getDataElementCode() + " text comment '" + data.getDataElementName() + "',";
         }
 
         createSql = createSql + "  PRIMARY KEY (id) ) ENGINE=MyISAM DEFAULT CHARSET=utf8;";
@@ -740,16 +740,18 @@ public class TableFacade extends BaseFacade {
         PreparedStatement statement = null;
         Connection connection = dataSource.getConnection();
         try {
-            statement = connection.prepareStatement("");
+            statement = connection.prepareStatement("select 1 from dual;");
             for (String key : inserSqlMap.keySet()) {
                 List<String> insertSqlList = inserSqlMap.get(key);
                 String insert_sql = insertSqlList.get(0);
-                statement.addBatch(insert_sql);
+                insert_sql = insert_sql.replace("\\","/");
                 // 执行操作
+                statement.addBatch(insert_sql);
                 statement.executeBatch();
             }
         } catch (Exception e) {
             e.printStackTrace();
+            throw e;
         } finally {
             if (statement != null) {
                 statement.close();
@@ -1761,15 +1763,17 @@ public class TableFacade extends BaseFacade {
                     tableMap.put(user, sqlMap);
                 }
             });
-            PreparedStatement ps = connection.prepareStatement("");
+
             tableMap.forEach((k, v) -> v.forEach((ik, iv) -> {
                 String delSql = "delete FROM " + ik;
                 try {
-                    ps.execute(delSql);
+                    PreparedStatement ps = connection.prepareStatement(delSql);
+                    ps.execute();
                     ResultSet resultSet = ps.executeQuery(iv);
                     List queryList = getConnectionQueryResult(resultSet, iv);
                     saveResultToDb(ik, 0, iv, queryList, connection);
                     tableList.put(ik, queryList);
+                    ps.close();
                 } catch (SQLException e) {
                     new RuntimeException(e);
                 }
